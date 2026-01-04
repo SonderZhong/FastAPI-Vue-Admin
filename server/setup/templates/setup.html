@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统初始化向导</title>
+    <style>
+        :root {
+            --primary-color: #5a7be0;
+            --primary-hover: #4a6bd0;
+            --primary-light: rgba(90, 123, 224, 0.1);
+            --success-color: #52c41a;
+            --error-color: #ff4d4f;
+            --warning-color: #faad14;
+            --text-color: #333;
+            --text-secondary: #666;
+            --border-color: #e4e7ed;
+            --bg-color: #f5f7fa;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-color);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 720px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #7c8ce8 100%);
+            color: white;
+            padding: 32px 24px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+        }
+        
+        .progress-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .progress-item.active { opacity: 1; }
+        
+        .progress-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .progress-item.active .progress-num {
+            background: white;
+            color: var(--primary-color);
+        }
+        
+        .content {
+            padding: 24px;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+            padding: 20px;
+            background: var(--bg-color);
+            border-radius: 6px;
+        }
+        
+        .section-title {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-color);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title .icon {
+            font-size: 18px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group:last-child { margin-bottom: 0; }
+        
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        
+        label .required {
+            color: var(--error-color);
+            margin-left: 2px;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+            color: var(--text-color);
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+        
+        input::placeholder {
+            color: #c0c4cc;
+        }
+        
+        .tip {
+            font-size: 12px;
+            color: #909399;
+            margin-top: 4px;
+        }
+        
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-color);
+        }
+        
+        .btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-size: 13px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status.success {
+            display: flex;
+            background: #f6ffed;
+            color: var(--success-color);
+            border: 1px solid #b7eb8f;
+        }
+        
+        .status.error {
+            display: flex;
+            background: #fff2f0;
+            color: var(--error-color);
+            border: 1px solid #ffccc7;
+        }
+        
+        .status.loading {
+            display: flex;
+            background: #fffbe6;
+            color: var(--warning-color);
+            border: 1px solid #ffe58f;
+        }
+        
+        .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid currentColor;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            padding: 16px 24px;
+            background: var(--bg-color);
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .result-box {
+            display: none;
+            padding: 20px;
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .result-box.show { display: block; }
+        
+        .result-box h3 {
+            color: var(--success-color);
+            font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .result-box p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .result-box .info-item {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .result-box .info-label {
+            color: #999;
+            min-width: 80px;
+        }
+        
+        .result-box .info-value {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .progress-bar { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 系统初始化向导</h1>
+            <p>首次运行系统，请完成以下配置</p>
+            <div class="progress-bar">
+                <div class="progress-item active">
+                    <span class="progress-num">1</span>
+                    <span>基础配置</span>
+                </div>
+                <div class="progress-item active">
+                    <span class="progress-num">2</span>
+                    <span>数据库</span>
+                </div>
+                <div class="progress-item active">
+                    <span class="progress-num">3</span>
+                    <span>缓存</span>
+                </div>
+                <div class="progress-item active">
+                    <span class="progress-num">4</span>
+                    <span>安全</span>
+                </div>
+                <div class="progress-item active">
+                    <span class="progress-num">5</span>
+                    <span>管理员</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div id="resultBox" class="result-box">
+                <h3>✓ 初始化完成</h3>
+                <p>系统已成功初始化，请重启应用后访问系统。</p>
+                <div class="info-item">
+                    <span class="info-label">管理员账号：</span>
+                    <span class="info-value" id="resultUsername">admin</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">访问地址：</span>
+                    <span class="info-value" id="resultUrl">http://localhost:9090</span>
+                </div>
+            </div>
+            
+            <form id="setupForm">
+                <!-- 应用配置 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span class="icon">⚙️</span>
+                        应用配置
+                    </div>
+                    <div class="form-group full">
+                        <label>应用名称 <span class="required">*</span></label>
+                        <input type="text" name="app_name" value="数字教科研平台" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>监听地址</label>
+                            <input type="text" name="app_host" value="0.0.0.0">
+                            <div class="tip">0.0.0.0 监听所有网络接口</div>
+                        </div>
+                        <div class="form-group">
+                            <label>监听端口 <span class="required">*</span></label>
+                            <input type="number" name="app_port" value="9090" required>
+                        </div>
+                    </div>
+                    <div class="form-group full">
+                        <label>运行环境</label>
+                        <select name="app_env">
+                            <option value="dev">开发环境 (dev) - 启用热重载</option>
+                            <option value="test">测试环境 (test)</option>
+                            <option value="prod">生产环境 (prod) - 关闭调试</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 数据库配置 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span class="icon">🗄️</span>
+                        数据库配置
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>数据库类型 <span class="required">*</span></label>
+                            <select name="db_engine" id="dbEngine">
+                                <option value="mysql">MySQL</option>
+                                <option value="postgresql">PostgreSQL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>数据库名 <span class="required">*</span></label>
+                            <input type="text" name="db_database" value="digital-management" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>主机地址 <span class="required">*</span></label>
+                            <input type="text" name="db_host" value="127.0.0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>端口 <span class="required">*</span></label>
+                            <input type="number" name="db_port" id="dbPort" value="3306" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>用户名 <span class="required">*</span></label>
+                            <input type="text" name="db_username" value="root" required>
+                        </div>
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" name="db_password" placeholder="数据库密码">
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button type="button" class="btn" onclick="testDatabase()">🔌 测试连接</button>
+                    </div>
+                    <div id="dbStatus" class="status"></div>
+                </div>
+
+                <!-- Redis配置 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span class="icon">📦</span>
+                        Redis 缓存配置
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>主机地址 <span class="required">*</span></label>
+                            <input type="text" name="redis_host" value="127.0.0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>端口 <span class="required">*</span></label>
+                            <input type="number" name="redis_port" value="6379" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>密码</label>
+                            <input type="password" name="redis_password" placeholder="无密码可留空">
+                        </div>
+                        <div class="form-group">
+                            <label>数据库编号</label>
+                            <input type="number" name="redis_database" value="1" min="0" max="15">
+                            <div class="tip">Redis 默认有 16 个数据库 (0-15)</div>
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button type="button" class="btn" onclick="testRedis()">🔌 测试连接</button>
+                    </div>
+                    <div id="redisStatus" class="status"></div>
+                </div>
+
+                <!-- JWT安全配置 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span class="icon">🔐</span>
+                        安全配置 (JWT)
+                    </div>
+                    <div class="form-group full">
+                        <label>签名密钥</label>
+                        <input type="text" name="jwt_secret" id="jwtSecret" placeholder="留空将自动生成随机密钥">
+                        <div class="tip">用于 JWT Token 签名，建议使用随机字符串</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>加盐值</label>
+                            <input type="text" name="jwt_salt" value="digital-research-system">
+                            <div class="tip">用于密码加密</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Token 有效期 (分钟)</label>
+                            <input type="number" name="jwt_expire" value="1440">
+                            <div class="tip">1440 分钟 = 24 小时</div>
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button type="button" class="btn" onclick="generateSecret()">🎲 生成随机密钥</button>
+                    </div>
+                </div>
+
+                <!-- 管理员配置 -->
+                <div class="section">
+                    <div class="section-title">
+                        <span class="icon">👤</span>
+                        管理员账号
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>用户名 <span class="required">*</span></label>
+                            <input type="text" name="admin_username" value="admin" required>
+                        </div>
+                        <div class="form-group">
+                            <label>密码 <span class="required">*</span></label>
+                            <input type="password" name="admin_password" value="admin123" required>
+                            <div class="tip">请牢记此密码，用于首次登录</div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>昵称</label>
+                            <input type="text" name="admin_nickname" value="超级管理员">
+                        </div>
+                        <div class="form-group">
+                            <label>邮箱</label>
+                            <input type="email" name="admin_email" value="admin@example.com">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="footer">
+            <button type="button" class="btn-primary" id="submitBtn" onclick="submitForm()">
+                🎉 完成初始化
+            </button>
+            <div id="submitStatus" class="status"></div>
+        </div>
+    </div>
+
+    <script>
+        // 数据库类型切换
+        document.getElementById('dbEngine').addEventListener('change', function() {
+            document.getElementById('dbPort').value = this.value === 'mysql' ? '3306' : '5432';
+        });
+
+        // 生成随机密钥
+        function generateSecret() {
+            const chars = 'abcdef0123456789';
+            let secret = '';
+            for (let i = 0; i < 64; i++) {
+                secret += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('jwtSecret').value = secret;
+        }
+
+        function getFormData() {
+            const form = document.getElementById('setupForm');
+            const formData = new FormData(form);
+            return {
+                app: {
+                    name: formData.get('app_name'),
+                    host: formData.get('app_host'),
+                    port: parseInt(formData.get('app_port')),
+                    env: formData.get('app_env')
+                },
+                database: {
+                    engine: formData.get('db_engine'),
+                    host: formData.get('db_host'),
+                    port: parseInt(formData.get('db_port')),
+                    username: formData.get('db_username'),
+                    password: formData.get('db_password'),
+                    database: formData.get('db_database')
+                },
+                redis: {
+                    host: formData.get('redis_host'),
+                    port: parseInt(formData.get('redis_port')),
+                    password: formData.get('redis_password'),
+                    database: parseInt(formData.get('redis_database'))
+                },
+                jwt: {
+                    secret_key: formData.get('jwt_secret'),
+                    salt: formData.get('jwt_salt'),
+                    expire_minutes: parseInt(formData.get('jwt_expire'))
+                },
+                admin: {
+                    username: formData.get('admin_username'),
+                    password: formData.get('admin_password'),
+                    nickname: formData.get('admin_nickname'),
+                    email: formData.get('admin_email')
+                }
+            };
+        }
+
+        function showStatus(elementId, type, message) {
+            const el = document.getElementById(elementId);
+            el.className = 'status ' + type;
+            if (type === 'loading') {
+                el.innerHTML = '<span class="spinner"></span><span>' + message + '</span>';
+            } else {
+                const icon = type === 'success' ? '✓' : '✗';
+                el.innerHTML = '<span>' + icon + '</span><span>' + message + '</span>';
+            }
+        }
+
+        async function testDatabase() {
+            const data = getFormData();
+            showStatus('dbStatus', 'loading', '正在测试数据库连接...');
+            try {
+                const res = await fetch('/api/setup/test-database', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data.database)
+                });
+                const result = await res.json();
+                showStatus('dbStatus', result.success ? 'success' : 'error', result.msg);
+            } catch (e) {
+                showStatus('dbStatus', 'error', '请求失败: ' + e.message);
+            }
+        }
+
+        async function testRedis() {
+            const data = getFormData();
+            showStatus('redisStatus', 'loading', '正在测试 Redis 连接...');
+            try {
+                const res = await fetch('/api/setup/test-redis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data.redis)
+                });
+                const result = await res.json();
+                showStatus('redisStatus', result.success ? 'success' : 'error', result.msg);
+            } catch (e) {
+                showStatus('redisStatus', 'error', '请求失败: ' + e.message);
+            }
+        }
+
+        async function submitForm() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> 正在初始化...';
+            showStatus('submitStatus', 'loading', '正在保存配置、初始化数据库、创建管理员账号...');
+
+            try {
+                const data = getFormData();
+                const res = await fetch('/api/setup/initialize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    showStatus('submitStatus', 'success', result.msg);
+                    btn.innerHTML = '✓ 初始化完成';
+                    
+                    // 显示结果
+                    document.getElementById('resultBox').classList.add('show');
+                    document.getElementById('resultUsername').textContent = result.data.admin_username;
+                    document.getElementById('resultUrl').textContent = 'http://localhost:' + result.data.app_port;
+                    
+                    // 隐藏表单
+                    document.getElementById('setupForm').style.display = 'none';
+                } else {
+                    showStatus('submitStatus', 'error', result.msg);
+                    btn.disabled = false;
+                    btn.innerHTML = '🎉 完成初始化';
+                }
+            } catch (e) {
+                showStatus('submitStatus', 'error', '请求失败: ' + e.message);
+                btn.disabled = false;
+                btn.innerHTML = '🎉 完成初始化';
+            }
+        }
+    </script>
+</body>
+</html>

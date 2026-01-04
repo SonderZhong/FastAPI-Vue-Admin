@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    container_name: fva-backend
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./server/config.yaml:/app/config.yaml
+      - ./server/uploads:/app/uploads
+      - ./server/logs:/app/logs
+      - ./server/data:/app/data
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - fva-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: fva-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - fva-network
+
+networks:
+  fva-network:
+    driver: bridge
