@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+*.log
+.venv
+venv
+
+# Node
+node_modules/
+dist/
+.DS_Store
+*.local
+
+# VitePress
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 环境变量
+.env.local
+.env.*.local
+
+# 数据库
+*.db
+*.sqlite
+
+# 上传文件
+server/data/
+server/assets/uploads/
+server/uploads/
+
+
+# 日志
+logs/
+*.log
+
+# 临时文件
+*.tmp
+*.temp

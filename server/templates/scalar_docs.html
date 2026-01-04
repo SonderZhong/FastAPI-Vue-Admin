@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - API文档</title>
+    <link rel="stylesheet" href="/api/assets/css/scalar-api-reference.css">
+    <style>
+        {% raw %}
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        {% endraw %}
+    </style>
+</head>
+<body>
+    <div id="scalar-app"></div>
+
+    <script src="/api/assets/js/scalar-api-reference.js"></script>
+    <script>
+        // 获取当前访问的域名和端口
+        const currentLocation = window.location;
+        const currentPort = currentLocation.port;
+        const backendPort = {{ backend_port }};
+
+        // 智能检测是否为代理访问
+        function getBaseUrl() {
+            const scheme = currentLocation.protocol;
+            const host = currentLocation.host;
+            return `${scheme}//${host}`;
+        }
+
+        // 获取API测试用的基础URL（用于代理处理）
+        function getApiTestBaseUrl() {
+            if (currentPort != backendPort.toString()) {
+                return currentLocation.origin + '/api';
+            }
+            return currentLocation.origin;
+        }
+
+        // 获取正确的token_url
+        function getTokenUrl() {
+            if (currentPort != backendPort.toString()) {
+                // 代理访问时，使用相对路径
+                return '/api/auth/login';
+            }
+            // 直接访问时，使用完整URL
+            return `${getBaseUrl()}/auth/login`;
+        }
+
+        // 初始化Scalar API Reference
+        async function initScalar() {
+            const baseUrl = getBaseUrl();
+            const apiTestBaseUrl = getApiTestBaseUrl();
+            const tokenUrl = getTokenUrl();
+
+            console.log('Initializing Scalar with:', {
+                baseUrl,
+                apiTestBaseUrl,
+                tokenUrl,
+                currentPort,
+                backendPort
+            });
+
+            try {
+                // 智能获取OpenAPI规范URL
+                let openapiUrl;
+                if (currentPort != backendPort.toString()) {
+                    // 代理访问时，需要添加/api前缀
+                    openapiUrl = currentLocation.origin + '/api/openapi.json';
+                } else {
+                    // 直接访问时，使用当前域名
+                    openapiUrl = baseUrl + '/openapi.json';
+                }
+
+                // 首先测试OpenAPI规范是否可访问
+                const openapiResponse = await fetch(openapiUrl);
+                if (!openapiResponse.ok) {
+                    throw new Error(`无法访问OpenAPI规范: ${openapiResponse.status}`);
+                }
+
+                // 获取OpenAPI规范并修改token_url
+                const openapiSpec = await openapiResponse.json();
+
+                // 强制修改OAuth2PasswordBearer的token_url
+                if (openapiSpec.components && openapiSpec.components.securitySchemes && openapiSpec.components.securitySchemes.OAuth2PasswordBearer) {
+                    // 修改flows.password.tokenUrl
+                    if (openapiSpec.components.securitySchemes.OAuth2PasswordBearer.flows &&
+                        openapiSpec.components.securitySchemes.OAuth2PasswordBearer.flows.password) {
+                        const originalTokenUrl = openapiSpec.components.securitySchemes.OAuth2PasswordBearer.flows.password.tokenUrl;
+                        openapiSpec.components.securitySchemes.OAuth2PasswordBearer.flows.password.tokenUrl = tokenUrl;
+                        console.log('Modified OAuth2PasswordBearer flows.password.tokenUrl from', originalTokenUrl, 'to', tokenUrl);
+                    }
+
+                    // 也尝试修改顶层的tokenUrl（如果存在）
+                    if (openapiSpec.components.securitySchemes.OAuth2PasswordBearer.tokenUrl !== undefined) {
+                        const originalTokenUrl = openapiSpec.components.securitySchemes.OAuth2PasswordBearer.tokenUrl;
+                        openapiSpec.components.securitySchemes.OAuth2PasswordBearer.tokenUrl = tokenUrl;
+                        console.log('Modified OAuth2PasswordBearer tokenUrl from', originalTokenUrl, 'to', tokenUrl);
+                    }
+                }
+
+                // 构建配置对象
+                const scalarConfig = {
+                    // 使用修改后的规范
+                    spec: {
+                        content: openapiSpec
+                    },
+                    // 配置服务器
+                    servers: [
+                        {
+                            url: baseUrl,
+                            description: `API服务器: ${baseUrl}`
+                        }
+                    ],
+                    // 配置主题
+                    theme: 'purple',
+                    // 隐藏部分不需要的UI元素
+                    hideModels: false,
+                    hideDownloadButton: false,
+                    // 配置默认服务器
+                    defaultHttpClient: {
+                        targetKey: 'javascript',
+                        clientKey: 'fetch'
+                    }
+                };
+
+                // 只在代理访问时配置proxy（避免直接访问时出现404）
+                // 当访问端口与后端端口不同时，说明是通过代理访问
+                if (currentPort != backendPort.toString()) {
+                    scalarConfig.proxy = apiTestBaseUrl + '/proxy';
+                    console.log('Proxy mode enabled:', scalarConfig.proxy);
+                }
+
+                scalarInstance = Scalar.createApiReference('#scalar-app', scalarConfig);
+
+            } catch (error) {
+                console.error('Scalar initialization failed:', error);
+                const appElement = document.getElementById('scalar-app');
+                appElement.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column;">
+                        <h3>初始化失败</h3>
+                        <p>${error.message}</p>
+                        <button onclick="location.reload()" style="margin-top: 16px; padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">重试</button>
+                    </div>
+                `;
+            }
+        }
+
+        let scalarInstance = null;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initScalar();
+        });
+    </script>
+</body>
+</html>
