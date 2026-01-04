@@ -6,6 +6,11 @@ export default defineConfig({
   lang: 'zh-CN',
   base: '/FastAPI-Vue-Admin/',
   
+  ignoreDeadLinks: [
+    /^http:\/\/localhost/,
+    /^http:\/\/127\.0\.0\.1/
+  ],
+  
   sitemap: {
     hostname: 'https://sonderzhong.github.io/FastAPI-Vue-Admin/'
   },
