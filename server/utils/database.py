@@ -35,6 +35,10 @@ def _build_db_connection(db_config) -> Dict[str, Dict[str, Any]]:
         }
     }
 
+    # MySQL 需要在连接参数中设置时区
+    if db_config.engine == "mysql":
+        conn_config["credentials"]["init_command"] = "SET time_zone = '+08:00'"
+
     if db_config.engine == "postgresql":
         conn_config["credentials"]["sslmode"] = "disable"
     elif db_config.engine == "sqlite":

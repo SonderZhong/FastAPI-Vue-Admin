@@ -16,6 +16,8 @@ services:
       - ./server/data:/app/data
     environment:
       - TZ=Asia/Shanghai
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - fva-network
     healthcheck:

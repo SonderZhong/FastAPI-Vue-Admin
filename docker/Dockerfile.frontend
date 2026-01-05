@@ -5,8 +5,17 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# 设置时区为东八区
+ENV TZ=Asia/Shanghai
+RUN apk add --no-cache tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 配置 npm/pnpm 使用淘宝镜像源
+RUN npm config set registry https://registry.npmmirror.com
+
 # 安装 pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm && \
+    pnpm config set registry https://registry.npmmirror.com
 
 # 复制依赖文件
 COPY web/package.json web/pnpm-lock.yaml ./
@@ -17,11 +26,19 @@ RUN pnpm install --frozen-lockfile
 # 复制源代码
 COPY web/ .
 
+# 预加载（启动 dev server 运行几秒后终止，用于预编译依赖）
+RUN timeout 30s pnpm dev || true
+
 # 构建
 RUN pnpm build
 
 # 阶段2: 运行
 FROM nginx:alpine
+
+# 设置时区为东八区
+ENV TZ=Asia/Shanghai
+RUN apk add --no-cache tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 复制构建产物
 COPY --from=builder /app/dist /usr/share/nginx/html

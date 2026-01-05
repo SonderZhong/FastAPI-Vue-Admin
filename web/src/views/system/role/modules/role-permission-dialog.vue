@@ -158,9 +158,9 @@
     try {
       const response = await fetchRolePermissionList(props.roleData.id)
       if (response.success && response.data) {
-        // 使用权限ID作为选中的key，而不是角色权限记录的ID
+        // 使用权限ID作为选中的key
         checkedKeys.value =
-          response.data?.result?.map((item) => item.permission_id || item.id) || []
+          response.data?.result?.map((item) => item.permission_id) || []
         nextTick(() => {
           treeRef.value?.setCheckedKeys(checkedKeys.value)
         })

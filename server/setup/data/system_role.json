@@ -1,0 +1,24 @@
+[
+  {
+    "id": "618ac2af-e2a0-4630-91c6-eff8fc64bb23",
+    "is_del": 0,
+    "created_at": "21/9/2025 09:00:02.265365",
+    "updated_at": "21/9/2025 09:00:02.265365",
+    "role_name": "系统管理员",
+    "role_code": "admin",
+    "role_description": "系统管理员拥有系统所有权限",
+    "status": 1,
+    "department_id": "5ad12c18-259a-4257-8f4a-66cb986435c6"
+  },
+  {
+    "id": "9311493b-5034-4479-adad-9b63e879fd7a",
+    "is_del": 0,
+    "created_at": "21/9/2025 10:17:38.663538",
+    "updated_at": "21/9/2025 10:17:38.663538",
+    "role_name": "普通用户",
+    "role_code": "user",
+    "role_description": "普通用户",
+    "status": 1,
+    "department_id": "5ad12c18-259a-4257-8f4a-66cb986435c6"
+  }
+]

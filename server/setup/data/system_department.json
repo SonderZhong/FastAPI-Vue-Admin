@@ -1,0 +1,16 @@
+[
+  {
+    "id": "5ad12c18-259a-4257-8f4a-66cb986435c6",
+    "is_del": 0,
+    "created_at": "12/9/2025 17:46:45.98283",
+    "updated_at": "15/9/2025 19:42:10.422851",
+    "name": "系统管理",
+    "parent_id": null,
+    "sort": 1,
+    "phone": "admin",
+    "principal": "系统管理",
+    "email": "admin@example.com",
+    "status": 0,
+    "remark": null
+  }
+]

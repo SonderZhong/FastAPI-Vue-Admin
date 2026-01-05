@@ -21,7 +21,7 @@ from fastmcp import FastMCP
 mcp = FastMCP(
     name="fva-helper",
     instructions="""
-    FVA Helper - 数字教科研平台助手工具。
+    FVA Helper - FastAPI-Vue-Admin助手工具。
     提供数据库操作、用户管理、角色管理、权限管理等功能。
     """
 )
