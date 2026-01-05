@@ -43,7 +43,7 @@ class DynamicConfigService:
         {"group": ConfigGroup.MAP, "key": "map_timeout", "name": "超时时间", "value": "10", "type": True, "remark": "地图API超时时间（秒）"},
         
         # 系统配置
-        {"group": ConfigGroup.SYSTEM, "key": "system_name", "name": "系统名称", "value": "数字教科研平台", "type": True, "remark": "系统显示名称"},
+        {"group": ConfigGroup.SYSTEM, "key": "system_name", "name": "系统名称", "value": "FastAPI-Vue-Admin", "type": True, "remark": "系统显示名称"},
         {"group": ConfigGroup.SYSTEM, "key": "system_version", "name": "系统版本", "value": "1.0.0", "type": True, "remark": "系统版本号"},
         {"group": ConfigGroup.SYSTEM, "key": "api_status_enabled", "name": "启用状态接口", "value": "true", "type": True, "remark": "是否启用/health等状态接口"},
         {"group": ConfigGroup.SYSTEM, "key": "ip_location_enabled", "name": "启用IP定位", "value": "true", "type": True, "remark": "是否启用IP地理位置查询"},

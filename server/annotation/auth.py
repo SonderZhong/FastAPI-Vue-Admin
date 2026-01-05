@@ -114,6 +114,11 @@ class Auth:
             token = request.headers.get("Authorization")
             current_user = await AuthController.get_current_user(request, token)
             
+            # 超级管理员(user_type=0)和管理员(user_type=1)直接放行
+            user_type = current_user.get("user_type", 3)
+            if user_type in (0, 1):
+                return await func(request, *args, **kwargs)
+            
             # 获取用户的按钮权限标识
             permission_marks = set(current_user.get("permission_marks", []))
             # 获取用户的API权限列表 (格式: ["GET:/user/*", "POST:/role/add"])

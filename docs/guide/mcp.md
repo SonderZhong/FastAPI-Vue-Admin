@@ -55,37 +55,164 @@ python -m fva_mcp.server --mode sse --port 9091
 
 ## IDE 配置
 
+::: warning 重要说明
+MCP 配置必须使用**绝对路径**，包括：
+1. Python 解释器路径 - 如果使用虚拟环境，必须指向虚拟环境中的 Python
+2. MCP 服务脚本路径 - 必须是 `server.py` 的完整绝对路径
+
+相对路径或 `cwd` 配置在某些 IDE 中可能不生效！
+:::
+
 ### Cursor
 
 在 `.cursor/mcp.json` 中添加：
 
-```json
+::: code-group
+
+```json [Windows]
 {
   "mcpServers": {
     "fva-helper": {
-      "command": "python",
-      "args": ["-m", "fva_mcp.server"],
-      "cwd": "/path/to/project/server"
+      "command": "E:/projects/fastapi-vue-admin/server/venv/Scripts/python.exe",
+      "args": ["E:/projects/fastapi-vue-admin/server/fva_mcp/server.py"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "list_permissions",
+        "list_users",
+        "list_roles",
+        "list_departments",
+        "get_statistics",
+        "redis_keys",
+        "redis_get",
+        "redis_dbsize",
+        "redis_info"
+      ]
     }
   }
 }
 ```
+
+```json [Linux/Mac]
+{
+  "mcpServers": {
+    "fva-helper": {
+      "command": "/home/user/projects/fastapi-vue-admin/server/venv/bin/python",
+      "args": ["/home/user/projects/fastapi-vue-admin/server/fva_mcp/server.py"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "list_permissions",
+        "list_users",
+        "list_roles",
+        "list_departments",
+        "get_statistics",
+        "redis_keys",
+        "redis_get",
+        "redis_dbsize",
+        "redis_info"
+      ]
+    }
+  }
+}
+```
+
+:::
 
 ### Kiro
 
 在 `.kiro/settings/mcp.json` 中添加：
 
-```json
+::: code-group
+
+```json [Windows]
 {
   "mcpServers": {
     "fva-helper": {
-      "command": "python",
-      "args": ["-m", "fva_mcp.server"],
-      "cwd": "/path/to/project/server"
+      "command": "E:/projects/fastapi-vue-admin/server/venv/Scripts/python.exe",
+      "args": ["E:/projects/fastapi-vue-admin/server/fva_mcp/server.py"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "list_permissions",
+        "list_users",
+        "list_roles",
+        "list_departments",
+        "get_statistics",
+        "redis_keys",
+        "redis_get",
+        "redis_dbsize",
+        "redis_info"
+      ]
     }
   }
 }
 ```
+
+```json [Linux/Mac]
+{
+  "mcpServers": {
+    "fva-helper": {
+      "command": "/home/user/projects/fastapi-vue-admin/server/venv/bin/python",
+      "args": ["/home/user/projects/fastapi-vue-admin/server/fva_mcp/server.py"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": [
+        "list_permissions",
+        "list_users",
+        "list_roles",
+        "list_departments",
+        "get_statistics",
+        "redis_keys",
+        "redis_get",
+        "redis_dbsize",
+        "redis_info"
+      ]
+    }
+  }
+}
+```
+
+:::
+
+### 路径说明
+
+| 操作系统 | Python 路径示例 |
+|---------|----------------|
+| Windows (venv) | `E:/projects/fastapi-vue-admin/server/venv/Scripts/python.exe` |
+| Windows (系统) | `C:/Python311/python.exe` |
+| Linux/Mac (venv) | `/home/user/projects/fastapi-vue-admin/server/venv/bin/python` |
+| Linux/Mac (系统) | `/usr/bin/python3` |
+
+::: tip 如何获取路径
+
+::: code-group
+
+```bash [Windows]
+# 在项目 server 目录下激活虚拟环境后执行
+where python
+```
+
+```bash [Linux/Mac]
+# 在项目 server 目录下激活虚拟环境后执行
+which python
+```
+
+:::
+
+:::
+
+### autoApprove 配置
+
+`autoApprove` 数组中的工具会自动执行，无需每次确认。建议只添加只读查询类工具：
+
+- `list_*` - 列表查询类
+- `get_*` - 详情查询类
+- `redis_get`, `redis_keys`, `redis_info` - Redis 只读操作
+
+::: danger 安全提示
+不建议将 `execute_sql`、`redis_set`、`redis_delete` 等写操作工具加入 autoApprove！
+:::
 
 ## 使用示例
 

@@ -580,9 +580,9 @@ class ConfigLoader:
         project_root = current_file.parent.parent
         config_path = project_root / "config.yaml"
 
-        # 加载配置文件（必须存在）
-        if not config_path.exists():
-            raise FileNotFoundError(f"配置文件不存在: {config_path}")
+        # 加载配置文件（必须存在且为文件）
+        if not config_path.exists() or not config_path.is_file():
+            raise FileNotFoundError(f"配置文件不存在或不是有效文件: {config_path}")
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f) or {}
 

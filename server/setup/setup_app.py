@@ -27,7 +27,7 @@ class DatabaseConfig(BaseModel):
     port: int = 3306
     username: str = "root"
     password: str = ""
-    database: str = "digital-management"
+    database: str = "fva"
 
 
 class RedisConfig(BaseModel):
@@ -41,13 +41,13 @@ class RedisConfig(BaseModel):
 class JwtConfig(BaseModel):
     """JWT配置"""
     secret_key: str = ""
-    salt: str = "digital-research-system"
+    salt: str = "fastapi-vue-admin"
     expire_minutes: int = 1440
 
 
 class AppConfig(BaseModel):
     """应用配置"""
-    name: str = "数字教科研平台"
+    name: str = "FastAPI-Vue-Admin"
     host: str = "0.0.0.0"
     port: int = 9090
     env: str = "dev"
@@ -56,7 +56,7 @@ class AppConfig(BaseModel):
 class AdminConfig(BaseModel):
     """管理员配置"""
     username: str = "admin"
-    password: str = "admin123"
+    password: str = "admin123@*"
     nickname: str = "超级管理员"
     email: str = "admin@example.com"
 
@@ -177,10 +177,19 @@ async def init_database_tables(db_config: DatabaseConfig):
             connect_timeout=10
         )
         async with conn.cursor() as cursor:
+            # 检查数据库是否存在
             await cursor.execute(
-                f"CREATE DATABASE IF NOT EXISTS `{db_config.database}` "
-                f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = %s",
+                (db_config.database,)
             )
+            db_exists = await cursor.fetchone()
+            
+            if not db_exists:
+                # 数据库不存在，创建新数据库
+                await cursor.execute(
+                    f"CREATE DATABASE `{db_config.database}` "
+                    f"CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                )
         await conn.ensure_closed()
         
         db_url = (
@@ -222,15 +231,61 @@ async def init_database_tables(db_config: DatabaseConfig):
             "models.notification",
             "models.file",
             "models.casbin",
-        ]}
+        ]},
+        use_tz=False,
+        timezone="Asia/Shanghai"
     )
+    
+    # 获取数据库连接，删除已存在的表后重建
+    conn = Tortoise.get_connection("default")
+    
+    # 需要删除的表列表（按依赖顺序，先删除有外键依赖的表）
+    tables_to_drop = [
+        "system_user_role",
+        "user_notification",
+        "system_login_log",
+        "system_operation_log",
+        "system_user", 
+        "system_role",
+        "system_department",
+        "system_permission",
+        "system_config",
+        "system_notification",
+        "system_file",
+        "casbin_rule",
+    ]
+    
+    # 禁用外键检查（MySQL）
+    try:
+        await conn.execute_query("SET FOREIGN_KEY_CHECKS = 0")
+    except Exception:
+        pass
+    
+    for table in tables_to_drop:
+        try:
+            await conn.execute_query(f"DROP TABLE IF EXISTS `{table}`")
+        except Exception:
+            pass  # 表不存在则忽略
+    
+    # 重新启用外键检查
+    try:
+        await conn.execute_query("SET FOREIGN_KEY_CHECKS = 1")
+    except Exception:
+        pass
+    
+    # 重新生成表结构
     await Tortoise.generate_schemas()
     await Tortoise.close_connections()
 
 
 async def init_admin_and_data(db_config: DatabaseConfig, admin_config: AdminConfig, jwt_salt: str):
-    """初始化管理员账号和基础数据"""
+    """初始化管理员账号和基础数据 - 从 JSON 文件批量导入"""
     from tortoise import Tortoise
+    from datetime import datetime
+    import json
+    
+    # 当前时间，用于所有导入数据
+    now = datetime.now()
     
     if db_config.engine == "mysql":
         db_url = (
@@ -255,149 +310,133 @@ async def init_admin_and_data(db_config: DatabaseConfig, admin_config: AdminConf
             "models.notification",
             "models.file",
             "models.casbin",
-        ]}
+        ]},
+        use_tz=False,
+        timezone="Asia/Shanghai"
     )
     
-    from models import SystemUser, SystemDepartment, SystemRole
+    from models import SystemUser, SystemDepartment, SystemRole, SystemPermission
     from models.user import SystemUserRole
-    
-    # 1. 从JSON初始化部门数据
-    await init_departments()
-    
-    # 2. 从JSON初始化角色数据
-    await init_roles()
-    
-    # 3. 获取管理员角色（从JSON数据中获取）
-    role = await SystemRole.get_or_none(code="admin", is_del=False)
-    if not role:
-        # 如果没有找到admin角色，创建一个默认的
-        dept = await SystemDepartment.get_or_none(name="系统管理", is_del=False)
-        role = await SystemRole.create(
-            code="admin",
-            name="系统管理员",
-            description="系统管理员，拥有系统所有权限",
-            status=1,
-            department=dept
-        )
-    
-    # 4. 创建管理员账号
-    admin = await SystemUser.get_or_none(username=admin_config.username, is_del=False)
-    if not admin:
-        hashed_pwd = hash_password(admin_config.password, jwt_salt)
-        # 获取系统管理部门
-        dept = await SystemDepartment.get_or_none(name="系统管理", is_del=False)
-        admin = await SystemUser.create(
-            username=admin_config.username,
-            password=hashed_pwd,
-            nickname=admin_config.nickname,
-            email=admin_config.email,
-            user_type=0,  # 超级管理员
-            status=1,
-            department=dept
-        )
-        # 关联角色
-        await SystemUserRole.create(user=admin, role=role)
-    
-    # 5. 初始化基础权限菜单
-    await init_permissions()
-    
-    # 6. 初始化 Casbin 规则
-    await init_casbin_rules()
-    
-    await Tortoise.close_connections()
-
-
-def load_permissions_data() -> dict:
-    """从 JSON 文件加载权限数据"""
-    json_path = DATA_DIR / "permissions.json"
-    if json_path.exists():
-        import json
-        return json.loads(json_path.read_text(encoding="utf-8"))
-    return {"menus": [], "buttons": [], "roles": [], "departments": [], "casbin_rules": []}
-
-
-async def init_casbin_rules():
-    """从 JSON 文件初始化 Casbin 规则"""
     from models.casbin import CasbinRule
     
-    # 检查是否已有规则
-    count = await CasbinRule.filter(is_del=False).count()
-    if count > 0:
-        return
+    # 1. 导入部门数据
+    dept_file = DATA_DIR / "system_department.json"
+    if dept_file.exists():
+        departments = json.loads(dept_file.read_text(encoding="utf-8"))
+        for dept in departments:
+            await SystemDepartment.create(
+                id=dept["id"],
+                name=dept["name"],
+                parent_id=dept.get("parent_id"),
+                sort=dept.get("sort", 0),
+                phone=dept.get("phone"),
+                principal=dept.get("principal"),
+                email=dept.get("email"),
+                status=dept.get("status", 1),
+                remark=dept.get("remark"),
+                created_at=now,
+                updated_at=now
+            )
     
-    data = load_permissions_data()
-    for rule in data.get("casbin_rules", []):
-        await CasbinRule.create(**rule)
-
-
-async def init_departments():
-    """从 JSON 文件初始化部门数据"""
-    from models import SystemDepartment
+    # 2. 导入角色数据
+    role_file = DATA_DIR / "system_role.json"
+    if role_file.exists():
+        roles = json.loads(role_file.read_text(encoding="utf-8"))
+        for role in roles:
+            await SystemRole.create(
+                id=role["id"],
+                name=role.get("role_name", role.get("name")),
+                code=role.get("role_code", role.get("code")),
+                description=role.get("role_description", role.get("description")),
+                status=role.get("status", 1),
+                department_id=role.get("department_id"),
+                created_at=now,
+                updated_at=now
+            )
     
-    # 检查是否已有部门数据
-    count = await SystemDepartment.filter(is_del=False).count()
-    if count > 0:
-        return
+    # 3. 导入权限数据
+    perm_file = DATA_DIR / "system_permission.json"
+    if perm_file.exists():
+        permissions = json.loads(perm_file.read_text(encoding="utf-8"))
+        for perm in permissions:
+            await SystemPermission.create(
+                id=perm["id"],
+                menu_type=perm.get("menu_type", 0),
+                parent_id=perm.get("parent_id"),
+                name=perm.get("name"),
+                path=perm.get("path"),
+                component=perm.get("component"),
+                title=perm.get("title"),
+                icon=perm.get("icon"),
+                order=perm.get("order", 0),
+                authTitle=perm.get("authTitle"),
+                authMark=perm.get("authMark"),
+                api_path=perm.get("api_path"),
+                api_method=perm.get("api_method"),
+                min_user_type=perm.get("min_user_type", 3),
+                isHide=perm.get("isHide", 0),
+                keepAlive=perm.get("keepAlive"),
+                showBadge=perm.get("showBadge", 0),
+                data_scope=perm.get("data_scope", 4),
+                remark=perm.get("remark"),
+                created_at=now,
+                updated_at=now
+            )
     
-    data = load_permissions_data()
-    for dept in data.get("departments", []):
-        await SystemDepartment.create(**dept)
-
-
-async def init_roles():
-    """从 JSON 文件初始化角色数据"""
-    from models import SystemRole, SystemDepartment
+    # 4. 创建管理员账号（使用用户配置的密码重新计算）
+    hashed_pwd = hash_password(admin_config.password, jwt_salt)
+    dept = await SystemDepartment.get_or_none(name="系统管理", is_del=False)
+    admin = await SystemUser.create(
+        username=admin_config.username,
+        password=hashed_pwd,
+        nickname=admin_config.nickname,
+        email=admin_config.email,
+        user_type=0,  # 超级管理员
+        status=1,
+        department=dept,
+        created_at=now,
+        updated_at=now
+    )
     
-    # 检查是否已有角色数据
-    count = await SystemRole.filter(is_del=False).count()
-    if count > 0:
-        return
+    # 5. 关联管理员角色
+    admin_role = await SystemRole.get_or_none(code="admin", is_del=False)
+    if admin_role:
+        await SystemUserRole.create(
+            user=admin, 
+            role=admin_role,
+            created_at=now,
+            updated_at=now
+        )
     
-    data = load_permissions_data()
-    for role in data.get("roles", []):
-        role_data = {**role}
-        
-        # 处理部门关联
-        dept_id = role_data.pop("department_id", None)
-        if dept_id:
-            dept = await SystemDepartment.get_or_none(id=dept_id, is_del=False)
-            if dept:
-                role_data["department"] = dept
-        
-        await SystemRole.create(**role_data)
-
-
-async def init_permissions():
-    """从 JSON 文件初始化权限配置"""
-    from models import SystemPermission
+    # 6. 导入 Casbin 规则
+    casbin_file = DATA_DIR / "casbin_rule.json"
+    if casbin_file.exists():
+        casbin_rules = json.loads(casbin_file.read_text(encoding="utf-8"))
+        for rule in casbin_rules:
+            await CasbinRule.create(
+                id=rule["id"],
+                ptype=rule["ptype"],
+                v0=rule.get("v0"),
+                v1=rule.get("v1"),
+                v2=rule.get("v2"),
+                v3=rule.get("v3"),
+                v4=rule.get("v4"),
+                v5=rule.get("v5"),
+                created_at=now,
+                updated_at=now
+            )
     
-    # 检查是否已有权限数据
-    count = await SystemPermission.filter(is_del=False).count()
-    if count > 0:
-        return
+    # 7. 添加新管理员用户到 Casbin（用户ID -> 角色代码）
+    if admin_role:
+        await CasbinRule.create(
+            ptype="g",
+            v0=str(admin.id),
+            v1=admin_role.code,
+            created_at=now,
+            updated_at=now
+        )
     
-    import json
-    
-    data = load_permissions_data()
-    
-    # 1. 创建菜单权限（使用JSON中的真实ID）
-    for menu in data.get("menus", []):
-        menu_data = {**menu}
-        # 确保必要字段存在
-        if "component" not in menu_data:
-            menu_data["component"] = None
-        await SystemPermission.create(**menu_data)
-    
-    # 2. 创建按钮权限（使用JSON中的真实ID）
-    for btn in data.get("buttons", []):
-        btn_data = {**btn}
-        # 确保必要字段存在
-        if "component" not in btn_data:
-            btn_data["component"] = None
-        if "path" not in btn_data:
-            btn_data["path"] = None
-        # api_method 字段已经是数组格式，JSONField会自动处理
-        await SystemPermission.create(**btn_data)
+    await Tortoise.close_connections()
 
 
 @setup_app.post("/api/setup/initialize")
@@ -412,6 +451,9 @@ async def initialize_system(config: SetupConfig):
         config_content = f"""# 应用基础配置
 # 此文件由系统初始化向导自动生成
 # 生成时间: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+# 已初始化标记
+initialized: true
 
 app:
   name: "{config.app.name}"
@@ -471,9 +513,6 @@ redis:
             }
         }
     except Exception as e:
-        # 如果失败，删除配置文件
-        if CONFIG_PATH.exists():
-            CONFIG_PATH.unlink()
         import traceback
         return {"success": False, "msg": f"初始化失败: {str(e)}\n{traceback.format_exc()}"}
 
@@ -481,8 +520,18 @@ redis:
 @setup_app.get("/api/setup/status")
 async def get_setup_status():
     """获取初始化状态"""
+    initialized = False
+    if CONFIG_PATH.exists() and CONFIG_PATH.is_file():
+        try:
+            import yaml
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+                config = yaml.safe_load(f) or {}
+            initialized = config.get('initialized', False) is True
+        except Exception:
+            pass
+    
     return {
-        "initialized": CONFIG_PATH.exists(),
+        "initialized": initialized,
         "config_path": str(CONFIG_PATH)
     }
 

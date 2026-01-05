@@ -17,8 +17,18 @@ CONFIG_PATH = BASE_DIR / "config.yaml"
 
 
 def check_config_exists() -> bool:
-    """检查配置文件是否存在"""
-    return CONFIG_PATH.exists()
+    """检查配置文件是否已初始化"""
+    if not CONFIG_PATH.exists() or not CONFIG_PATH.is_file():
+        return False
+    
+    # 读取配置文件检查 initialized 字段
+    try:
+        import yaml
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f) or {}
+        return config.get('initialized', False) is True
+    except Exception:
+        return False
 
 
 def start_setup_server():

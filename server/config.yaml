@@ -1,0 +1,45 @@
+# 应用基础配置
+# 此文件由系统初始化向导自动生成
+# 生成时间: 2026-01-06 06:38:46
+
+# 已初始化标记
+initialized: false
+
+app:
+  name: "FastAPI-Vue-Admin"
+  version: "1.0.0"
+  host: "0.0.0.0"
+  port: 9090
+  env: "dev"
+  api_prefix: "/api"
+  reload: true
+  api_status_enabled: true
+
+jwt:
+  algorithm: "HS256"
+  secret_key: "4945c545918de68f7acfd54cdfee2994b0e7cbe387209a69383a71c6fcc63c19"
+  salt: "fastapi-vue-admin"
+  expire_minutes: 1440
+  redis_expire_minutes: 30
+
+database:
+  engine: "mysql"
+  host: "host.docker.internal"
+  port: 3306
+  username: "root"
+  password: ""
+  database: "fva"
+  pool_size: 10
+  pool_timeout: 30
+  echo: false
+  timezone: "Asia/Shanghai"
+  charset: "utf8mb4"
+
+redis:
+  host: "host.docker.internal"
+  port: 6379
+  password: ""
+  database: 1
+  max_connections: 10
+  socket_timeout: 5
+  retry_on_timeout: true

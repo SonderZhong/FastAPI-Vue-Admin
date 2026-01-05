@@ -1,4 +1,17 @@
-# 认证接口
+# API 接口文档
+
+## 在线文档
+
+项目集成了 Swagger UI 交互式 API 文档，可以直接在线测试接口。
+
+::: tip 访问地址
+- **后端直接访问**: `http://localhost:9090/docs`
+- **前端代理访问**: `http://localhost/api/docs`
+
+生产环境请将 `localhost` 替换为实际域名。
+:::
+
+## 认证接口
 
 ## 登录
 

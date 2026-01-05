@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系统初始化向导</title>
+    <title>FastAPI-Vue-Admin 初始化向导</title>
     <style>
         :root {
             --primary-color: #5a7be0;
@@ -12,6 +12,7 @@
             --success-color: #52c41a;
             --error-color: #ff4d4f;
             --warning-color: #faad14;
+            --info-color: #1890ff;
             --text-color: #333;
             --text-secondary: #666;
             --border-color: #e4e7ed;
@@ -35,7 +36,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 720px;
+            max-width: 760px;
             overflow: hidden;
         }
         
@@ -115,8 +116,19 @@
             gap: 8px;
         }
         
-        .section-title .icon {
-            font-size: 18px;
+        .section-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            padding: 10px 12px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid var(--info-color);
+        }
+        
+        .section-desc.warning {
+            border-left-color: var(--warning-color);
+            background: #fffbe6;
         }
         
         .form-row {
@@ -173,6 +185,11 @@
             font-size: 12px;
             color: #909399;
             margin-top: 4px;
+            line-height: 1.5;
+        }
+        
+        .tip.highlight {
+            color: var(--warning-color);
         }
         
         .btn-row {
@@ -318,6 +335,15 @@
             font-weight: 500;
         }
         
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 12px;
+            color: #c7254e;
+        }
+        
         @media (max-width: 600px) {
             .form-row { grid-template-columns: 1fr; }
             .progress-bar { gap: 20px; }
@@ -327,7 +353,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 系统初始化向导</h1>
+            <h1>🚀 FastAPI-Vue-Admin 初始化向导</h1>
             <p>首次运行系统，请完成以下配置</p>
             <div class="progress-bar">
                 <div class="progress-item active">
@@ -374,28 +400,34 @@
                         <span class="icon">⚙️</span>
                         应用配置
                     </div>
+                    <div class="section-desc">
+                        配置应用的基本信息，包括名称、监听地址和运行环境。生产环境建议选择 prod 模式以获得更好的性能。
+                    </div>
                     <div class="form-group full">
                         <label>应用名称 <span class="required">*</span></label>
-                        <input type="text" name="app_name" value="数字教科研平台" required>
+                        <input type="text" name="app_name" value="FastAPI-Vue-Admin" required>
+                        <div class="tip">显示在浏览器标题和系统界面中的名称</div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>监听地址</label>
                             <input type="text" name="app_host" value="0.0.0.0">
-                            <div class="tip">0.0.0.0 监听所有网络接口</div>
+                            <div class="tip"><code>0.0.0.0</code> 监听所有网络接口，<code>127.0.0.1</code> 仅本机访问</div>
                         </div>
                         <div class="form-group">
                             <label>监听端口 <span class="required">*</span></label>
                             <input type="number" name="app_port" value="9090" required>
+                            <div class="tip">后端 API 服务端口，确保未被其他程序占用</div>
                         </div>
                     </div>
                     <div class="form-group full">
                         <label>运行环境</label>
                         <select name="app_env">
-                            <option value="dev">开发环境 (dev) - 启用热重载</option>
-                            <option value="test">测试环境 (test)</option>
-                            <option value="prod">生产环境 (prod) - 关闭调试</option>
+                            <option value="dev">开发环境 (dev) - 启用热重载和调试信息</option>
+                            <option value="test">测试环境 (test) - 适合测试部署</option>
+                            <option value="prod">生产环境 (prod) - 关闭调试，优化性能</option>
                         </select>
+                        <div class="tip">开发环境支持代码热重载，生产环境性能更优</div>
                     </div>
                 </div>
 
@@ -405,37 +437,46 @@
                         <span class="icon">🗄️</span>
                         数据库配置
                     </div>
+                    <div class="section-desc warning">
+                        <strong>⚠️ Docker 部署注意：</strong>如果应用运行在 Docker 容器中，需要连接宿主机上的 MySQL/PostgreSQL，请将主机地址填写为 <code>host.docker.internal</code>，而不是 <code>127.0.0.1</code>。
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>数据库类型 <span class="required">*</span></label>
                             <select name="db_engine" id="dbEngine">
-                                <option value="mysql">MySQL</option>
+                                <option value="mysql">MySQL (推荐)</option>
                                 <option value="postgresql">PostgreSQL</option>
                             </select>
+                            <div class="tip">选择您已安装的数据库类型</div>
                         </div>
                         <div class="form-group">
                             <label>数据库名 <span class="required">*</span></label>
-                            <input type="text" name="db_database" value="digital-management" required>
+                            <input type="text" name="db_database" value="fva" required>
+                            <div class="tip">数据库不存在时会自动创建</div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>主机地址 <span class="required">*</span></label>
                             <input type="text" name="db_host" value="127.0.0.1" required>
+                            <div class="tip highlight">本地部署填 <code>127.0.0.1</code>，Docker 部署填 <code>host.docker.internal</code></div>
                         </div>
                         <div class="form-group">
                             <label>端口 <span class="required">*</span></label>
                             <input type="number" name="db_port" id="dbPort" value="3306" required>
+                            <div class="tip">MySQL 默认 3306，PostgreSQL 默认 5432</div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>用户名 <span class="required">*</span></label>
                             <input type="text" name="db_username" value="root" required>
+                            <div class="tip">数据库登录用户名</div>
                         </div>
                         <div class="form-group">
                             <label>密码</label>
                             <input type="password" name="db_password" placeholder="数据库密码">
+                            <div class="tip">数据库登录密码，无密码可留空</div>
                         </div>
                     </div>
                     <div class="btn-row">
@@ -450,25 +491,31 @@
                         <span class="icon">📦</span>
                         Redis 缓存配置
                     </div>
+                    <div class="section-desc warning">
+                        <strong>⚠️ Docker 部署注意：</strong>如果应用运行在 Docker 容器中，需要连接宿主机上的 Redis，请将主机地址填写为 <code>host.docker.internal</code>，而不是 <code>127.0.0.1</code>。
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>主机地址 <span class="required">*</span></label>
                             <input type="text" name="redis_host" value="127.0.0.1" required>
+                            <div class="tip highlight">本地部署填 <code>127.0.0.1</code>，Docker 部署填 <code>host.docker.internal</code></div>
                         </div>
                         <div class="form-group">
                             <label>端口 <span class="required">*</span></label>
                             <input type="number" name="redis_port" value="6379" required>
+                            <div class="tip">Redis 默认端口为 6379</div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>密码</label>
                             <input type="password" name="redis_password" placeholder="无密码可留空">
+                            <div class="tip">Redis 认证密码，未设置密码可留空</div>
                         </div>
                         <div class="form-group">
                             <label>数据库编号</label>
                             <input type="number" name="redis_database" value="1" min="0" max="15">
-                            <div class="tip">Redis 默认有 16 个数据库 (0-15)</div>
+                            <div class="tip">Redis 默认有 16 个数据库 (0-15)，建议使用非 0 号库</div>
                         </div>
                     </div>
                     <div class="btn-row">
@@ -483,21 +530,24 @@
                         <span class="icon">🔐</span>
                         安全配置 (JWT)
                     </div>
+                    <div class="section-desc">
+                        JWT (JSON Web Token) 用于用户身份认证。签名密钥和加盐值用于保护用户凭证安全，生产环境请务必使用随机生成的强密钥。
+                    </div>
                     <div class="form-group full">
-                        <label>签名密钥</label>
-                        <input type="text" name="jwt_secret" id="jwtSecret" placeholder="留空将自动生成随机密钥">
-                        <div class="tip">用于 JWT Token 签名，建议使用随机字符串</div>
+                        <label>签名密钥 (Secret Key)</label>
+                        <input type="text" name="jwt_secret" id="jwtSecret" placeholder="留空将自动生成 64 位随机密钥">
+                        <div class="tip">用于 JWT Token 签名验证，建议点击下方按钮生成随机密钥</div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>加盐值</label>
-                            <input type="text" name="jwt_salt" value="digital-research-system">
-                            <div class="tip">用于密码加密</div>
+                            <label>加盐值 (Salt)</label>
+                            <input type="text" name="jwt_salt" value="fastapi-vue-admin">
+                            <div class="tip">用于用户密码加密，修改后已有用户密码将失效</div>
                         </div>
                         <div class="form-group">
                             <label>Token 有效期 (分钟)</label>
                             <input type="number" name="jwt_expire" value="1440">
-                            <div class="tip">1440 分钟 = 24 小时</div>
+                            <div class="tip">登录状态保持时间，1440 分钟 = 24 小时</div>
                         </div>
                     </div>
                     <div class="btn-row">
@@ -511,25 +561,31 @@
                         <span class="icon">👤</span>
                         管理员账号
                     </div>
+                    <div class="section-desc">
+                        配置系统超级管理员账号，拥有系统的全部权限。请牢记用户名和密码，用于首次登录系统。
+                    </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>用户名 <span class="required">*</span></label>
                             <input type="text" name="admin_username" value="admin" required>
+                            <div class="tip">管理员登录账号，建议使用英文字母</div>
                         </div>
                         <div class="form-group">
                             <label>密码 <span class="required">*</span></label>
-                            <input type="password" name="admin_password" value="admin123" required>
-                            <div class="tip">请牢记此密码，用于首次登录</div>
+                            <input type="password" name="admin_password" value="admin123@*" required>
+                            <div class="tip">默认密码 <code>admin123@*</code>，生产环境请修改</div>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>昵称</label>
                             <input type="text" name="admin_nickname" value="超级管理员">
+                            <div class="tip">显示在系统界面中的名称</div>
                         </div>
                         <div class="form-group">
                             <label>邮箱</label>
                             <input type="email" name="admin_email" value="admin@example.com">
+                            <div class="tip">用于接收系统通知（可选）</div>
                         </div>
                     </div>
                 </div>

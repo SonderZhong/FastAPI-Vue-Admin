@@ -3,6 +3,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# 设置时区为东八区
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# 配置 pip 使用腾讯云镜像源
+RUN pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple/ && \
+    pip config set global.trusted-host mirrors.cloud.tencent.com
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \

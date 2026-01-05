@@ -1,0 +1,18 @@
+[
+  {
+    "id": "58dd6ee8-e934-4aff-965b-2887ee186b7a",
+    "is_del": 0,
+    "created_at": "18/12/2025 05:51:41.278237",
+    "updated_at": "31/12/2025 06:49:15.296795",
+    "username": "admin",
+    "password": "79196bb48d042d8aa55756639254899eca83ab1294c381711f88635972c7cb2d",
+    "email": null,
+    "phone": null,
+    "nickname": null,
+    "avatar": "/files/avatars/2025/12/31/d65a1cf739f9467a.jpg",
+    "gender": 0,
+    "status": 1,
+    "user_type": 0,
+    "department_id": "5ad12c18-259a-4257-8f4a-66cb986435c6"
+  }
+]

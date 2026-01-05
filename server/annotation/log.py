@@ -138,7 +138,19 @@ class Log:
         """装饰器入口"""
 
         @wraps(func)
-        async def wrapper(request: Request, *args, **kwargs) -> JSONResponse:
+        async def wrapper(*args, **kwargs) -> JSONResponse:
+            # ---------- 提取 request 对象 ----------
+            # 支持 request 作为第一个位置参数或关键字参数
+            request: Request = None
+            if args and isinstance(args[0], Request):
+                request = args[0]
+            elif "request" in kwargs:
+                request = kwargs["request"]
+            
+            if request is None:
+                # 如果找不到 request，直接执行原函数
+                return await func(*args, **kwargs)
+            
             # ---------- 前置采集 ----------
             start_ns: int = time.perf_counter_ns()
             meta: Dict[str, Any] = _request_meta(request)
@@ -161,7 +173,7 @@ class Log:
 
             # ---------- 执行原函数 ----------
             try:
-                result = await func(request, *args, **kwargs)
+                result = await func(*args, **kwargs)
                 success: bool = True
                 status_code: int = 200
             except (ServiceWarning, LoginException) as e:
