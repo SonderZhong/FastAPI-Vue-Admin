@@ -27,7 +27,7 @@
         <ElTreeSelect
           v-model="formData.parent_id"
           :data="permissionTreeData"
-          :props="{ value: 'id', label: 'title', children: 'children' }"
+          :props="({ value: 'id', label: 'title', children: 'children' } as any)"
           :placeholder="$t('common.pleaseSelect')"
           check-strictly
           clearable

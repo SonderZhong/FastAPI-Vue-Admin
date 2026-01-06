@@ -126,7 +126,7 @@
   }
 
   /** ArtTable 组件的 Props 接口 */
-  interface ArtTableProps extends TableProps<Record<string, any>> {
+  interface ArtTableProps extends Partial<TableProps<Record<string, any>>> {
     /** 加载状态 */
     loading?: boolean
     /** 列渲染配置 */

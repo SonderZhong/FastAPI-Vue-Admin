@@ -38,7 +38,7 @@
         <ElTreeSelect
           v-model="formData.scope_ids"
           :data="departmentTree"
-          :props="{ label: 'name', value: 'id', children: 'children' }"
+          :props="({ label: 'name', value: 'id', children: 'children' } as any)"
           multiple
           filterable
           check-strictly
