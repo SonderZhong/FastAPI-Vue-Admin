@@ -28,13 +28,17 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, onBeforeUnmount } from 'vue'
+  import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import * as echarts from 'echarts'
   import { fetchLoginStatistics, fetchLoginTrend } from '@/api/dashboard'
   import { ElMessage } from 'element-plus'
+  import { useSettingStore } from '@/store/modules/setting'
+  import { storeToRefs } from 'pinia'
 
   const { t } = useI18n()
+  const settingStore = useSettingStore()
+  const { isDark } = storeToRefs(settingStore)
 
   const osChartRef = ref<HTMLElement>()
   const browserChartRef = ref<HTMLElement>()
@@ -45,6 +49,15 @@
   let browserChart: echarts.ECharts | null = null
   let locationChart: echarts.ECharts | null = null
   let trendChart: echarts.ECharts | null = null
+
+  // 获取主题相关样式
+  const getThemeStyles = () => ({
+    textColor: isDark.value ? '#b5b7c8' : '#303133',
+    subTextColor: isDark.value ? '#808290' : '#909399',
+    borderColor: isDark.value ? '#363843' : '#fff',
+    axisLineColor: isDark.value ? '#444' : '#EDEDED',
+    splitLineColor: isDark.value ? '#363843' : '#ebeef5'
+  })
 
   // 加载统计数据
   const loadStatisticsData = async () => {
@@ -77,25 +90,28 @@
   // 初始化操作系统饼图
   const initOsChart = (data: any[]) => {
     if (!osChartRef.value) return
-    osChart = echarts.init(osChartRef.value)
+    const theme = getThemeStyles()
+    if (!osChart) {
+      osChart = echarts.init(osChartRef.value)
+    }
     const option = {
       title: {
         text: t('dashboard.osDistribution'),
         left: 'center',
         top: 10,
-        textStyle: { fontSize: 14, fontWeight: 'normal' }
+        textStyle: { fontSize: 14, fontWeight: 'normal', color: theme.textColor }
       },
       tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
-      legend: { orient: 'horizontal', bottom: 10, type: 'scroll' },
+      legend: { orient: 'horizontal', bottom: 10, type: 'scroll', textStyle: { color: theme.subTextColor } },
       series: [{
         name: t('dashboard.osDistribution'),
         type: 'pie',
         radius: ['40%', '70%'],
         center: ['50%', '50%'],
         avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+        itemStyle: { borderRadius: 10, borderColor: theme.borderColor, borderWidth: 2 },
         label: { show: false, position: 'center' },
-        emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
+        emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold', color: theme.textColor } },
         labelLine: { show: false },
         data: data
       }]
@@ -106,25 +122,28 @@
   // 初始化浏览器饼图
   const initBrowserChart = (data: any[]) => {
     if (!browserChartRef.value) return
-    browserChart = echarts.init(browserChartRef.value)
+    const theme = getThemeStyles()
+    if (!browserChart) {
+      browserChart = echarts.init(browserChartRef.value)
+    }
     const option = {
       title: {
         text: t('dashboard.browserDistribution'),
         left: 'center',
         top: 10,
-        textStyle: { fontSize: 14, fontWeight: 'normal' }
+        textStyle: { fontSize: 14, fontWeight: 'normal', color: theme.textColor }
       },
       tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
-      legend: { orient: 'horizontal', bottom: 10, type: 'scroll' },
+      legend: { orient: 'horizontal', bottom: 10, type: 'scroll', textStyle: { color: theme.subTextColor } },
       series: [{
         name: t('dashboard.browserDistribution'),
         type: 'pie',
         radius: ['40%', '70%'],
         center: ['50%', '50%'],
         avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+        itemStyle: { borderRadius: 10, borderColor: theme.borderColor, borderWidth: 2 },
         label: { show: false, position: 'center' },
-        emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
+        emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold', color: theme.textColor } },
         labelLine: { show: false },
         data: data
       }]
@@ -135,18 +154,32 @@
   // 初始化登录地区柱状图
   const initLocationChart = (data: any[]) => {
     if (!locationChartRef.value) return
-    locationChart = echarts.init(locationChartRef.value)
+    const theme = getThemeStyles()
+    if (!locationChart) {
+      locationChart = echarts.init(locationChartRef.value)
+    }
     const option = {
       title: {
         text: t('dashboard.locationDistribution'),
         left: 'center',
         top: 10,
-        textStyle: { fontSize: 14, fontWeight: 'normal' }
+        textStyle: { fontSize: 14, fontWeight: 'normal', color: theme.textColor }
       },
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
-      xAxis: { type: 'value', boundaryGap: [0, 0.01] },
-      yAxis: { type: 'category', data: data.map((item) => item.name) },
+      xAxis: { 
+        type: 'value', 
+        boundaryGap: [0, 0.01],
+        axisLine: { lineStyle: { color: theme.axisLineColor } },
+        axisLabel: { color: theme.subTextColor },
+        splitLine: { lineStyle: { color: theme.splitLineColor } }
+      },
+      yAxis: { 
+        type: 'category', 
+        data: data.map((item) => item.name),
+        axisLine: { lineStyle: { color: theme.axisLineColor } },
+        axisLabel: { color: theme.subTextColor }
+      },
       series: [{
         name: t('dashboard.loginCount'),
         type: 'bar',
@@ -165,7 +198,10 @@
   // 初始化趋势图
   const initTrendChart = (data: any) => {
     if (!trendChartRef.value) return
-    trendChart = echarts.init(trendChartRef.value)
+    const theme = getThemeStyles()
+    if (!trendChart) {
+      trendChart = echarts.init(trendChartRef.value)
+    }
     
     const locationSeries = data.locationSeries.map((item: any) => ({
       name: item.name,
@@ -180,7 +216,7 @@
         text: t('dashboard.last7DaysLoginTrend'),
         left: 'center',
         top: 10,
-        textStyle: { fontSize: 14, fontWeight: 'normal' }
+        textStyle: { fontSize: 14, fontWeight: 'normal', color: theme.textColor }
       },
       tooltip: {
         trigger: 'axis',
@@ -189,11 +225,23 @@
       legend: {
         data: [t('dashboard.totalLogins'), ...data.locationSeries.map((item: any) => item.name)],
         bottom: 10,
-        type: 'scroll'
+        type: 'scroll',
+        textStyle: { color: theme.subTextColor }
       },
       grid: { left: '3%', right: '4%', bottom: '15%', top: '15%', containLabel: true },
-      xAxis: { type: 'category', boundaryGap: false, data: data.dates },
-      yAxis: { type: 'value' },
+      xAxis: { 
+        type: 'category', 
+        boundaryGap: false, 
+        data: data.dates,
+        axisLine: { lineStyle: { color: theme.axisLineColor } },
+        axisLabel: { color: theme.subTextColor }
+      },
+      yAxis: { 
+        type: 'value',
+        axisLine: { lineStyle: { color: theme.axisLineColor } },
+        axisLabel: { color: theme.subTextColor },
+        splitLine: { lineStyle: { color: theme.splitLineColor } }
+      },
       series: [
         {
           name: t('dashboard.totalLogins'),
@@ -224,6 +272,12 @@
     trendChart?.resize()
   }
 
+  // 监听主题变化，重新渲染图表
+  watch(isDark, () => {
+    loadStatisticsData()
+    loadTrendData()
+  })
+
   onMounted(() => {
     loadStatisticsData()
     loadTrendData()
@@ -241,23 +295,24 @@
 
 <style lang="scss" scoped>
   .chart-container {
-    background: #fff;
+    background: var(--art-main-bg-color);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--art-card-shadow);
+    border: 1px solid var(--art-card-border);
 
     .chart-header {
       margin-bottom: 20px;
       h3 {
         font-size: 16px;
         font-weight: 500;
-        color: #303133;
+        color: var(--art-gray-900);
         margin: 0 0 8px 0;
       }
       .chart-desc {
         font-size: 13px;
-        color: #909399;
+        color: var(--art-gray-600);
         margin: 0;
       }
     }
@@ -269,7 +324,7 @@
       }
       .trend-row {
         margin-top: 20px;
-        border-top: 1px solid #ebeef5;
+        border-top: 1px solid var(--art-border-color);
         padding-top: 20px;
       }
       .trend-chart {

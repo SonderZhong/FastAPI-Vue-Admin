@@ -333,17 +333,19 @@ async def get_operation_statistics(
     # 统计操作类型分布
     type_stats = await operation_logs.annotate(count=Count('id')).group_by('operation_type').values('operation_type', 'count')
     type_distribution = []
+    # 与 OperationType 枚举对应: OTHER=0, INSERT=1, DELETE=2, UPDATE=3, SELECT=4, IMPORT=5, EXPORT=6, GRANT=7
     type_names = {
-        1: "查询",
-        2: "新增",
+        0: "其他",
+        1: "新增",
+        2: "删除",
         3: "修改",
-        4: "删除",
+        4: "查询",
         5: "导入",
         6: "导出",
-        7: "其他"
+        7: "授权"
     }
     for stat in type_stats:
-        if stat['operation_type']:
+        if stat['operation_type'] is not None:
             type_distribution.append({
                 "name": type_names.get(stat['operation_type'], f"类型{stat['operation_type']}"),
                 "value": stat['count']

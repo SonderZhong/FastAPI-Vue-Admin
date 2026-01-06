@@ -395,3 +395,125 @@ details.vp-raw > div[class*='language-'] {
 .vp-code-group div[class*='language-'].line-numbers-mode .line-numbers-wrapper {
   top: 32px;
 }
+
+
+/* ========== 侧边栏导航优化 ========== */
+
+/* 已访问的链接变灰 */
+.VPSidebarItem .link:visited,
+.VPSidebarItem.level-1 .link:visited {
+  color: var(--vp-c-text-3);
+}
+
+/* 当前激活的链接 - 淡蓝色下划线 */
+.VPSidebarItem .link.active,
+.VPSidebarItem.is-active > .item > .link {
+  color: var(--vp-c-brand-1) !important;
+  font-weight: 600;
+  position: relative;
+}
+
+.VPSidebarItem .link.active::after,
+.VPSidebarItem.is-active > .item > .link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--vp-c-brand-1), var(--vp-c-brand-soft));
+  border-radius: 1px;
+}
+
+/* 侧边栏链接悬停效果 */
+.VPSidebarItem .link:hover {
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+  border-radius: 4px;
+}
+
+/* ========== 页面右侧导航（目录）优化 ========== */
+
+/* 已读的目录项变灰 */
+.VPDocOutlineItem a:visited {
+  color: var(--vp-c-text-3) !important;
+}
+
+/* 当前激活的目录项 - 淡蓝色高亮 */
+.VPDocOutlineItem a.active,
+.VPDocOutlineItem.active > a {
+  color: var(--vp-c-brand-1) !important;
+  font-weight: 500;
+}
+
+/* 目录项左侧指示条 - 当前项高亮 */
+.VPDocAsideOutline .outline-marker {
+  background-color: var(--vp-c-brand-1) !important;
+}
+
+/* 目录项悬停效果 */
+.VPDocOutlineItem a:hover {
+  color: var(--vp-c-brand-1) !important;
+}
+
+/* ========== 回到顶部按钮 ========== */
+
+.back-to-top {
+  position: fixed;
+  right: 40px;
+  bottom: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(93, 135, 255, 0.15);
+  color: var(--vp-c-brand-1);
+  border: 1px solid var(--vp-c-brand-soft);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(93, 135, 255, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.back-to-top:hover {
+  background: rgba(93, 135, 255, 0.25);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(93, 135, 255, 0.2);
+}
+
+.back-to-top svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 暗黑模式下的回到顶部按钮 */
+.dark .back-to-top {
+  background: rgba(93, 135, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(93, 135, 255, 0.1);
+}
+
+.dark .back-to-top:hover {
+  background: rgba(93, 135, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(93, 135, 255, 0.15);
+}
+
+/* 响应式 - 移动端调整位置 */
+@media (max-width: 768px) {
+  .back-to-top {
+    right: 24px;
+    bottom: 16px;
+    width: 40px;
+    height: 40px;
+  }
+}

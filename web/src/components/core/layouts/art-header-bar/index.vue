@@ -175,6 +175,11 @@
                     <span class="menu-txt">{{ $t('topBar.user.lockScreen') }}</span>
                   </li>
                   <div class="line"></div>
+                  <li @click="openGitHub">
+                    <i class="menu-icon iconfont-sys">&#xe8d6;</i>
+                    <span class="menu-txt">GitHub</span>
+                  </li>
+                  <div class="line"></div>
                   <div class="logout-btn" @click="loginOut">
                     {{ $t('topBar.user.logout') }}
                   </div>
@@ -406,6 +411,13 @@
    */
   const lockScreen = (): void => {
     mittBus.emit('openLockScreen')
+  }
+
+  /**
+   * 打开 GitHub 仓库
+   */
+  const openGitHub = (): void => {
+    window.open('https://github.com/SonderZhong/FastAPI-Vue-Admin', '_blank')
   }
 
   /**

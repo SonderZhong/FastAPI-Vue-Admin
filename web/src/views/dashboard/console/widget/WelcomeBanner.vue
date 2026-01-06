@@ -141,7 +141,7 @@ onUnmounted(() => {
         margin: 0 0 8px 0;
         font-size: 24px;
         font-weight: 600;
-        color: white;
+        color: white !important;
       }
 
       .user-role {
@@ -170,6 +170,7 @@ onUnmounted(() => {
 
         i {
           font-size: 18px;
+          color: rgba(255, 255, 255, 0.95) !important;
         }
 
         .time {
@@ -219,6 +220,17 @@ onUnmounted(() => {
         transform: translateY(-50%);
         animation-delay: 4s;
       }
+    }
+  }
+}
+
+// 暗色模式适配
+html.dark {
+  .welcome-banner {
+    background: linear-gradient(135deg, rgba(93, 135, 255, 0.8) 0%, rgba(145, 167, 255, 0.6) 100%);
+    
+    .banner-decoration .circle {
+      background: rgba(255, 255, 255, 0.08);
     }
   }
 }

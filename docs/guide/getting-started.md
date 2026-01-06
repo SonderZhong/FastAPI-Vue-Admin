@@ -28,8 +28,8 @@ redis-server -v     # Redis server v=7.x.x
 
 ```bash
 # 克隆仓库
-git clone <repository-url>
-cd fastapi-vue-admin
+git clone https://github.com/SonderZhong/FastAPI-Vue-Admin.git
+cd FastAPI-Vue-Admin
 ```
 
 ## 🔧 后端配置
@@ -114,7 +114,7 @@ VITE_ACCESS_MODE = backend     # 权限模式：frontend/backend
 
 | 账号 | 密码 | 角色 |
 |------|------|------|
-| admin | 123456 | 超级管理员 |
+| admin | admin123@* | 超级管理员 |
 
 ::: danger 🔒 安全提示
 生产环境部署前，请务必修改默认密码！

@@ -34,6 +34,8 @@ export default defineConfig({
         text: '相关链接',
         items: [
           { text: 'GitHub', link: 'https://github.com/SonderZhong/FastAPI-Vue-Admin' },
+          { text: '在线演示', link: 'https://fva.hygc.site' },
+          { text: 'Art Design Pro', link: 'https://github.com/Daymychen/art-design-pro' },
           { text: 'FastAPI', link: 'https://fastapi.tiangolo.com' },
           { text: 'Vue 3', link: 'https://vuejs.org' }
         ]
