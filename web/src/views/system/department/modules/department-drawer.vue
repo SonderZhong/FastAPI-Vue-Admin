@@ -24,7 +24,7 @@
         <ElTreeSelect
           v-model="formData.parent_id"
           :data="departmentTree"
-          :props="{ label: 'name', value: 'id', children: 'children' }"
+          :props="({ label: 'name', value: 'id', children: 'children' } as any)"
           :placeholder="$t('common.pleaseSelect', '请选择') + $t('department.parent', '上级部门')"
           check-strictly
           clearable
