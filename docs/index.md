@@ -6,7 +6,7 @@ hero:
   text: 轻量级全栈后台管理框架
   tagline: 🔥 FastAPI + Vue 3 + Element Plus，开箱即用的企业级解决方案
   image:
-    src: /logo.svg
+    src: /logo.png
     alt: FastAPI-Vue-Admin
   actions:
     - theme: brand

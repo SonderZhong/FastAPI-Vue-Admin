@@ -1,0 +1,56 @@
+name: Release Server
+
+on:
+  push:
+    paths:
+      - 'server/**'
+    branches:
+      - main
+      - master
+
+jobs:
+  release-server:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get server version
+        id: version
+        run: |
+          VERSION=$(grep -oP 'version:\s*"\K[^"]+' server/config.yaml | head -1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Server version: $VERSION"
+
+      - name: Create server archive
+        run: |
+          cd server
+          # 排除不需要的目录，打包为 zip
+          zip -r ../server-${{ steps.version.outputs.version }}.zip . \
+              -x "venv/*" \
+              -x "__pycache__/*" \
+              -x "*.pyc" \
+              -x ".pytest_cache/*" \
+              -x "logs/*" \
+              -x "uploads/*"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: server-${{ steps.version.outputs.version }}
+          name: Server Release ${{ steps.version.outputs.version }}
+          body: |
+            ## 后端发布 v${{ steps.version.outputs.version }}
+            
+            ### 安装说明
+            1. 解压文件到目标目录
+            2. 创建虚拟环境: `python -m venv venv`
+            3. 激活虚拟环境并安装依赖: `pip install -r requirements.txt`
+            4. 配置 `config.yaml`
+            5. 启动服务: `python main.py`
+          files: server-${{ steps.version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

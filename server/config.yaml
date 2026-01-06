@@ -1,13 +1,13 @@
 # 应用基础配置
 # 此文件由系统初始化向导自动生成
-# 生成时间: 2026-01-06 06:38:46
+# 生成时间: 2026-01-07 06:26:57
 
 # 已初始化标记
 initialized: false
 
 app:
   name: "FastAPI-Vue-Admin"
-  version: "1.0.0"
+  version: "1.0.1"
   host: "0.0.0.0"
   port: 9090
   env: "dev"
@@ -17,7 +17,7 @@ app:
 
 jwt:
   algorithm: "HS256"
-  secret_key: "4945c545918de68f7acfd54cdfee2994b0e7cbe387209a69383a71c6fcc63c19"
+  secret_key: "31af1064d98635925c4258ed896d1a1d9d426aa2706b330432b3300bd7333c0c"
   salt: "fastapi-vue-admin"
   expire_minutes: 1440
   redis_expire_minutes: 30

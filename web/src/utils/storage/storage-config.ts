@@ -16,7 +16,7 @@ export class StorageConfig {
   static readonly THEME_KEY = 'sys-theme'
 
   /** 跳过升级检查的版本 */
-  static readonly SKIP_UPGRADE_VERSION = '1.0.0'
+  static readonly SKIP_UPGRADE_VERSION = '1.0.1'
 
   /** 升级处理延迟时间（毫秒） */
   static readonly UPGRADE_DELAY = 1000

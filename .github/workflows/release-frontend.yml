@@ -1,0 +1,93 @@
+name: Release Frontend
+
+on:
+  push:
+    paths:
+      - 'web/**'
+    branches:
+      - main
+      - master
+
+jobs:
+  release-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Get frontend version
+        id: version
+        working-directory: web
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Frontend version: $VERSION"
+
+      - name: Install dependencies
+        working-directory: web
+        run: pnpm install
+
+      - name: Preload with dev server
+        working-directory: web
+        run: |
+          # 启动 dev server 进行预构建，30秒后自动退出
+          timeout 30s pnpm dev || true
+
+      - name: Build
+        working-directory: web
+        run: pnpm build
+
+      - name: Create dist archive
+        run: |
+          cd web/dist
+          zip -r ../../dist-${{ steps.version.outputs.version }}.zip .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: dist-${{ steps.version.outputs.version }}
+          name: Frontend Release ${{ steps.version.outputs.version }}
+          body: |
+            ## 前端发布 v${{ steps.version.outputs.version }}
+            
+            ### 部署说明
+            1. 解压文件到 Web 服务器目录
+            2. 配置 Nginx 或其他 Web 服务器
+            3. 确保后端 API 地址配置正确
+            
+            ### Nginx 配置示例
+            ```nginx
+            server {
+                listen 80;
+                server_name your-domain.com;
+                
+                root /path/to/dist;
+                index index.html;
+                
+                location / {
+                    try_files $uri $uri/ /index.html;
+                }
+                
+                location /api {
+                    proxy_pass http://localhost:9090;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                }
+            }
+            ```
+          files: dist-${{ steps.version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

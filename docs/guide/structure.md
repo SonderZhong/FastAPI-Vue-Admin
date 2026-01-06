@@ -242,7 +242,7 @@ docs/
 ├── config/                 # ⚙️ 配置文档
 ├── api/                    # 📡 API 文档
 └── public/                 # 📁 静态资源
-    ├── logo.svg           # Logo
+    ├── logo.png           # Logo
     ├── favicon.ico        # 图标
     └── screenshots/       # 系统截图
 ```

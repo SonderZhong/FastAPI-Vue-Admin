@@ -21,13 +21,17 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted, onBeforeUnmount } from 'vue'
+  import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
   import { useI18n } from 'vue-i18n'
   import * as echarts from 'echarts'
   import { fetchOperationStatistics } from '@/api/dashboard'
   import { ElMessage } from 'element-plus'
+  import { useSettingStore } from '@/store/modules/setting'
+  import { storeToRefs } from 'pinia'
 
   const { t } = useI18n()
+  const settingStore = useSettingStore()
+  const { isDark } = storeToRefs(settingStore)
 
   const typeChartRef = ref<HTMLElement>()
   const moduleChartRef = ref<HTMLElement>()
@@ -37,11 +41,24 @@
   let moduleChart: echarts.ECharts | null = null
   let trendChart: echarts.ECharts | null = null
 
+  // 缓存数据用于主题切换时重新渲染
+  let cachedData: any = null
+
+  // 获取主题相关样式
+  const getThemeStyles = () => ({
+    textColor: isDark.value ? '#b5b7c8' : '#303133',
+    subTextColor: isDark.value ? '#808290' : '#909399',
+    borderColor: isDark.value ? '#363843' : '#fff',
+    axisLineColor: isDark.value ? '#444' : '#EDEDED',
+    splitLineColor: isDark.value ? '#363843' : '#ebeef5'
+  })
+
   // 加载统计数据
   const loadData = async () => {
     try {
       const res = await fetchOperationStatistics()
       if (res.data) {
+        cachedData = res.data
         initTypeChart(res.data.typeDistribution || [])
         initModuleChart(res.data.moduleDistribution || [])
         initTrendChart(res.data.dates || [], res.data.dailyTrend || [])
@@ -55,8 +72,11 @@
   // 初始化操作类型饼图
   const initTypeChart = (data: any[]) => {
     if (!typeChartRef.value) return
+    const theme = getThemeStyles()
 
-    typeChart = echarts.init(typeChartRef.value)
+    if (!typeChart) {
+      typeChart = echarts.init(typeChartRef.value)
+    }
     const option = {
       title: {
         text: t('dashboard.operationTypeDistribution'),
@@ -64,7 +84,8 @@
         top: 10,
         textStyle: {
           fontSize: 14,
-          fontWeight: 'normal'
+          fontWeight: 'normal',
+          color: theme.textColor
         }
       },
       tooltip: {
@@ -74,7 +95,8 @@
       legend: {
         orient: 'horizontal',
         bottom: 10,
-        type: 'scroll'
+        type: 'scroll',
+        textStyle: { color: theme.subTextColor }
       },
       series: [
         {
@@ -85,7 +107,7 @@
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: 10,
-            borderColor: '#fff',
+            borderColor: theme.borderColor,
             borderWidth: 2
           },
           label: {
@@ -96,7 +118,8 @@
             label: {
               show: true,
               fontSize: 16,
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              color: theme.textColor
             }
           },
           labelLine: {
@@ -112,8 +135,11 @@
   // 初始化模块分布饼图
   const initModuleChart = (data: any[]) => {
     if (!moduleChartRef.value) return
+    const theme = getThemeStyles()
 
-    moduleChart = echarts.init(moduleChartRef.value)
+    if (!moduleChart) {
+      moduleChart = echarts.init(moduleChartRef.value)
+    }
     const option = {
       title: {
         text: t('dashboard.moduleDistribution'),
@@ -121,7 +147,8 @@
         top: 10,
         textStyle: {
           fontSize: 14,
-          fontWeight: 'normal'
+          fontWeight: 'normal',
+          color: theme.textColor
         }
       },
       tooltip: {
@@ -131,7 +158,8 @@
       legend: {
         orient: 'horizontal',
         bottom: 10,
-        type: 'scroll'
+        type: 'scroll',
+        textStyle: { color: theme.subTextColor }
       },
       series: [
         {
@@ -142,7 +170,7 @@
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: 10,
-            borderColor: '#fff',
+            borderColor: theme.borderColor,
             borderWidth: 2
           },
           label: {
@@ -153,7 +181,8 @@
             label: {
               show: true,
               fontSize: 16,
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              color: theme.textColor
             }
           },
           labelLine: {
@@ -169,8 +198,11 @@
   // 初始化操作趋势折线图
   const initTrendChart = (dates: string[], data: number[]) => {
     if (!trendChartRef.value) return
+    const theme = getThemeStyles()
 
-    trendChart = echarts.init(trendChartRef.value)
+    if (!trendChart) {
+      trendChart = echarts.init(trendChartRef.value)
+    }
     const option = {
       title: {
         text: t('dashboard.operationTrend'),
@@ -178,7 +210,8 @@
         top: 10,
         textStyle: {
           fontSize: 14,
-          fontWeight: 'normal'
+          fontWeight: 'normal',
+          color: theme.textColor
         }
       },
       tooltip: {
@@ -197,10 +230,15 @@
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: dates.map(d => d.slice(5)) // 只显示月-日
+        data: dates.map(d => d.slice(5)),
+        axisLine: { lineStyle: { color: theme.axisLineColor } },
+        axisLabel: { color: theme.subTextColor }
       },
       yAxis: {
-        type: 'value'
+        type: 'value',
+        axisLine: { lineStyle: { color: theme.axisLineColor } },
+        axisLabel: { color: theme.subTextColor },
+        splitLine: { lineStyle: { color: theme.splitLineColor } }
       },
       series: [
         {
@@ -234,6 +272,15 @@
     trendChart?.resize()
   }
 
+  // 监听主题变化，重新渲染图表
+  watch(isDark, () => {
+    if (cachedData) {
+      initTypeChart(cachedData.typeDistribution || [])
+      initModuleChart(cachedData.moduleDistribution || [])
+      initTrendChart(cachedData.dates || [], cachedData.dailyTrend || [])
+    }
+  })
+
   onMounted(() => {
     loadData()
     window.addEventListener('resize', handleResize)
@@ -249,11 +296,12 @@
 
 <style lang="scss" scoped>
   .chart-container {
-    background: #fff;
+    background: var(--art-main-bg-color);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--art-card-shadow);
+    border: 1px solid var(--art-card-border);
 
     .chart-header {
       margin-bottom: 20px;
@@ -261,13 +309,13 @@
       h3 {
         font-size: 16px;
         font-weight: 500;
-        color: #303133;
+        color: var(--art-gray-900);
         margin: 0 0 8px 0;
       }
 
       .chart-desc {
         font-size: 13px;
-        color: #909399;
+        color: var(--art-gray-600);
         margin: 0;
       }
     }
