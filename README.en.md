@@ -22,7 +22,7 @@
 FastAPI-Vue-Admin is a modern full-stack admin framework based on **FastAPI + Tortoise-ORM + Vue 3 + Element Plus**, featuring a separated frontend and backend architecture with an out-of-the-box enterprise solution.
 
 - 📚 [Documentation](https://sonderzhong.github.io/FastAPI-Vue-Admin/)
-- 🎯 [Live Demo](https://fva.hygc.site)
+- 🎯 [Live Demo](https://fva.hygc.site) - Username: `admin` Password: `admin123@*`
 
 ## ✨ Features
 

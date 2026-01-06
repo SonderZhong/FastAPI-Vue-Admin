@@ -22,7 +22,7 @@
 FastAPI-Vue-Admin 是一个基于 **FastAPI + Tortoise-ORM + Vue 3 + Element Plus** 的现代化全栈后台管理系统框架，采用前后端分离架构，提供开箱即用的企业级解决方案。
 
 - 📚 [在线文档](https://sonderzhong.github.io/FastAPI-Vue-Admin/)
-- 🎯 [在线演示](https://fva.hygc.site)
+- 🎯 [在线演示](https://fva.hygc.site) - 账号：`admin` 密码：`admin123@*`
 
 ## ✨ 特性
 
