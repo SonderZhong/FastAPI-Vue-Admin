@@ -14,11 +14,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get latest commit hash of ip2region.xdb
+      - name: Get latest commit hash of ip2region_v4.xdb
         id: check
         run: |
           # 获取目标文件最新的 commit hash
-          LATEST_HASH=$(curl -s "https://api.github.com/repos/lionsoul2014/ip2region/commits?path=data/ip2region.xdb&per_page=1" | jq -r '.[0].sha')
+          LATEST_HASH=$(curl -s "https://api.github.com/repos/lionsoul2014/ip2region/commits?path=data/ip2region_v4.xdb&per_page=1" | jq -r '.[0].sha')
           echo "latest_hash=$LATEST_HASH" >> $GITHUB_OUTPUT
           
           # 读取上次记录的 hash
@@ -36,10 +36,10 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Download new ip2region.xdb
+      - name: Download new ip2region_v4.xdb
         if: steps.check.outputs.changed == 'true'
         run: |
-          curl -L -o server/assets/ip2region.xdb "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region.xdb"
+          curl -L -o server/assets/ip2region_v4.xdb "https://raw.githubusercontent.com/lionsoul2014/ip2region/master/data/ip2region_v4.xdb"
           echo "${{ steps.check.outputs.latest_hash }}" > .github/ip2region_hash.txt
 
       - name: Commit and push
@@ -47,6 +47,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add server/assets/ip2region.xdb .github/ip2region_hash.txt
-          git commit -m "chore: update ip2region.xdb"
+          git add server/assets/ip2region_v4.xdb .github/ip2region_hash.txt
+          git commit -m "chore: update ip2region_v4.xdb"
           git push
