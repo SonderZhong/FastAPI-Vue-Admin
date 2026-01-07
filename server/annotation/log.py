@@ -27,7 +27,7 @@ from exceptions.exception import (
 )
 from models import SystemLoginLog, SystemOperationLog
 from utils.config import config
-from utils.geoip import get_ip_location_info
+from utils.ip2region_util import get_ip_location
 from utils.log import logger
 from utils.response import ResponseUtil
 
@@ -166,7 +166,7 @@ class Log:
 
             # IP 地理位置
             meta["location"] = (
-                get_ip_location_info(meta["ip"])
+                get_ip_location(meta["ip"])
                 if config.app().ip_location_enabled
                 else "内网IP"
             )

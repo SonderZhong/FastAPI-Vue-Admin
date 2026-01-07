@@ -38,7 +38,7 @@ from utils.mail import Email
 from utils.password import PasswordUtil
 from utils.response import ResponseUtil
 from annotation.log import _request_meta
-from utils.geoip import get_ip_location_info
+from utils.ip2region_util import get_ip_location
 from utils.config import config
 from utils.notification import NotificationService
 
@@ -50,7 +50,7 @@ def get_login_meta(request: Request) -> dict:
     meta = _request_meta(request)
     # 添加地理位置信息
     meta["location"] = (
-        get_ip_location_info(meta["ip"])
+        get_ip_location(meta["ip"])
         if config.app().ip_location_enabled
         else "内网IP"
     )
