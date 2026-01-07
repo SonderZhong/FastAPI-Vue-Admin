@@ -57,16 +57,41 @@ server {
     }
 
     # API 代理
-    location /api/ {
+    location /api {
+        rewrite ^.+api/?(.*)$ /$1 break;
         proxy_pass http://127.0.0.1:9090/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_http_version 1.1;
+        add_header X-Cache $upstream_cache_status;
+        add_header Cache-Control no-cache;
+        proxy_ssl_server_name off;
+        proxy_ssl_name $proxy_host;
+        add_header Strict-Transport-Security "max-age=31536000";
     }
 
     # 文件代理
-    location /files/ {
-        proxy_pass http://127.0.0.1:9090/files/;
+    location /files {
+        proxy_pass http://127.0.0.1:9090;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header REMOTE-HOST $remote_addr;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $http_connection;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_http_version 1.1;
+        add_header X-Cache $upstream_cache_status;
+        add_header Cache-Control no-cache;
+        proxy_ssl_server_name off;
+        proxy_ssl_name $proxy_host;
     }
 
     # WebSocket 代理

@@ -7,7 +7,7 @@ initialized: false
 
 app:
   name: "FastAPI-Vue-Admin"
-  version: "1.0.1"
+  version: "1.0.2"
   host: "0.0.0.0"
   port: 9090
   env: "dev"

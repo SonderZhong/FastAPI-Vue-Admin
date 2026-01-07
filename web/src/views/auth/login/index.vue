@@ -321,12 +321,15 @@
       showLoginSuccessNotice()
       router.push('/')
     } catch (error) {
+      // 登录失败时刷新验证码
+      if (authStore.captcha_enabled) {
+        refreshCaptcha()
+      }
+      
       // 处理 HttpError
       if (error instanceof HttpError) {
-        // 如果是验证码错误，刷新验证码
-        if (error.code === 400 && authStore.captcha_enabled) {
-          refreshCaptcha()
-        }
+        // HttpError 已经在拦截器中处理了消息提示
+        console.error('[Login] HttpError:', error.message)
       } else {
         // 处理非 HttpError
         ElMessage.error('登录失败，请稍后重试')

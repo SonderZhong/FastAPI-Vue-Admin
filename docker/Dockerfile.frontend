@@ -10,24 +10,17 @@ ENV TZ=Asia/Shanghai
 RUN apk add --no-cache tzdata && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# 配置 npm/pnpm 使用淘宝镜像源
-RUN npm config set registry https://registry.npmmirror.com
-
 # 安装 pnpm
-RUN npm install -g pnpm && \
-    pnpm config set registry https://registry.npmmirror.com
+RUN npm install -g pnpm
 
-# 复制依赖文件
-COPY web/package.json web/pnpm-lock.yaml ./
-
-# 安装依赖
-RUN pnpm install --frozen-lockfile
-
-# 复制源代码
+# 先复制所有源代码
 COPY web/ .
 
-# 预加载（启动 dev server 运行几秒后终止，用于预编译依赖）
-RUN timeout 30s pnpm dev || true
+# 删除可能存在的 node_modules（确保干净安装）
+RUN rm -rf node_modules
+
+# 安装依赖
+RUN pnpm install
 
 # 构建
 RUN pnpm build
