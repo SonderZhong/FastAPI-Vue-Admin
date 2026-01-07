@@ -23,6 +23,8 @@ FastAPI-Vue-Admin is a modern full-stack admin framework based on **FastAPI + To
 
 - 📚 [Documentation](https://sonderzhong.github.io/FastAPI-Vue-Admin/)
 - 🎯 [Live Demo](https://fva.hygc.site) - Username: `admin` Password: `admin123@*`
+- 📡 [API Docs (Apifox)](https://6cpx06bzzy.apifox.cn)
+- 📡 [API Docs (Built-in)](https://fva.hygc.site/api/docs)
 
 ## ✨ Features
 

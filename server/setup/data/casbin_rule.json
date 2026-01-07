@@ -4262,5 +4262,44 @@
     "v3": null,
     "v4": null,
     "v5": null
+  },
+  {
+    "id": "f2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c60",
+    "is_del": 0,
+    "created_at": "8/1/2026 00:00:00.000000",
+    "updated_at": "8/1/2026 00:00:00.000000",
+    "ptype": "p",
+    "v0": "admin",
+    "v1": "e2b3c4d5-e6f7-4a8b-9c0d-1e2f3a4b5c6d",
+    "v2": "menu",
+    "v3": null,
+    "v4": null,
+    "v5": null
+  },
+  {
+    "id": "f3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d70",
+    "is_del": 0,
+    "created_at": "8/1/2026 00:00:00.000000",
+    "updated_at": "8/1/2026 00:00:00.000000",
+    "ptype": "p",
+    "v0": "admin",
+    "v1": "e3c4d5e6-f7a8-4b9c-0d1e-2f3a4b5c6d7e",
+    "v2": "menu",
+    "v3": null,
+    "v4": null,
+    "v5": null
+  },
+  {
+    "id": "f4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e80",
+    "is_del": 0,
+    "created_at": "8/1/2026 00:00:00.000000",
+    "updated_at": "8/1/2026 00:00:00.000000",
+    "ptype": "p",
+    "v0": "admin",
+    "v1": "e4d5e6f7-a8b9-4c0d-1e2f-3a4b5c6d7e8f",
+    "v2": "menu",
+    "v3": null,
+    "v4": null,
+    "v5": null
   }
 ]

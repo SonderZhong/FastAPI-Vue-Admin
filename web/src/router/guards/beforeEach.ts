@@ -249,7 +249,13 @@ function convertBackendRoutesToFrontend(routes: any[]): AppRouteRecord[] {
         icon: route.icon || undefined,
         order: route.order,
         isHide: route.isHide,
+        isHideTab: route.isHideTab,
         keepAlive: route.keepAlive,
+        fixedTab: route.fixedTab,
+        isFullPage: route.isFullPage,
+        isIframe: route.isIframe,
+        link: route.link,
+        activePath: route.activePath,
         // 处理权限列表，确保格式正确
         authList:
           route.meta?.authList?.map((auth: any) => ({

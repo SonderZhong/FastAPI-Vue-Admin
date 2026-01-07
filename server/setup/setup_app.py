@@ -375,8 +375,16 @@ async def init_admin_and_data(db_config: DatabaseConfig, admin_config: AdminConf
                 api_method=perm.get("api_method"),
                 min_user_type=perm.get("min_user_type", 3),
                 isHide=perm.get("isHide", 0),
+                isHideTab=perm.get("isHideTab"),
+                isIframe=perm.get("isIframe"),
+                link=perm.get("link"),
                 keepAlive=perm.get("keepAlive"),
+                isFirstLevel=perm.get("isFirstLevel"),
+                fixedTab=perm.get("fixedTab"),
+                activePath=perm.get("activePath"),
+                isFullPage=perm.get("isFullPage"),
                 showBadge=perm.get("showBadge", 0),
+                showTextBadge=perm.get("showTextBadge"),
                 data_scope=perm.get("data_scope", 4),
                 remark=perm.get("remark"),
                 created_at=now,
@@ -457,7 +465,7 @@ initialized: true
 
 app:
   name: "{config.app.name}"
-  version: "1.0.2"
+  version: "1.0.3"
   host: "{config.app.host}"
   port: {config.app.port}
   env: "{config.app.env}"

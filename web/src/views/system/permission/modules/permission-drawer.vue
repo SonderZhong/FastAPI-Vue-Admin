@@ -248,7 +248,8 @@ const formRules = computed(() => ({
   ],
   title: [{ required: true, message: t('common.pleaseInput'), trigger: 'blur' }],
   path: [{ validator: (_: any, value: string, callback: Function) => {
-    if (formData.value.menu_type === 0 && !value) callback(new Error(t('permission.pathRequired')))
+    // 菜单类型且非 iframe 时路由路径必填
+    if (formData.value.menu_type === 0 && !formData.value.isIframe && !value) callback(new Error(t('permission.pathRequired')))
     else callback()
   }, trigger: 'blur' }],
   authTitle: [{ validator: (_: any, value: string, callback: Function) => {
@@ -266,7 +267,12 @@ const formRules = computed(() => ({
   api_method: [{ validator: (_: any, value: string[], callback: Function) => {
     if (formData.value.menu_type === 2 && (!value || value.length === 0)) callback(new Error(t('permission.apiMethodRequired')))
     else callback()
-  }, trigger: 'change' }]
+  }, trigger: 'change' }],
+  link: [{ validator: (_: any, value: string, callback: Function) => {
+    // iframe 类型时 link 必填
+    if (formData.value.menu_type === 0 && formData.value.isIframe && !value) callback(new Error(t('permission.linkRequired')))
+    else callback()
+  }, trigger: 'blur' }]
 }))
 
 // 翻译权限树节点标题
@@ -400,6 +406,13 @@ const handleSubmit = async () => {
 
     const submitData: any = { ...formData.value }
 
+    // iframe 类型自动生成 path（如果没有填写）
+    if (submitData.menu_type === 0 && submitData.isIframe && !submitData.path) {
+      // 使用 name 或时间戳生成唯一路径
+      const pathName = submitData.name || `iframe_${Date.now()}`
+      submitData.path = `/outside/iframe/${pathName}`
+    }
+
     // 根据类型清理不需要的字段
     if (submitData.menu_type === 0) {
       delete submitData.authTitle
@@ -441,11 +454,23 @@ const handleSubmit = async () => {
       delete submitData.activePath
     }
 
-    // 清理空值（但保留 api_method 数组和 data_scope）
+    // 清理空值
+    // 编辑模式：空字符串转为 null（允许清空字段）
+    // 新增模式：删除空值字段
     Object.keys(submitData).forEach(key => {
+      // 保留 api_method 数组和 data_scope
       if (key === 'api_method' || key === 'data_scope') return
-      if (submitData[key] === '' || submitData[key] === null || submitData[key] === undefined) {
-        delete submitData[key]
+      
+      if (props.dialogType === 'edit') {
+        // 编辑模式：空字符串转为 null，保留字段以便后端更新
+        if (submitData[key] === '' || submitData[key] === undefined) {
+          submitData[key] = null
+        }
+      } else {
+        // 新增模式：删除空值字段
+        if (submitData[key] === '' || submitData[key] === null || submitData[key] === undefined) {
+          delete submitData[key]
+        }
       }
     })
 
