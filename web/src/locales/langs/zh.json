@@ -333,6 +333,12 @@
     "myNotification": {
       "title": "我的通知"
     },
+    "externalLinks": {
+      "title": "外部链接",
+      "apifoxDocs": "Apifox 文档",
+      "builtinDocs": "内置文档",
+      "github": "GitHub"
+    },
     "hts": {
       "title": "海关编码",
       "codeManager": "编码管理",
@@ -516,6 +522,7 @@
     "activePath": "激活路径",
     "namePattern": "必须以字母开头，只能包含字母、数字和下划线",
     "pathRequired": "菜单类型必须填写路由路径",
+    "linkRequired": "内嵌iframe必须填写外部链接",
     "authTitleRequired": "按钮类型必须填写权限标题",
     "authMarkRequired": "按钮类型必须填写权限标识",
     "apiPathRequired": "API类型必须填写接口路径",

@@ -23,6 +23,8 @@ FastAPI-Vue-Admin 是一个基于 **FastAPI + Tortoise-ORM + Vue 3 + Element Plu
 
 - 📚 [在线文档](https://sonderzhong.github.io/FastAPI-Vue-Admin/)
 - 🎯 [在线演示](https://fva.hygc.site) - 账号：`admin` 密码：`admin123@*`
+- 📡 [API 文档 (Apifox)](https://6cpx06bzzy.apifox.cn)
+- 📡 [API 文档 (内置)](https://fva.hygc.site/api/docs)
 
 ## ✨ 特性
 

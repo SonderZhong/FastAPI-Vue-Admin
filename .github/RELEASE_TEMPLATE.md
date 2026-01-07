@@ -4,6 +4,8 @@
 
 📚 **文档地址**: [https://sonderzhong.github.io/FastAPI-Vue-Admin/](https://sonderzhong.github.io/FastAPI-Vue-Admin/)
 
+📡 **API 文档**: [Apifox](https://6cpx06bzzy.apifox.cn) | [内置文档](https://fva.hygc.site/api/docs)
+
 ### 📦 下载地址
 | 类型 | 文件 | 说明 |
 |------|------|------|
@@ -68,6 +70,25 @@ server {
         proxy_set_header Connection $http_connection;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_http_version 1.1;
+    }
+
+    # API 静态资源（Scalar文档等）
+    location /api/assets/ {
+        proxy_pass http://backend:9090/assets/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }
+    
+    # OpenAPI 规范
+    location /api/openapi.json {
+        proxy_pass http://backend:9090/openapi.json;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
     
     # 文件代理

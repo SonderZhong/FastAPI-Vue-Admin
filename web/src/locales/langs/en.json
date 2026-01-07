@@ -338,6 +338,12 @@
     "myNotification": {
       "title": "My Notifications"
     },
+    "externalLinks": {
+      "title": "External Links",
+      "apifoxDocs": "Apifox Docs",
+      "builtinDocs": "Built-in Docs",
+      "github": "GitHub"
+    },
     "hts": {
       "title": "HTS Code",
       "codeManager": "Code Management",
@@ -596,6 +602,7 @@
     "activePath": "Active Path",
     "namePattern": "Must start with a letter, can only contain letters, numbers and underscores",
     "pathRequired": "Route path is required for menu type",
+    "linkRequired": "External link is required for iframe",
     "authTitleRequired": "Permission title is required for button type",
     "authMarkRequired": "Permission mark is required for button type",
     "apiPathRequired": "API path is required for API type",

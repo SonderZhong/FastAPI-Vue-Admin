@@ -116,9 +116,9 @@ async def delete_permission_recursive(permission_id: str):
 @Auth(permission_list=["permission:btn:update", "PUT,POST:/permission/update/*"])
 async def update_permission(request: Request, params: AddPermissionParams, id: str = Path(description="权限ID"), ):
     if permission := await SystemPermission.get_or_none(id=id, is_del=False):
-        params = params.dict()
-        params = {k: v for k, v in params.items() if v is not None}
-        await permission.update_from_dict(params)
+        # 使用 exclude_unset=True 只获取用户实际传递的字段，允许设置 null 值
+        params_dict = params.model_dump(exclude_unset=True)
+        await permission.update_from_dict(params_dict)
         await permission.save()
         # 更新用户信息缓存
         await clear_user_cache(request)
@@ -409,9 +409,9 @@ async def update_button_permission(
     """更新按钮权限"""
     
     if permission := await SystemPermission.get_or_none(id=id, menu_type=1, is_del=False):
-        params_dict = params.dict()
+        # 使用 exclude_unset=True 只获取用户实际传递的字段，允许设置 null 值
+        params_dict = params.model_dump(exclude_unset=True)
         params_dict["menu_type"] = 1  # 确保是按钮类型
-        params_dict = {k: v for k, v in params_dict.items() if v is not None}
         
         await permission.update_from_dict(params_dict)
         await permission.save()

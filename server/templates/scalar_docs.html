@@ -108,11 +108,11 @@
                     spec: {
                         content: openapiSpec
                     },
-                    // 配置服务器
+                    // 配置服务器 - 代理访问时需要加 /api 前缀
                     servers: [
                         {
-                            url: baseUrl,
-                            description: `API服务器: ${baseUrl}`
+                            url: apiTestBaseUrl,
+                            description: `API服务器: ${apiTestBaseUrl}`
                         }
                     ],
                     // 配置主题
@@ -127,12 +127,9 @@
                     }
                 };
 
-                // 只在代理访问时配置proxy（避免直接访问时出现404）
-                // 当访问端口与后端端口不同时，说明是通过代理访问
-                if (currentPort != backendPort.toString()) {
-                    scalarConfig.proxy = apiTestBaseUrl + '/proxy';
-                    console.log('Proxy mode enabled:', scalarConfig.proxy);
-                }
+                // 直接访问后端，不需要 Scalar 的 proxy 功能
+                // Nginx 已经配置了 /api 代理
+                console.log('API base URL:', apiTestBaseUrl);
 
                 scalarInstance = Scalar.createApiReference('#scalar-app', scalarConfig);
 

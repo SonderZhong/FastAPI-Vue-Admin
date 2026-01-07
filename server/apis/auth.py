@@ -231,7 +231,7 @@ async def login(request: Request, params: CustomOAuth2PasswordRequestForm = Depe
                 return {
                     "access_token": accessToken,
                     "token_type": "Bearer",
-                    "expires_in": expiresTime * 60,
+                    "expires_in": expiresTime,
                 }
             else:
                 return ResponseUtil.success(
