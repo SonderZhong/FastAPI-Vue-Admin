@@ -18,7 +18,8 @@ from models.permission import PermissionType
 from schemas.common import BaseResponse
 from schemas.permission import AddPermissionParams, GetPermissionInfoResponse, GetPermissionListResponse
 from utils.casbin import CasbinEnforcer
-
+from utils.get_redis import RedisKeyConfig
+from utils.response import ResponseUtil
 
 def normalize_api_method(api_method) -> str:
     """
@@ -29,7 +30,7 @@ def normalize_api_method(api_method) -> str:
         import json
         try:
             api_method = json.loads(api_method)
-        except:
+        except Exception:
             api_method = [api_method]
     
     if isinstance(api_method, list):
@@ -37,8 +38,7 @@ def normalize_api_method(api_method) -> str:
         return ",".join(sorted(api_method))
     else:
         return api_method or "GET"
-from utils.get_redis import RedisKeyConfig
-from utils.response import ResponseUtil
+
 
 permissionAPI = APIRouter(
     prefix="/permission",
@@ -186,8 +186,13 @@ async def get_permission_list(
         auth_title: Optional[str] = Query(default=None, description="权限标题"),
         auth_mark: Optional[str] = Query(default=None, description="权限标识"),
         api_path: Optional[str] = Query(default=None, description="接口路径"),
-        api_method: Optional[str] = Query(default=None, description="请求方法")
+        api_method: Optional[str] = Query(default=None, description="请求方法"),
+        current_user: dict = Depends(AuthController.get_current_user)
 ):
+    # 获取当前用户类型，根据用户类型过滤权限
+    # user_type: 0=超级管理员, 1=管理员, 2=部门管理员, 3=普通用户
+    user_type = current_user.get("user_type", 3)
+    
     filterArgs = {
         k: v for k, v in {
             "menu_type": menu_type,
@@ -202,6 +207,11 @@ async def get_permission_list(
             "api_method__icontains": api_method,
         }.items() if v is not None
     }
+    
+    # 根据用户类型过滤: 只能看到 min_user_type >= 当前用户类型的权限
+    # 例如: 管理员(user_type=1)只能看到 min_user_type >= 1 的权限
+    filterArgs["min_user_type__gte"] = user_type
+    
     total = await SystemPermission.filter(**filterArgs, is_del=False).count()
     result = await SystemPermission.filter(**filterArgs, is_del=False).offset((page - 1) * pageSize).limit(
         pageSize).order_by(
@@ -253,8 +263,14 @@ async def get_permission_tree(
 ):
     """获取权限树形结构，包含菜单和按钮权限"""
     
-    # 获取所有权限数据
-    permissions = await SystemPermission.filter(is_del=False).order_by("order", "created_at").values(
+    # 获取当前用户类型，根据用户类型过滤权限
+    user_type = current_user.get("user_type", 3)
+    
+    # 获取所有权限数据，根据用户类型过滤
+    permissions = await SystemPermission.filter(
+        is_del=False,
+        min_user_type__gte=user_type  # 只能看到 min_user_type >= 当前用户类型的权限
+    ).order_by("order", "created_at").values(
         id="id",
         menu_type="menu_type",
         parent_id="parent_id", 
@@ -320,10 +336,14 @@ async def get_menu_buttons(
 ):
     """获取指定菜单下的按钮权限列表"""
     
+    # 获取当前用户类型，根据用户类型过滤权限
+    user_type = current_user.get("user_type", 3)
+    
     buttons = await SystemPermission.filter(
         parent_id=parent_id, 
         menu_type=1,  # 按钮类型
-        is_del=False
+        is_del=False,
+        min_user_type__gte=user_type  # 只能看到 min_user_type >= 当前用户类型的权限
     ).order_by("order", "created_at").values(
         id="id",
         menu_type="menu_type",
@@ -468,7 +488,10 @@ async def get_api_permission_list(
         current_user: dict = Depends(AuthController.get_current_user)
 ):
     """获取所有接口类型的权限"""
-    filterArgs = {"menu_type": PermissionType.API}
+    # 获取当前用户类型，根据用户类型过滤权限
+    user_type = current_user.get("user_type", 3)
+    
+    filterArgs = {"menu_type": PermissionType.API, "min_user_type__gte": user_type}
     
     if api_path:
         filterArgs["api_path__icontains"] = api_path

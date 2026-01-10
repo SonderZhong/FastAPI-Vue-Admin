@@ -51,167 +51,63 @@
       <!-- 右侧主内容区 -->
       <ElMain class="main-content">
         <template v-if="selectedDepartment">
-          <!-- 工具栏 -->
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <ElBreadcrumb separator="/">
-                <ElBreadcrumbItem>{{ selectedDepartment.name }}</ElBreadcrumbItem>
-                <ElBreadcrumbItem v-if="!showSubDeptUsers">
-                  {{ $t('user.currentOnly', '仅当前部门') }}
-                </ElBreadcrumbItem>
-                <ElBreadcrumbItem v-else>
-                  {{ $t('user.includeChild', '含下属部门') }}
-                </ElBreadcrumbItem>
-              </ElBreadcrumb>
-              <ElSwitch
-                v-model="showSubDeptUsers"
-                :active-text="$t('user.includeSub', '含下属')"
-                size="small"
-                @change="handleScopeChange"
-              />
-            </div>
-            <div class="toolbar-right">
-              <ElInput
-                v-model="searchText"
-                :placeholder="$t('user.search', '搜索用户')"
-                clearable
-                size="small"
-                style="width: 180px"
-                :prefix-icon="Search"
-              />
-              <ElButton
-                v-auth="'user:btn:addUser'"
-                type="primary"
-                size="small"
-                round
-                :icon="Plus"
-                @click="showDialog('add')"
-              >
-                {{ $t('user.addUser', '新增用户') }}
-              </ElButton>
+          <!-- 搜索区域 -->
+          <div class="search-area">
+            <div class="search-form">
+              <div class="search-item">
+                <span class="search-label">{{ $t('common.dept', '部门') }}</span>
+                <ElBreadcrumb separator="/" class="dept-breadcrumb">
+                  <ElBreadcrumbItem>{{ selectedDepartment.name }}</ElBreadcrumbItem>
+                </ElBreadcrumb>
+              </div>
+              <div class="search-item">
+                <span class="search-label">{{ $t('user.scope', '范围') }}</span>
+                <ElSwitch
+                  v-model="showSubDeptUsers"
+                  :active-text="$t('user.includeSub', '含下属')"
+                  :inactive-text="$t('user.currentOnly', '仅当前')"
+                  @change="handleScopeChange"
+                />
+              </div>
+              <div class="search-item">
+                <span class="search-label">{{ $t('user.username', '用户名') }}</span>
+                <ElInput
+                  v-model="searchText"
+                  :placeholder="$t('user.search', '搜索用户')"
+                  clearable
+                  style="width: 200px"
+                  :prefix-icon="Search"
+                />
+              </div>
             </div>
           </div>
 
           <!-- 表格卡片 -->
           <ElCard class="art-table-card" shadow="never">
-            <ArtTableHeader :loading="loading" @refresh="refreshData" />
+            <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
+              <template #left>
+                <ElButton
+                  v-auth="'user:btn:addUser'"
+                  type="primary"
+                  :icon="Plus"
+                  @click="showDialog('add')"
+                >
+                  {{ $t('user.addUser', '新增用户') }}
+                </ElButton>
+              </template>
+            </ArtTableHeader>
             
-            <ElTable
-              v-loading="loading"
+            <ArtTable
               :data="data"
-              border
-              stripe
-              highlight-current-row
-              class="user-table"
+              :loading="loading"
+              :columns="columns"
+              :pagination="pagination"
+              :show-table-header="false"
+              row-key="id"
               @row-click="selectUser"
-            >
-              <ElTableColumn type="index" width="60" align="center" :label="$t('table.index', '#')" />
-              <ElTableColumn prop="avatar" :label="$t('user.avatar', '头像')" width="80" align="center">
-                <template #default="{ row }">
-                  <ElAvatar :size="36" :src="getAvatarUrl(row.avatar)">
-                    <ElIcon><User /></ElIcon>
-                  </ElAvatar>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="username" :label="$t('user.username', '用户名')" min-width="120" show-overflow-tooltip />
-              <ElTableColumn prop="nickname" :label="$t('user.nickname', '昵称')" min-width="120" show-overflow-tooltip />
-              <ElTableColumn prop="department_name" :label="$t('common.dept', '部门')" min-width="120" show-overflow-tooltip>
-                <template #default="{ row }">
-                  {{ row.department_name || '-' }}
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="user_type" :label="$t('user.userType', '身份')" width="100" align="center">
-                <template #default="{ row }">
-                  <ElTag :type="getUserTypeTagType(row.user_type)" size="small">
-                    {{ getUserTypeName(row.user_type) }}
-                  </ElTag>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="status" :label="$t('common.status', '状态')" width="80" align="center">
-                <template #default="{ row }">
-                  <ElTag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-                    {{ row.status === 1 ? $t('common.enable', '启用') : $t('common.disable', '禁用') }}
-                  </ElTag>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="created_at" :label="$t('common.createTime', '创建时间')" width="160" align="center">
-                <template #default="{ row }">
-                  <span class="text-gray-500 text-xs">{{ dayjs(row.created_at).format('YYYY-MM-DD HH:mm') }}</span>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn :label="$t('common.actions', '操作')" width="180" align="center" fixed="right">
-                <template #default="{ row }">
-                  <div class="action-buttons">
-                    <ElButton
-                      v-auth="'user:btn:updateUser'"
-                      type="primary"
-                      size="small"
-                      link
-                      @click.stop="showDialog('edit', row)"
-                    >
-                      {{ $t('buttons.edit', '编辑') }}
-                    </ElButton>
-                    <ElDivider direction="vertical" />
-                    <ElDropdown @command="handleCommand" trigger="click">
-                      <ElButton type="info" size="small" link>
-                        {{ $t('common.more', '更多') }}
-                        <ElIcon class="el-icon--right"><ArrowDown /></ElIcon>
-                      </ElButton>
-                      <template #dropdown>
-                        <ElDropdownMenu>
-                          <ElDropdownItem
-                            v-if="hasPermission('user:btn:addRole')"
-                            :command="{ action: 'assignRoles', user: row }"
-                          >
-                            <ElIcon class="mr-1"><UserFilled /></ElIcon>
-                            {{ $t('user.assignRoles', '分配角色') }}
-                          </ElDropdownItem>
-                          <ElDropdownItem
-                            v-if="hasPermission('user:btn:permissionList')"
-                            :command="{ action: 'viewPermissions', user: row }"
-                          >
-                            <ElIcon class="mr-1"><Lock /></ElIcon>
-                            {{ $t('user.viewPermissions', '查看权限') }}
-                          </ElDropdownItem>
-                          <ElDropdownItem
-                            v-if="hasPermission('user:btn:reset_password')"
-                            :command="{ action: 'resetPassword', user: row }"
-                            divided
-                          >
-                            <ElIcon class="mr-1"><Key /></ElIcon>
-                            {{ $t('user.resetPassword', '重置密码') }}
-                          </ElDropdownItem>
-                          <ElDropdownItem
-                            v-if="hasPermission('user:btn:deleteUser')"
-                            :command="{ action: 'delete', user: row }"
-                          >
-                            <span class="text-red-500">
-                              <ElIcon class="mr-1"><Delete /></ElIcon>
-                              {{ $t('buttons.delete', '删除') }}
-                            </span>
-                          </ElDropdownItem>
-                        </ElDropdownMenu>
-                      </template>
-                    </ElDropdown>
-                  </div>
-                </template>
-              </ElTableColumn>
-            </ElTable>
-
-            <!-- 分页 -->
-            <div class="pagination-wrapper">
-              <span class="total-text">共 {{ pagination.total }} 条</span>
-              <ElPagination
-                v-model:current-page="pagination.current"
-                v-model:page-size="pagination.size"
-                :page-sizes="[10, 20, 50, 100]"
-                :total="pagination.total"
-                layout="sizes, prev, pager, next, jumper"
-                small
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
-            </div>
+              @pagination:size-change="handleSizeChange"
+              @pagination:current-change="handleCurrentChange"
+            />
           </ElCard>
         </template>
 
@@ -259,8 +155,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { dayjs, ElMessage, ElMessageBox, ElTree } from 'element-plus'
+import { ref, h, watch, onMounted } from 'vue'
+import { dayjs, ElMessage, ElMessageBox, ElTree, ElTag, ElButton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon, ElAvatar } from 'element-plus'
 import { Search, OfficeBuilding, User, ArrowDown, Plus, UserFilled, Lock, Key, Delete } from '@element-plus/icons-vue'
 import { fetchDepartmentTree } from '@/api/system/department'
 import type { DepartmentTree, DepartmentInfo } from '@/typings/department'
@@ -273,6 +169,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import { useTable } from '@/composables/useTable'
 import { usePermission } from '@/composables/usePermission'
+import ArtTable from '@/components/core/tables/art-table/index.vue'
 import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
 import UserEditDrawer from './modules/user-edit-drawer.vue'
 import UserRoleDrawer from './modules/user-role-drawer.vue'
@@ -295,8 +192,27 @@ const selectedDepartment = ref<DepartmentInfo | null>(null)
 const selectedUser = ref<UserInfo | null>(null)
 const departmentUserCounts = ref<Record<string, number>>({})
 
+/**
+ * 获取用户身份标签类型（颜色）
+ */
+const getUserTypeTagType = (userType: number): 'danger' | 'warning' | 'primary' | 'info' => {
+  switch (userType) {
+    case UserType.SUPER_ADMIN:
+      return 'danger'
+    case UserType.ADMIN:
+      return 'warning'
+    case UserType.DEPT_ADMIN:
+      return 'primary'
+    case UserType.NORMAL_USER:
+    default:
+      return 'info'
+  }
+}
+
 // 使用 useTable 管理用户列表
 const {
+  columns,
+  columnChecks,
   data,
   loading,
   pagination,
@@ -310,7 +226,72 @@ const {
     apiFn: fetchUserList,
     apiParams: {} as UserQueryParams,
     immediate: false,
-    paginationKey: { current: 'page', size: 'pageSize' }
+    paginationKey: { current: 'page', size: 'pageSize' },
+    columnsFactory: () => [
+      { type: 'index', width: 80, label: $t('table.column.index'), align: 'center' },
+      {
+        prop: 'avatar',
+        label: $t('user.avatar', '头像'),
+        width: 80,
+        align: 'center',
+        formatter: (row: UserInfo) => h(ElAvatar, { size: 36, src: getAvatarUrl(row.avatar) }, () => h(ElIcon, null, () => h(User)))
+      },
+      { prop: 'username', label: $t('user.username', '用户名'), align: 'center', showOverflowTooltip: true },
+      { prop: 'nickname', label: $t('user.nickname', '昵称'), align: 'center', showOverflowTooltip: true },
+      {
+        prop: 'department_name',
+        label: $t('common.dept', '部门'),
+        align: 'center',
+        showOverflowTooltip: true,
+        formatter: (row: UserInfo) => row.department_name || '-'
+      },
+      {
+        prop: 'user_type',
+        label: $t('user.userType', '身份'),
+        width: 120,
+        align: 'center',
+        formatter: (row: UserInfo) => h(ElTag, { type: getUserTypeTagType(row.user_type ?? UserType.NORMAL_USER), size: 'small' }, () => getUserTypeName(row.user_type ?? UserType.NORMAL_USER))
+      },
+      {
+        prop: 'status',
+        label: $t('common.status', '状态'),
+        width: 80,
+        align: 'center',
+        formatter: (row: UserInfo) => h(ElTag, { type: row.status === 1 ? 'success' : 'danger', size: 'small' }, () => row.status === 1 ? $t('common.enable', '启用') : $t('common.disable', '禁用'))
+      },
+      {
+        prop: 'created_at',
+        label: $t('common.createTime', '创建时间'),
+        width: 160,
+        align: 'center',
+        formatter: (row: UserInfo) => dayjs(row.created_at).format('YYYY-MM-DD HH:mm')
+      },
+      {
+        prop: 'actions',
+        label: $t('common.actions', '操作'),
+        width: 180,
+        align: 'center',
+        fixed: 'right',
+        formatter: (row: UserInfo) => {
+          const buttons = []
+          if (hasPermission('user:btn:updateUser')) {
+            buttons.push(h(ElButton, { type: 'primary', size: 'small', onClick: () => showDialog('edit', row) }, () => $t('buttons.edit', '编辑')))
+          }
+          buttons.push(
+            h(ElDropdown, { trigger: 'click', onCommand: handleCommand }, {
+              default: () => h(ElButton, { type: 'info', size: 'small' }, () => [$t('common.more', '更多'), h(ElIcon, { class: 'el-icon--right' }, () => h(ArrowDown))]),
+              dropdown: () => h(ElDropdownMenu, null, () => [
+                hasPermission('user:btn:addRole') && h(ElDropdownItem, { command: { action: 'assignRoles', user: row } }, () => [h(ElIcon, { class: 'mr-1' }, () => h(UserFilled)), $t('user.assignRoles', '分配角色')]),
+                hasPermission('user:btn:permissionList') && h(ElDropdownItem, { command: { action: 'viewPermissions', user: row } }, () => [h(ElIcon, { class: 'mr-1' }, () => h(Lock)), $t('user.viewPermissions', '查看权限')]),
+                hasPermission('user:btn:reset_password') && h(ElDropdownItem, { command: { action: 'resetPassword', user: row }, divided: true }, () => [h(ElIcon, { class: 'mr-1' }, () => h(Key)), $t('user.resetPassword', '重置密码')]),
+                hasPermission('user:btn:deleteUser') && h(ElDropdownItem, { command: { action: 'delete', user: row } }, () => h('span', { class: 'text-red-500' }, [h(ElIcon, { class: 'mr-1' }, () => h(Delete)), $t('buttons.delete', '删除')]))
+              ].filter(Boolean))
+            })
+          )
+          return h('div', { class: 'flex gap-2 justify-center' }, buttons)
+        }
+      }
+    ]
   },
   performance: {
     enableCache: true,
@@ -318,14 +299,6 @@ const {
     debounceTime: 300
   }
 })
-
-// 抽屉相关
-const dialogVisible = ref(false)
-const roleDrawerVisible = ref(false)
-const permissionDrawerVisible = ref(false)
-const resetPasswordDrawerVisible = ref(false)
-const currentUserData = ref<UserInfo | undefined>(undefined)
-const dialogType = ref<'add' | 'edit'>('add')
 
 // 树组件引用
 const treeRef = ref<InstanceType<typeof ElTree>>()
@@ -362,6 +335,14 @@ const findDepartmentInTree = (dept: DepartmentTree, targetId: string): Departmen
   return null
 }
 
+// 抽屉相关
+const dialogVisible = ref(false)
+const roleDrawerVisible = ref(false)
+const permissionDrawerVisible = ref(false)
+const resetPasswordDrawerVisible = ref(false)
+const currentUserData = ref<UserInfo | undefined>(undefined)
+const dialogType = ref<'add' | 'edit'>('add')
+
 // 监听搜索框过滤树
 watch(treeFilterText, (val) => {
   treeRef.value?.filter(val)
@@ -374,23 +355,6 @@ watch(searchText, () => {
     loadUserList()
   }
 })
-
-/**
- * 获取用户身份标签类型（颜色）
- */
-const getUserTypeTagType = (userType: number) => {
-  switch (userType) {
-    case UserType.SUPER_ADMIN:
-      return 'danger'
-    case UserType.ADMIN:
-      return 'warning'
-    case UserType.DEPT_ADMIN:
-      return 'primary'
-    case UserType.NORMAL_USER:
-    default:
-      return 'info'
-  }
-}
 
 /**
  * 过滤树节点
@@ -636,70 +600,93 @@ onMounted(() => {
 .main-content {
   height: 100%;
   padding: 0;
+  padding-left: 16px;
   display: flex;
   flex-direction: column;
   background: var(--el-fill-color-lighter);
   overflow: hidden;
 }
 
-.toolbar {
+.search-area {
   flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
   background: var(--el-bg-color);
+  padding: 0 16px;
+  height: 49px;
+  display: flex;
+  align-items: center;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
-.toolbar-left {
+.search-form {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
 }
 
-.toolbar-right {
+.search-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  
+  :deep(.el-input),
+  :deep(.el-select) {
+    --el-component-size: 32px;
+  }
+  
+  :deep(.el-switch) {
+    --el-switch-height: 20px;
+  }
+}
+
+.search-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  white-space: nowrap;
+}
+
+.dept-breadcrumb {
+  :deep(.el-breadcrumb__item) {
+    .el-breadcrumb__inner {
+      color: var(--el-color-primary);
+      font-weight: 500;
+    }
+  }
 }
 
 .art-table-card {
   flex: 1;
-  margin: 12px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  margin: 16px;
+  margin-left: 0;
+  margin-top: 16px;
+  border-radius: 8px;
   
   :deep(.el-card__body) {
     flex: 1;
-    padding: 0;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
   }
-}
-
-.user-table {
-  flex: 1;
-  min-height: 0;
-}
-
-.pagination-wrapper {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.total-text {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
+  
+  .table-header {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  
+  :deep(.art-table) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
 .empty-state {
@@ -707,17 +694,5 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.action-buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  
-  :deep(.el-divider--vertical) {
-    margin: 0 4px;
-    height: 14px;
-  }
 }
 </style>

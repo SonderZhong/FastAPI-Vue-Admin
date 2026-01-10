@@ -31,7 +31,7 @@ def normalize_api_method(api_method) -> str:
         import json
         try:
             api_method = json.loads(api_method)
-        except:
+        except Exception:
             api_method = [api_method]
     
     if isinstance(api_method, list):

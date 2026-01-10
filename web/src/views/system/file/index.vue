@@ -1,29 +1,58 @@
 <template>
-  <div class="file-page art-full-height">
-    <ElCard class="file-card" shadow="never">
-      <!-- 头部统计 -->
-      <div class="file-stats">
-        <div class="stat-item">
-          <div class="stat-value">{{ statistics.total_count }}</div>
-          <div class="stat-label">{{ t('file.totalFiles') }}</div>
+  <div class="art-full-height">
+    <!-- 头部统计 -->
+    <div class="stats-area">
+      <div class="stat-item">
+        <div class="stat-value">{{ statistics.total_count }}</div>
+        <div class="stat-label">{{ t('file.totalFiles') }}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ formatFileSize(statistics.total_size) }}</div>
+        <div class="stat-label">{{ t('file.totalSize') }}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ storageConfig.storage_type }}</div>
+        <div class="stat-label">{{ t('file.storageType') }}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">{{ storageConfig.max_size }}MB</div>
+        <div class="stat-label">{{ t('file.maxSize') }}</div>
+      </div>
+    </div>
+
+    <!-- 搜索区域 -->
+    <div class="search-area">
+      <div class="search-form">
+        <div class="search-item">
+          <span class="search-label">{{ t('file.fileType') }}</span>
+          <ElSelect v-model="selectedFileType" placeholder="全部" clearable style="width: 140px" @change="handleSearch">
+            <ElOption v-for="(label, key) in FileTypeLabels" :key="key" :label="label" :value="key" />
+          </ElSelect>
         </div>
-        <div class="stat-item">
-          <div class="stat-value">{{ formatFileSize(statistics.total_size) }}</div>
-          <div class="stat-label">{{ t('file.totalSize') }}</div>
+        <div class="search-item">
+          <span class="search-label">{{ t('file.storageType') }}</span>
+          <ElSelect v-model="selectedStorageType" placeholder="全部" clearable style="width: 140px" @change="handleSearch">
+            <ElOption v-for="(label, key) in StorageTypeLabels" :key="key" :label="label" :value="key" />
+          </ElSelect>
         </div>
-        <div class="stat-item">
-          <div class="stat-value">{{ storageConfig.storage_type }}</div>
-          <div class="stat-label">{{ t('file.storageType') }}</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">{{ storageConfig.max_size }}MB</div>
-          <div class="stat-label">{{ t('file.maxSize') }}</div>
+        <div class="search-item">
+          <span class="search-label">{{ t('file.fileName') }}</span>
+          <ElInput
+            v-model="searchText"
+            :placeholder="t('file.searchPlaceholder')"
+            clearable
+            style="width: 220px"
+            :prefix-icon="Search"
+            @input="handleSearch"
+          />
         </div>
       </div>
+    </div>
 
-      <!-- 操作栏 -->
-      <div class="file-toolbar">
-        <div class="toolbar-left">
+    <!-- 表格卡片 -->
+    <ElCard class="art-table-card" shadow="never">
+      <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="loadData">
+        <template #left>
           <ElUpload
             v-auth="'file:btn:upload'"
             :show-file-list="false"
@@ -31,118 +60,33 @@
             :http-request="handleUpload"
             multiple
           >
-            <ElButton type="primary" v-ripple>
-              <ElIcon><Upload /></ElIcon>
+            <ElButton type="primary" :icon="Upload">
               {{ t('file.upload') }}
             </ElButton>
           </ElUpload>
           <ElButton
+            v-if="selectedIds.length > 0"
             v-auth="'file:btn:delete'"
             type="danger"
             plain
-            :disabled="selectedIds.length === 0"
             @click="handleBatchDelete"
-            v-ripple
           >
-            <ElIcon><Delete /></ElIcon>
-            {{ t('buttons.batchDelete') }}
+            {{ t('buttons.batchDelete') }} ({{ selectedIds.length }})
           </ElButton>
-          <ElButton @click="loadData" v-ripple>
-            <ElIcon><Refresh /></ElIcon>
-            {{ t('buttons.refresh') }}
-          </ElButton>
-        </div>
-        <div class="toolbar-right">
-          <ElSelect v-model="searchParams.file_type" :placeholder="t('file.fileType')" clearable style="width: 120px" @change="handleSearch">
-            <ElOption v-for="(label, key) in FileTypeLabels" :key="key" :label="label" :value="key" />
-          </ElSelect>
-          <ElSelect v-model="searchParams.storage_type" :placeholder="t('file.storageType')" clearable style="width: 140px" @change="handleSearch">
-            <ElOption v-for="(label, key) in StorageTypeLabels" :key="key" :label="label" :value="key" />
-          </ElSelect>
-          <ElInput
-            v-model="searchParams.name"
-            :placeholder="t('file.searchPlaceholder')"
-            clearable
-            style="width: 200px"
-            @input="handleSearch"
-          >
-            <template #prefix>
-              <ElIcon><Search /></ElIcon>
-            </template>
-          </ElInput>
-        </div>
-      </div>
+        </template>
+      </ArtTableHeader>
 
-      <!-- 文件列表 -->
-      <div class="file-list">
-        <ElTable
-          :data="fileList"
-          v-loading="loading"
-          @selection-change="handleSelectionChange"
-          style="width: 100%"
-        >
-          <ElTableColumn type="selection" width="50" />
-          <ElTableColumn :label="t('file.fileName')" min-width="200">
-            <template #default="{ row }">
-              <div class="file-name-cell">
-                <ElIcon class="file-icon" :class="getFileIcon(row.file_type)">
-                  <component :is="getFileIconComponent(row.file_type)" />
-                </ElIcon>
-                <span class="file-name" :title="row.name">{{ row.name }}</span>
-              </div>
-            </template>
-          </ElTableColumn>
-          <ElTableColumn :label="t('file.fileType')" width="100">
-            <template #default="{ row }">
-              <ElTag size="small" :type="getFileTypeTagType(row.file_type)">
-                {{ FileTypeLabels[row.file_type] || row.file_type }}
-              </ElTag>
-            </template>
-          </ElTableColumn>
-          <ElTableColumn :label="t('file.fileSize')" width="100">
-            <template #default="{ row }">
-              {{ formatFileSize(row.size) }}
-            </template>
-          </ElTableColumn>
-          <ElTableColumn :label="t('file.storageType')" width="120">
-            <template #default="{ row }">
-              {{ StorageTypeLabels[row.storage_type] || row.storage_type }}
-            </template>
-          </ElTableColumn>
-          <ElTableColumn prop="uploader_name" :label="t('file.uploader')" width="100" />
-          <ElTableColumn :label="t('common.createdAt')" width="170">
-            <template #default="{ row }">
-              {{ formatDateTime(row.created_at) }}
-            </template>
-          </ElTableColumn>
-          <ElTableColumn :label="t('common.actions')" width="180" fixed="right">
-            <template #default="{ row }">
-              <ElButton type="primary" link size="small" @click="handlePreview(row)">
-                {{ t('file.preview') }}
-              </ElButton>
-              <ElButton type="primary" link size="small" @click="handleCopyUrl(row)">
-                {{ t('file.copyUrl') }}
-              </ElButton>
-              <ElButton v-auth="'file:btn:delete'" type="danger" link size="small" @click="handleDelete(row)">
-                {{ t('buttons.delete') }}
-              </ElButton>
-            </template>
-          </ElTableColumn>
-        </ElTable>
-
-        <!-- 分页 -->
-        <div class="pagination-wrapper">
-          <ElPagination
-            v-model:current-page="searchParams.page"
-            v-model:page-size="searchParams.pageSize"
-            :total="total"
-            :page-sizes="[20, 50, 100]"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="loadData"
-            @current-change="loadData"
-          />
-        </div>
-      </div>
+      <ArtTable
+        :data="data"
+        :loading="loading"
+        :columns="columns"
+        :pagination="pagination"
+        :show-table-header="false"
+        row-key="id"
+        @selection-change="handleSelectionChange"
+        @pagination:size-change="handleSizeChange"
+        @pagination:current-change="handleCurrentChange"
+      />
     </ElCard>
 
     <!-- 图片预览 -->
@@ -155,13 +99,17 @@
 </template>
 
 <script setup lang="ts">
+import { ref, h, onMounted } from 'vue'
 import {
   ElCard, ElButton, ElIcon, ElUpload, ElSelect, ElOption, ElInput,
-  ElTable, ElTableColumn, ElTag, ElPagination, ElMessage, ElMessageBox,
-  ElImageViewer
+  ElTag, ElMessage, ElMessageBox, ElImageViewer
 } from 'element-plus'
-import { Upload, Delete, Refresh, Search, Document, Picture, VideoPlay, Headset, FolderOpened, QuestionFilled } from '@element-plus/icons-vue'
+import { Upload, Search, Document, Picture, VideoPlay, Headset, FolderOpened, QuestionFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useTable } from '@/composables/useTable'
+import { usePermission } from '@/composables/usePermission'
+import ArtTable from '@/components/core/tables/art-table/index.vue'
+import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
 import {
   fetchFileList, fetchDeleteFile, fetchDeleteFileList, fetchUploadFile,
   fetchFileStatistics, fetchStorageConfig, formatFileSize,
@@ -172,23 +120,19 @@ import {
 defineOptions({ name: 'FileManagement' })
 
 const { t } = useI18n()
+const { hasPermission } = usePermission()
 
-// 状态
-const loading = ref(false)
-const fileList = ref<FileInfo[]>([])
-const total = ref(0)
+// 搜索状态
+const searchText = ref('')
+const selectedFileType = ref('')
+const selectedStorageType = ref('')
 const selectedIds = ref<string[]>([])
+
+// 预览状态
 const previewVisible = ref(false)
 const previewUrl = ref('')
 
-const searchParams = reactive({
-  page: 1,
-  pageSize: 20,
-  name: '',
-  file_type: '',
-  storage_type: ''
-})
-
+// 统计数据
 const statistics = ref<FileStatistics>({
   total_count: 0,
   total_size: 0,
@@ -202,20 +146,157 @@ const storageConfig = ref<StorageConfig>({
   allowed_extensions: []
 })
 
-// 加载数据
-const loadData = async () => {
-  try {
-    loading.value = true
-    const response = await fetchFileList(searchParams)
-    if (response?.success && response.data) {
-      fileList.value = response.data.result
-      total.value = response.data.total
-    }
-  } catch (error) {
-    console.error('加载文件列表失败:', error)
-  } finally {
-    loading.value = false
+// 获取文件图标组件
+const getFileIconComponent = (fileType: string) => {
+  const icons: Record<string, any> = {
+    image: Picture,
+    document: Document,
+    video: VideoPlay,
+    audio: Headset,
+    archive: FolderOpened,
+    other: QuestionFilled
   }
+  return icons[fileType] || icons.other
+}
+
+// 获取文件类型标签类型
+const getFileTypeTagType = (fileType: string): 'primary' | 'success' | 'warning' | 'info' | 'danger' => {
+  const types: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'danger'> = {
+    image: 'success',
+    document: 'primary',
+    video: 'warning',
+    audio: 'info',
+    archive: 'danger',
+    other: 'info'
+  }
+  return types[fileType] || 'info'
+}
+
+// 获取文件图标颜色
+const getFileIconColor = (fileType: string) => {
+  const colors: Record<string, string> = {
+    image: '#67c23a',
+    document: '#409eff',
+    video: '#e6a23c',
+    audio: '#909399',
+    archive: '#f56c6c',
+    other: '#909399'
+  }
+  return colors[fileType] || colors.other
+}
+
+// 格式化时间
+const formatDateTime = (dateStr: string) => {
+  if (!dateStr) return '-'
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// 使用 useTable 管理文件列表
+const {
+  columns,
+  columnChecks,
+  data,
+  loading,
+  pagination,
+  searchParams,
+  handleSizeChange,
+  handleCurrentChange,
+  getData,
+  refreshUpdate
+} = useTable<typeof fetchFileList>({
+  core: {
+    apiFn: fetchFileList,
+    apiParams: {},
+    paginationKey: { current: 'page', size: 'pageSize' },
+    columnsFactory: () => [
+      { type: 'selection' },
+      { type: 'index', width: 80, label: t('table.column.index'), align: 'center' },
+      {
+        prop: 'name',
+        label: t('file.fileName'),
+        minWidth: 200,
+        showOverflowTooltip: true,
+        formatter: (row: FileInfo) => h('div', { class: 'flex items-center gap-2' }, [
+          h(ElIcon, { size: 20, style: { color: getFileIconColor(row.file_type) } }, () => h(getFileIconComponent(row.file_type))),
+          h('span', row.name)
+        ])
+      },
+      {
+        prop: 'file_type',
+        label: t('file.fileType'),
+        width: 100,
+        align: 'center',
+        formatter: (row: FileInfo) => h(ElTag, { type: getFileTypeTagType(row.file_type), size: 'small' }, () => FileTypeLabels[row.file_type] || row.file_type)
+      },
+      {
+        prop: 'size',
+        label: t('file.fileSize'),
+        width: 100,
+        align: 'center',
+        formatter: (row: FileInfo) => formatFileSize(row.size)
+      },
+      {
+        prop: 'storage_type',
+        label: t('file.storageType'),
+        width: 120,
+        align: 'center',
+        formatter: (row: FileInfo) => StorageTypeLabels[row.storage_type] || row.storage_type
+      },
+      {
+        prop: 'uploader_name',
+        label: t('file.uploader'),
+        width: 100,
+        align: 'center',
+        formatter: (row: FileInfo) => row.uploader_name || '-'
+      },
+      {
+        prop: 'created_at',
+        label: t('common.createdAt'),
+        width: 160,
+        align: 'center',
+        formatter: (row: FileInfo) => formatDateTime(row.created_at)
+      },
+      {
+        prop: 'actions',
+        label: t('common.actions'),
+        width: 200,
+        align: 'center',
+        fixed: 'right',
+        formatter: (row: FileInfo) => {
+          const buttons = []
+          buttons.push(h(ElButton, { type: 'primary', size: 'small', onClick: () => handlePreview(row) }, () => t('file.preview')))
+          buttons.push(h(ElButton, { type: 'info', size: 'small', onClick: () => handleCopyUrl(row) }, () => t('file.copyUrl')))
+          if (hasPermission('file:btn:delete')) {
+            buttons.push(h(ElButton, { type: 'danger', size: 'small', onClick: () => handleDelete(row) }, () => t('buttons.delete')))
+          }
+          return h('div', { class: 'flex gap-2 justify-center' }, buttons)
+        }
+      }
+    ]
+  },
+  performance: {
+    enableCache: true,
+    cacheTime: 5 * 60 * 1000,
+    debounceTime: 300
+  }
+})
+
+// 加载数据
+const loadData = () => {
+  Object.assign(searchParams, {
+    name: searchText.value || undefined,
+    file_type: selectedFileType.value || undefined,
+    storage_type: selectedStorageType.value || undefined
+  })
+  getData()
+  loadStatistics()
 }
 
 // 加载统计
@@ -244,7 +325,7 @@ const loadStorageConfig = async () => {
 
 // 搜索
 const handleSearch = () => {
-  searchParams.page = 1
+  ;(searchParams as any).page = 1
   loadData()
 }
 
@@ -277,7 +358,6 @@ const handleUpload = async (options: { file: File }) => {
     if (response?.success) {
       ElMessage.success(t('file.uploadSuccess'))
       loadData()
-      loadStatistics()
     } else {
       ElMessage.error(response?.msg || t('file.uploadFailed'))
     }
@@ -299,7 +379,6 @@ const handleDelete = async (row: FileInfo) => {
     if (response?.success) {
       ElMessage.success(t('common.deleteSuccess'))
       loadData()
-      loadStatistics()
     } else {
       ElMessage.error(response?.msg || t('common.deleteFailed'))
     }
@@ -326,7 +405,6 @@ const handleBatchDelete = async () => {
       ElMessage.success(t('common.deleteSuccess'))
       selectedIds.value = []
       loadData()
-      loadStatistics()
     } else {
       ElMessage.error(response?.msg || t('common.deleteFailed'))
     }
@@ -357,151 +435,100 @@ const handleCopyUrl = async (row: FileInfo) => {
   }
 }
 
-// 获取文件图标组件
-const getFileIconComponent = (fileType: string) => {
-  const icons: Record<string, any> = {
-    image: Picture,
-    document: Document,
-    video: VideoPlay,
-    audio: Headset,
-    archive: FolderOpened,
-    other: QuestionFilled
-  }
-  return icons[fileType] || icons.other
-}
-
-// 获取文件图标类名
-const getFileIcon = (fileType: string) => {
-  const icons: Record<string, string> = {
-    image: 'icon-image',
-    document: 'icon-document',
-    video: 'icon-video',
-    audio: 'icon-audio',
-    archive: 'icon-archive',
-    other: 'icon-other'
-  }
-  return icons[fileType] || icons.other
-}
-
-// 获取文件类型标签类型
-const getFileTypeTagType = (fileType: string): 'primary' | 'success' | 'warning' | 'info' | 'danger' => {
-  const types: Record<string, 'primary' | 'success' | 'warning' | 'info' | 'danger'> = {
-    image: 'success',
-    document: 'primary',
-    video: 'warning',
-    audio: 'info',
-    archive: 'danger',
-    other: 'info'
-  }
-  return types[fileType] || 'info'
-}
-
-// 格式化时间
-const formatDateTime = (dateStr: string) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
 onMounted(() => {
   loadData()
-  loadStatistics()
   loadStorageConfig()
 })
 </script>
 
 <style lang="scss" scoped>
-.file-page {
-  .file-card {
-    height: 100%;
-    
-    :deep(.el-card__body) {
-      height: calc(100% - 20px);
-      display: flex;
-      flex-direction: column;
+.stats-area {
+  flex-shrink: 0;
+  display: flex;
+  gap: 40px;
+  background: var(--el-bg-color);
+  border-radius: 8px;
+  padding: 16px 24px;
+  margin-bottom: 12px;
+
+  .stat-item {
+    text-align: center;
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--el-color-primary);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--el-text-color-secondary);
+      margin-top: 4px;
     }
   }
+}
 
-  .file-stats {
-    display: flex;
-    gap: 40px;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-    margin-bottom: 16px;
+.search-area {
+  flex-shrink: 0;
+  background: var(--el-bg-color);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+}
 
-    .stat-item {
-      text-align: center;
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+}
 
-      .stat-value {
-        font-size: 24px;
-        font-weight: 600;
-        color: rgb(var(--art-primary));
-      }
-
-      .stat-label {
-        font-size: 12px;
-        color: var(--el-text-color-secondary);
-        margin-top: 4px;
-      }
-    }
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  :deep(.el-input),
+  :deep(.el-select) {
+    --el-component-size: 36px;
   }
+}
 
-  .file-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+.search-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  white-space: nowrap;
+}
 
-    .toolbar-left {
-      display: flex;
-      gap: 10px;
-    }
-
-    .toolbar-right {
-      display: flex;
-      gap: 10px;
-    }
-  }
-
-  .file-list {
+.art-table-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  margin-top: 0;
+  
+  :deep(.el-card__body) {
     flex: 1;
-    overflow: auto;
-
-    .file-name-cell {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .file-icon {
-        font-size: 20px;
-        flex-shrink: 0;
-
-        &.icon-image { color: #67c23a; }
-        &.icon-document { color: #409eff; }
-        &.icon-video { color: #e6a23c; }
-        &.icon-audio { color: #909399; }
-        &.icon-archive { color: #f56c6c; }
-        &.icon-other { color: #909399; }
-      }
-
-      .file-name {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    }
-  }
-
-  .pagination-wrapper {
+    padding: 12px 16px;
     display: flex;
-    justify-content: flex-end;
-    padding-top: 16px;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  
+  .table-header {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  
+  :deep(.art-table) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
 }
 </style>

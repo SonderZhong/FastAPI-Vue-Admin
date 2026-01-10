@@ -104,20 +104,35 @@ class CasbinMiddleware(BaseHTTPMiddleware):
         try:
             user_id = str(user_info.get("user_id"))
             
-            # 先检查用户直接权限
-            has_permission = await CasbinEnforcer.check_permission(
-                sub=user_id,
-                obj=path,
-                act=method
-            )
+            # 获取用户角色
+            roles = await CasbinEnforcer.get_roles_for_user(user_id)
+            has_permission = False
             
-            if not has_permission:
-                # 检查用户角色权限
-                roles = await CasbinEnforcer.get_roles_for_user(user_id)
-                for role in roles:
-                    if await CasbinEnforcer.check_permission(role, path, method):
-                        has_permission = True
+            # 检查用户角色的 API 权限
+            for role in roles:
+                try:
+                    # 获取角色的 API 权限列表
+                    api_permissions = await CasbinEnforcer.get_api_permissions_for_role(role)
+                    for api_perm in api_permissions:
+                        api_path = api_perm.get("path", "")
+                        api_methods = api_perm.get("method", [])
+                        
+                        # 检查路径匹配（支持通配符）
+                        if self._match_path(path, api_path):
+                            # 检查方法匹配
+                            if isinstance(api_methods, list):
+                                if method in api_methods or "*" in api_methods:
+                                    has_permission = True
+                                    break
+                            elif method == api_methods or api_methods == "*":
+                                has_permission = True
+                                break
+                    
+                    if has_permission:
                         break
+                except Exception as role_err:
+                    logger.debug(f"检查角色 {role} 权限时出错: {role_err}")
+                    continue
             
             if not has_permission:
                 logger.warning(f"权限拒绝: user={user_id}, path={path}, method={method}")
@@ -136,6 +151,26 @@ class CasbinMiddleware(BaseHTTPMiddleware):
             logger.error(f"Casbin 权限验证异常: {e}")
             # 出错时放行，避免阻塞正常请求
             return await call_next(request)
+    
+    def _match_path(self, request_path: str, policy_path: str) -> bool:
+        """路径匹配，支持通配符"""
+        import re
+        
+        # 精确匹配
+        if request_path == policy_path:
+            return True
+        
+        # 通配符匹配 - 将 * 转换为正则
+        if "*" in policy_path:
+            # /api/user/* -> /api/user/.*
+            pattern = policy_path.replace("*", ".*")
+            pattern = f"^{pattern}$"
+            try:
+                return bool(re.match(pattern, request_path))
+            except Exception:
+                return False
+        
+        return False
     
     async def _get_user_from_token(self, request: Request) -> dict:
         """从 Token 解析用户信息"""

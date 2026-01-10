@@ -18,7 +18,7 @@ class RoleInfo(DataBaseModel):
     code: str = Field(..., max_length=255, description="角色编码")
     description: Optional[str] = Field(default=None, max_length=255, description="角色描述")
     status: int = Field(default=1, description="角色状态")
-    department: Optional[str] = Field(default=None, description="所属部门")
+    department_id: Optional[str] = Field(default=None, description="所属部门ID")
 
 
 class AddRoleParams(BaseModel):
@@ -30,7 +30,7 @@ class AddRoleParams(BaseModel):
     code: str = Field(..., max_length=255, description="角色编码")
     description: Optional[str] = Field(default=None, max_length=255, description="角色描述")
     status: int = Field(default=1, description="角色状态")
-    department: Optional[str] = Field(default=None, description="所属部门")
+    department_id: Optional[str] = Field(default=None, description="所属部门ID")
 
 
 class UpdateRoleParams(BaseModel):
@@ -42,7 +42,7 @@ class UpdateRoleParams(BaseModel):
     code: Optional[str] = Field(default=None, max_length=255, description="角色编码")
     description: Optional[str] = Field(default=None, max_length=255, description="角色描述")
     status: Optional[int] = Field(default=None, description="角色状态")
-    department: Optional[str] = Field(default=None, description="所属部门")
+    department_id: Optional[str] = Field(default=None, description="所属部门ID")
 
 
 class UpdateRoleResponse(BaseResponse):

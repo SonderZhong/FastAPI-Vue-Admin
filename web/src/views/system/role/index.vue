@@ -51,136 +51,64 @@
       <!-- 右侧主内容区 -->
       <ElMain class="main-content">
         <template v-if="selectedDepartment">
-          <!-- 工具栏 -->
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <ElBreadcrumb separator="/">
-                <ElBreadcrumbItem>{{ selectedDepartment.name }}</ElBreadcrumbItem>
-                <ElBreadcrumbItem v-if="!showSubDeptRoles">
-                  {{ $t('role.currentOnly', '仅当前部门') }}
-                </ElBreadcrumbItem>
-                <ElBreadcrumbItem v-else>
-                  {{ $t('role.includeChild', '含下属部门') }}
-                </ElBreadcrumbItem>
-              </ElBreadcrumb>
-              <ElSwitch
-                v-model="showSubDeptRoles"
-                :active-text="$t('role.includeSub', '含下属')"
-                size="small"
-                @change="handleScopeChange"
-              />
-            </div>
-            <div class="toolbar-right">
-              <ElInput
-                v-model="searchText"
-                :placeholder="$t('role.search', '搜索角色')"
-                clearable
-                size="small"
-                style="width: 180px"
-                :prefix-icon="Search"
-              />
-              <ElButton
-                v-auth="'role:btn:add'"
-                type="primary"
-                size="small"
-                :icon="Plus"
-                @click="showDialog('add')"
-              >
-                {{ $t('role.add', '新增角色') }}
-              </ElButton>
+          <!-- 搜索区域 -->
+          <div class="search-area">
+            <div class="search-form">
+              <div class="search-item">
+                <span class="search-label">{{ $t('common.dept', '部门') }}</span>
+                <ElBreadcrumb separator="/" class="dept-breadcrumb">
+                  <ElBreadcrumbItem>{{ selectedDepartment.name }}</ElBreadcrumbItem>
+                </ElBreadcrumb>
+              </div>
+              <div class="search-item">
+                <span class="search-label">{{ $t('role.scope', '范围') }}</span>
+                <ElSwitch
+                  v-model="showSubDeptRoles"
+                  :active-text="$t('role.includeSub', '含下属')"
+                  :inactive-text="$t('role.currentOnly', '仅当前')"
+                  @change="handleScopeChange"
+                />
+              </div>
+              <div class="search-item">
+                <span class="search-label">{{ $t('role.name', '角色名称') }}</span>
+                <ElInput
+                  v-model="searchText"
+                  :placeholder="$t('role.search', '搜索角色')"
+                  clearable
+                  style="width: 200px"
+                  :prefix-icon="Search"
+                />
+              </div>
             </div>
           </div>
 
           <!-- 表格卡片 -->
           <ElCard class="art-table-card" shadow="never">
-            <ArtTableHeader :loading="loading" @refresh="refreshData" />
+            <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
+              <template #left>
+                <ElButton
+                  v-auth="'role:btn:add'"
+                  type="primary"
+                  :icon="Plus"
+                  @click="showDialog('add')"
+                >
+                  {{ $t('role.add', '新增角色') }}
+                </ElButton>
+              </template>
+            </ArtTableHeader>
             
-            <ElTable
-              v-loading="loading"
-              :data="roles"
-              border
-              stripe
-              highlight-current-row
-              class="role-table"
+            <ArtTable
+              :data="data"
+              :loading="loading"
+              :columns="columns"
+              :pagination="pagination"
+              :show-table-header="false"
+              row-key="id"
               @row-click="handleRowClick"
               @row-dblclick="handleRowDblClick"
-            >
-              <ElTableColumn type="index" width="60" align="center" :label="$t('table.index', '#')" />
-              <ElTableColumn prop="name" :label="$t('role.name', '角色名称')" min-width="120" show-overflow-tooltip />
-              <ElTableColumn prop="code" :label="$t('role.code', '角色编码')" min-width="130" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <code class="code-tag">{{ row.code }}</code>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="department_name" :label="$t('common.dept', '部门')" min-width="120" show-overflow-tooltip>
-                <template #default="{ row }">
-                  {{ row.department_name || '-' }}
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="description" :label="$t('common.desc', '描述')" min-width="180" show-overflow-tooltip>
-                <template #default="{ row }">
-                  <span class="text-gray-500">{{ row.description || '-' }}</span>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="status" :label="$t('common.status', '状态')" width="80" align="center">
-                <template #default="{ row }">
-                  <ElTag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-                    {{ row.status === 1 ? $t('common.enable', '启用') : $t('common.disable', '禁用') }}
-                  </ElTag>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn prop="created_at" :label="$t('common.createTime', '创建时间')" width="160" align="center">
-                <template #default="{ row }">
-                  <span class="text-gray-500 text-xs">{{ dayjs(row.created_at).format('YYYY-MM-DD HH:mm') }}</span>
-                </template>
-              </ElTableColumn>
-              <ElTableColumn :label="$t('common.actions', '操作')" width="180" align="center" fixed="right">
-                <template #default="{ row }">
-                  <ElButton
-                    v-auth="'role:btn:addPermission'"
-                    type="warning"
-                    size="small"
-                    link
-                    @click.stop="showPermissionDialog(row)"
-                  >
-                    {{ $t('role.perm', '权限') }}
-                  </ElButton>
-                  <ElButton
-                    v-auth="'role:btn:update'"
-                    type="primary"
-                    size="small"
-                    link
-                    @click.stop="showDialog('edit', row)"
-                  >
-                    {{ $t('buttons.edit', '编辑') }}
-                  </ElButton>
-                  <ElButton
-                    v-auth="'role:btn:delete'"
-                    type="danger"
-                    size="small"
-                    link
-                    @click.stop="deleteRole(row)"
-                  >
-                    {{ $t('buttons.delete', '删除') }}
-                  </ElButton>
-                </template>
-              </ElTableColumn>
-            </ElTable>
-
-            <!-- 分页 -->
-            <div class="pagination-wrapper">
-              <span class="total-text">共 {{ total }} 条</span>
-              <ElPagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 50, 100]"
-                :total="total"
-                layout="sizes, prev, pager, next, jumper"
-                small
-                @size-change="handleSizeChange"
-                @current-change="handlePageChange"
-              />
-            </div>
+              @pagination:size-change="handleSizeChange"
+              @pagination:current-change="handleCurrentChange"
+            />
           </ElCard>
         </template>
 
@@ -225,13 +153,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { dayjs, ElMessage, ElMessageBox, ElTree } from 'element-plus'
+import { ref, h, watch, onMounted } from 'vue'
+import { dayjs, ElMessage, ElMessageBox, ElTree, ElTag, ElButton } from 'element-plus'
 import { Search, OfficeBuilding, Plus } from '@element-plus/icons-vue'
 import { fetchDepartmentTree } from '@/api/system/department'
-import { fetchRoleList, deleteRole as deleteRoleApi } from '@/api/system/role'
+import { fetchRoleList, deleteRole as deleteRoleApi, type RoleQueryParams } from '@/api/system/role'
 import type { DepartmentTree, DepartmentInfo } from '@/typings/department'
 import type { RoleInfo } from '@/api/system/role'
+import { useI18n } from 'vue-i18n'
+import { useTable } from '@/composables/useTable'
+import { usePermission } from '@/composables/usePermission'
+import ArtTable from '@/components/core/tables/art-table/index.vue'
 import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
 import RoleEditDrawer from './modules/role-edit-drawer.vue'
 import RolePermissionDrawer from './modules/role-permission-drawer.vue'
@@ -239,21 +171,17 @@ import RoleDetailDrawer from './modules/role-detail-drawer.vue'
 
 defineOptions({ name: 'Role' })
 
+const { t: $t } = useI18n()
+const { hasPermission } = usePermission()
+
 // 响应式数据
-const loading = ref(false)
 const treeFilterText = ref('')
 const searchText = ref('')
 const showSubDeptRoles = ref(false)
 const departmentTree = ref<DepartmentTree[]>([])
 const selectedDepartment = ref<DepartmentInfo | null>(null)
 const selectedRole = ref<RoleInfo | null>(null)
-const roles = ref<RoleInfo[]>([])
 const departmentRoleCounts = ref<Record<string, number>>({})
-
-// 分页
-const currentPage = ref(1)
-const pageSize = ref(20)
-const total = ref(0)
 
 // 弹窗
 const dialogVisible = ref(false)
@@ -265,6 +193,91 @@ const dialogType = ref<'add' | 'edit'>('add')
 // 树组件
 const treeRef = ref<InstanceType<typeof ElTree>>()
 const treeProps = { children: 'children', label: 'name' }
+
+// 使用 useTable 管理角色列表
+const {
+  columns,
+  columnChecks,
+  data,
+  loading,
+  pagination,
+  searchParams,
+  handleSizeChange,
+  handleCurrentChange,
+  getData,
+  refreshUpdate
+} = useTable<typeof fetchRoleList>({
+  core: {
+    apiFn: fetchRoleList,
+    apiParams: {} as RoleQueryParams,
+    immediate: false,
+    paginationKey: { current: 'page', size: 'pageSize' },
+    columnsFactory: () => [
+      { type: 'index', width: 80, label: $t('table.column.index'), align: 'center' },
+      { prop: 'name', label: $t('role.name', '角色名称'), align: 'center', showOverflowTooltip: true },
+      {
+        prop: 'code',
+        label: $t('role.code', '角色编码'),
+        align: 'center',
+        showOverflowTooltip: true,
+        formatter: (row: RoleInfo) => h('code', { class: 'code-tag' }, row.code)
+      },
+      {
+        prop: 'department_name',
+        label: $t('common.dept', '部门'),
+        align: 'center',
+        showOverflowTooltip: true,
+        formatter: (row: RoleInfo) => row.department_name || '-'
+      },
+      {
+        prop: 'description',
+        label: $t('common.desc', '描述'),
+        align: 'center',
+        showOverflowTooltip: true,
+        formatter: (row: RoleInfo) => h('span', { class: 'text-gray-500' }, row.description || '-')
+      },
+      {
+        prop: 'status',
+        label: $t('common.status', '状态'),
+        width: 80,
+        align: 'center',
+        formatter: (row: RoleInfo) => h(ElTag, { type: row.status === 1 ? 'success' : 'danger', size: 'small' }, () => row.status === 1 ? $t('common.enable', '启用') : $t('common.disable', '禁用'))
+      },
+      {
+        prop: 'created_at',
+        label: $t('common.createTime', '创建时间'),
+        width: 160,
+        align: 'center',
+        formatter: (row: RoleInfo) => h('span', { class: 'text-gray-500 text-xs' }, dayjs(row.created_at).format('YYYY-MM-DD HH:mm'))
+      },
+      {
+        prop: 'actions',
+        label: $t('common.actions', '操作'),
+        width: 200,
+        align: 'center',
+        fixed: 'right',
+        formatter: (row: RoleInfo) => {
+          const buttons = []
+          if (hasPermission('role:btn:addPermission')) {
+            buttons.push(h(ElButton, { type: 'warning', size: 'small', onClick: () => showPermissionDialog(row) }, () => $t('role.perm', '权限')))
+          }
+          if (hasPermission('role:btn:update')) {
+            buttons.push(h(ElButton, { type: 'primary', size: 'small', onClick: () => showDialog('edit', row) }, () => $t('buttons.edit', '编辑')))
+          }
+          if (hasPermission('role:btn:delete')) {
+            buttons.push(h(ElButton, { type: 'danger', size: 'small', onClick: () => deleteRole(row) }, () => $t('buttons.delete', '删除')))
+          }
+          return h('div', { class: 'flex gap-2 justify-center' }, buttons)
+        }
+      }
+    ]
+  },
+  performance: {
+    enableCache: true,
+    cacheTime: 5 * 60 * 1000,
+    debounceTime: 300
+  }
+})
 
 const getDepartmentRoleCount = (deptId: string): number => {
   return departmentRoleCounts.value[deptId] || 0
@@ -289,7 +302,7 @@ const getAllSubDepartmentIds = (dept: DepartmentTree): string[] => {
 
 watch(searchText, () => {
   if (selectedDepartment.value) {
-    currentPage.value = 1
+    ;(searchParams as any).page = 1
     loadRoleList()
   }
 })
@@ -302,12 +315,12 @@ const handleNodeClick = (data: DepartmentInfo) => {
   selectedDepartment.value = data
   selectedRole.value = null
   detailDrawerVisible.value = false
-  currentPage.value = 1
+  ;(searchParams as any).page = 1
   loadRoleList()
 }
 
 const handleScopeChange = () => {
-  currentPage.value = 1
+  ;(searchParams as any).page = 1
   loadRoleList()
 }
 
@@ -335,51 +348,25 @@ const loadDepartmentTree = async () => {
 
 const loadRoleList = async () => {
   if (!selectedDepartment.value) return
-  try {
-    loading.value = true
-    let deptIds: string[]
-    if (showSubDeptRoles.value) {
-      let target: DepartmentTree | null = null
-      for (const d of departmentTree.value) {
-        target = findDepartmentInTree(d, selectedDepartment.value.id)
-        if (target) break
-      }
-      deptIds = target ? getAllSubDepartmentIds(target) : [selectedDepartment.value.id]
-    } else {
-      deptIds = [selectedDepartment.value.id]
+  
+  let deptIds: string[]
+  if (showSubDeptRoles.value) {
+    let target: DepartmentTree | null = null
+    for (const d of departmentTree.value) {
+      target = findDepartmentInTree(d, selectedDepartment.value.id)
+      if (target) break
     }
-
-    const res = await fetchRoleList({
-      page: currentPage.value,
-      pageSize: pageSize.value,
-      department_ids: deptIds.join(','),
-      name: searchText.value || undefined
-    })
-
-    if (res.success && res.data) {
-      roles.value = res.data.result || []
-      total.value = res.data.total || 0
-      if (!showSubDeptRoles.value) {
-        departmentRoleCounts.value[selectedDepartment.value.id] = total.value
-      }
-    }
-  } catch (e) {
-    console.error('加载角色失败:', e)
-    ElMessage.error('加载角色数据失败')
-  } finally {
-    loading.value = false
+    deptIds = target ? getAllSubDepartmentIds(target) : [selectedDepartment.value.id]
+  } else {
+    deptIds = [selectedDepartment.value.id]
   }
-}
 
-const handlePageChange = (page: number) => {
-  currentPage.value = page
-  loadRoleList()
-}
+  Object.assign(searchParams, {
+    department_ids: deptIds.join(','),
+    name: searchText.value || undefined
+  })
 
-const handleSizeChange = (size: number) => {
-  pageSize.value = size
-  currentPage.value = 1
-  loadRoleList()
+  getData()
 }
 
 const showDialog = (type: 'add' | 'edit', role?: RoleInfo) => {
@@ -417,13 +404,12 @@ const deleteRole = async (role: RoleInfo) => {
   }
 }
 
-const refreshData = () => loadRoleList()
+const refreshData = () => refreshUpdate()
 
 onMounted(() => loadDepartmentTree())
 </script>
 
 <style lang="scss" scoped>
-// 关键：让 ElContainer 填满 art-full-height
 :deep(.el-container) {
   height: 100%;
 }
@@ -454,7 +440,7 @@ onMounted(() => loadDepartmentTree())
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    min-height: 0; // 关键：允许 flex 子元素收缩
+    min-height: 0;
   }
 }
 
@@ -496,55 +482,93 @@ onMounted(() => loadDepartmentTree())
 .main-content {
   height: 100%;
   padding: 0;
+  padding-left: 16px;
   display: flex;
   flex-direction: column;
   background: var(--el-fill-color-lighter);
   overflow: hidden;
 }
 
-.toolbar {
+.search-area {
   flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
   background: var(--el-bg-color);
+  padding: 0 16px;
+  height: 49px;
+  display: flex;
+  align-items: center;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
-.toolbar-left {
+.search-form {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  gap: 24px;
 }
 
-.toolbar-right {
+.search-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  
+  :deep(.el-input),
+  :deep(.el-select) {
+    --el-component-size: 32px;
+  }
+  
+  :deep(.el-switch) {
+    --el-switch-height: 20px;
+  }
+}
+
+.search-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  white-space: nowrap;
+}
+
+.dept-breadcrumb {
+  :deep(.el-breadcrumb__item) {
+    .el-breadcrumb__inner {
+      color: var(--el-color-primary);
+      font-weight: 500;
+    }
+  }
 }
 
 .art-table-card {
   flex: 1;
-  margin: 12px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   min-height: 0;
+  margin: 16px;
+  margin-left: 0;
+  margin-top: 16px;
+  border-radius: 8px;
   
   :deep(.el-card__body) {
     flex: 1;
-    padding: 0;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
   }
-}
-
-.role-table {
-  flex: 1;
-  min-height: 0;
+  
+  .table-header {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  
+  :deep(.art-table) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 
 .code-tag {
@@ -552,21 +576,6 @@ onMounted(() => loadDepartmentTree())
   background: var(--el-fill-color-light);
   padding: 2px 6px;
   border-radius: 4px;
-}
-
-.pagination-wrapper {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.total-text {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
 }
 
 .empty-state {

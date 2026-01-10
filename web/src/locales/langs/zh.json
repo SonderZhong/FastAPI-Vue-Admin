@@ -369,7 +369,7 @@
       "expand": "展开",
       "index": "序号"
     },
-    "index": "#",
+    "index": "序号",
     "zebra": "斑马纹",
     "border": "边框",
     "headerBackground": "表头背景"
@@ -382,6 +382,7 @@
     "delete": "删除",
     "export": "导出",
     "import": "导入",
+    "upload": "上传",
     "info": "查看详情",
     "resetPassword": "重置密码",
     "assignPermission": "分配权限",
@@ -489,7 +490,8 @@
     "remark": "备注",
     "updateTime": "更新时间",
     "icon": "图标",
-    "unknown": "未知"
+    "unknown": "未知",
+    "more": "更多"
   },
   "permission": {
     "title": "权限管理",
@@ -599,7 +601,8 @@
     "rolePermissions": "角色权限",
     "noPermissions": "暂无权限",
     "selectDepartmentTip": "请选择左侧部门查看角色信息",
-    "currentOnly": "仅当前部门",
+    "scope": "范围",
+    "currentOnly": "仅当前",
     "includeChild": "含下属部门",
     "includeSub": "含下属",
     "permissionStats": "权限统计",
@@ -615,6 +618,9 @@
     "userDetail": "用户详情",
     "username": "用户名",
     "nickname": "昵称",
+    "avatar": "头像",
+    "userType": "身份",
+    "scope": "范围",
     "email": "邮箱",
     "phone": "手机",
     "gender": "性别",
@@ -764,7 +770,13 @@
     "uploadFailed": "上传失败",
     "fileTooLarge": "文件大小超过限制（最大{size}MB）",
     "fileTypeNotAllowed": "不支持的文件类型",
-    "confirmDelete": "确定要删除文件 \"{name}\" 吗？"
+    "confirmDelete": "确定要删除文件 \"{name}\" 吗？",
+    "buttons": {
+      "list": "查看文件列表",
+      "upload": "上传文件",
+      "delete": "删除文件",
+      "info": "查看文件详情"
+    }
   },
   "cache": {
     "title": "缓存管理",

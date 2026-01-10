@@ -23,7 +23,7 @@ class UserInfo(DataBaseModel):
     gender: int = Field(default=0, description="性别（0未知，1男，2女）")
     status: int = Field(default=1, description="用户状态（1启用，0禁用）")
     user_type: int = Field(default=3, description="用户身份标识（0超级管理员，1管理员，2部门管理员，3普通用户）")
-    department: Optional[str] = Field(default=None, description="所属部门")
+    department_id: Optional[str] = Field(default=None, description="所属部门ID")
 
 
 class AddUserParams(BaseModel):
@@ -40,7 +40,7 @@ class AddUserParams(BaseModel):
     gender: int = Field(default=0, description="性别（0未知，1男，2女）")
     status: int = Field(default=1, description="用户状态（1启用，0禁用）")
     user_type: int = Field(default=3, description="用户身份标识（0超级管理员，1管理员，2部门管理员，3普通用户）")
-    department: Optional[str] = Field(default=None, description="所属部门")
+    department_id: Optional[str] = Field(default=None, description="所属部门ID")
 
 
 class UpdateUserParams(BaseModel):
@@ -57,7 +57,7 @@ class UpdateUserParams(BaseModel):
     gender: Optional[int] = Field(default=None, description="性别（0未知，1男，2女）")
     status: Optional[int] = Field(default=None, description="用户状态（1启用，0禁用）")
     user_type: Optional[int] = Field(default=None, description="用户身份标识（0超级管理员，1管理员，2部门管理员，3普通用户）")
-    department: Optional[str] = Field(default=None, description="所属部门")
+    department_id: Optional[str] = Field(default=None, description="所属部门ID")
 
 
 class GetUserListResult(ListQueryResult):

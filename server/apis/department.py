@@ -483,10 +483,27 @@ async def get_department_tree(
     )
 
     # 构建树形结构
+    # 获取所有部门ID集合，用于判断父部门是否在结果集中
+    dept_ids = {str(dept.get("id")) for dept in departments}
+    
     def build_tree(parent_id=None):
         tree = []
         for dept in departments:
-            if str(dept.get("parent_id")) == str(parent_id):
+            dept_parent_id = dept.get("parent_id")
+            dept_parent_id_str = str(dept_parent_id) if dept_parent_id else None
+            
+            # 判断是否应该作为当前层级的节点
+            should_add = False
+            if parent_id is None:
+                # 根节点：parent_id 为空，或者 parent_id 不在结果集中（作为虚拟根节点）
+                if dept_parent_id is None or dept_parent_id_str not in dept_ids:
+                    should_add = True
+            else:
+                # 子节点：parent_id 匹配
+                if dept_parent_id_str == str(parent_id):
+                    should_add = True
+            
+            if should_add:
                 dept_copy = dict(dept)
                 children = build_tree(dept.get("id"))
                 if children:
