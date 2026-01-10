@@ -465,7 +465,7 @@ initialized: true
 
 app:
   name: "{config.app.name}"
-  version: "1.0.4"
+  version: "1.0.5"
   host: "{config.app.host}"
   port: {config.app.port}
   env: "{config.app.env}"

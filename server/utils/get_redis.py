@@ -107,6 +107,11 @@ class RedisUtil:
             logger.warning(f"关闭Redis连接时发生错误: {e}")
 
     @classmethod
+    def _get_config_key(cls, key: str) -> str:
+        """获取系统配置的完整 Redis 键名"""
+        return f"{RedisKeyConfig.SYSTEM_CONFIG.key}:{key}"
+
+    @classmethod
     async def init_system_config(
             cls,
             conn: AsyncRedis,
@@ -119,8 +124,8 @@ class RedisUtil:
                 logger.warning("未查询到系统配置数据，跳过Redis初始化")
                 return
 
-            # 获取现有配置的所有键名
-            existing_keys = [item['key'] for item in configs]
+            # 获取现有配置的所有 Redis 键名（带前缀）
+            existing_keys = [cls._get_config_key(item['key']) for item in configs]
             
             # 删除现有的系统配置键（批量删除）
             if existing_keys:
@@ -130,10 +135,11 @@ class RedisUtil:
                     # 忽略不存在的键
                     pass
 
-            # 重新设置所有系统配置到Redis
+            # 重新设置所有系统配置到Redis（带前缀）
             async with conn.pipeline() as pipe:
                 for item in configs:
-                    await pipe.set(item['key'], item["value"])
+                    redis_key = cls._get_config_key(item['key'])
+                    await pipe.set(redis_key, item["value"])
                 await pipe.execute()
 
             logger.info(f"系统配置已同步到Redis（共{len(configs)}条）")
@@ -150,7 +156,8 @@ class RedisUtil:
     ) -> str:
         """从Redis获取系统配置值"""
         try:
-            value = await conn.get(key)
+            redis_key = cls._get_config_key(key)
+            value = await conn.get(redis_key)
             return value.decode('utf-8') if value else ""
         except RedisError as e:
             logger.error(f"获取系统配置失败 key={key}: {e}")
@@ -165,8 +172,9 @@ class RedisUtil:
     ) -> bool:
         """设置系统配置到Redis"""
         try:
-            await conn.set(key, value)
-            logger.info(f"系统配置已更新 key={key}")
+            redis_key = cls._get_config_key(key)
+            await conn.set(redis_key, value)
+            logger.info(f"系统配置已更新 key={redis_key}")
             return True
         except RedisError as e:
             logger.error(f"设置系统配置失败 key={key}: {e}")
