@@ -1,5 +1,6 @@
 <template>
-  <ElSubMenu v-if="hasChildren" :index="item.path || item.meta.title">
+  <!-- 有多个子菜单时显示为展开菜单 -->
+  <ElSubMenu v-if="hasMultipleChildren" :index="item.path || item.meta.title">
     <template #title>
       <i
         class="menu-icon iconfont-sys"
@@ -25,17 +26,18 @@
     />
   </ElSubMenu>
 
+  <!-- 普通菜单项（包括只有一个子路由的情况） -->
   <ElMenuItem
     v-else-if="!item.meta.isHide"
-    :index="item.path || item.meta.title"
-    @click="goPage(item)"
+    :index="getMenuItemPath"
+    @click="goPage(getMenuItemTarget)"
   >
     <i
       class="menu-icon iconfont-sys"
       :style="{ color: theme?.iconColor }"
       v-html="item.meta.icon"
     ></i>
-    <span>{{ formatMenuTitle(item.meta.title) }}</span>
+    <span>{{ formatMenuTitle(getSingleChildTitle) }}</span>
     <div
       v-if="item.meta.showBadge"
       class="art-badge"
@@ -76,9 +78,34 @@
     return props.item.children?.filter((child) => !child.meta.isHide) || []
   })
 
-  // 计算当前项是否有可见的子菜单
-  const hasChildren = computed(() => {
-    return filteredChildren.value.length > 0
+  // 计算当前项是否有多个可见的子菜单（只有多于1个时才展开）
+  const hasMultipleChildren = computed(() => {
+    return filteredChildren.value.length > 1
+  })
+
+  // 判断是否只有一个子路由
+  const hasSingleChild = computed(() => {
+    return filteredChildren.value.length === 1
+  })
+
+  // 获取菜单项的实际跳转目标
+  const getMenuItemTarget = computed(() => {
+    if (hasSingleChild.value) {
+      return filteredChildren.value[0]
+    }
+    return props.item
+  })
+
+  // 获取菜单项的路径
+  const getMenuItemPath = computed(() => {
+    const target = getMenuItemTarget.value
+    return target.path || target.meta.title
+  })
+
+  // 获取菜单项显示的标题
+  const getSingleChildTitle = computed(() => {
+    const target = getMenuItemTarget.value
+    return target.meta.title
   })
 
   const goPage = (item: AppRouteRecord) => {

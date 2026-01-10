@@ -1,7 +1,7 @@
 <template>
   <template v-for="item in filteredMenuItems" :key="item.path">
-    <!-- 包含子菜单的项目 -->
-    <ElSubMenu v-if="hasChildren(item)" :index="item.path || item.meta.title" :level="level">
+    <!-- 包含子菜单的项目（多于1个子路由时才展开） -->
+    <ElSubMenu v-if="hasMultipleChildren(item)" :index="item.path || item.meta.title" :level="level">
       <template #title>
         <MenuItemIcon :icon="item.meta.icon" :color="theme?.iconColor" />
         <span class="menu-name">
@@ -19,12 +19,12 @@
       />
     </ElSubMenu>
 
-    <!-- 普通菜单项 -->
+    <!-- 普通菜单项（包括只有一个子路由的情况） -->
     <ElMenuItem
       v-else
-      :index="isExternalLink(item) ? undefined : item.path || item.meta.title"
+      :index="isExternalLink(item) ? undefined : getMenuItemPath(item)"
       :level-item="level + 1"
-      @click="goPage(item)"
+      @click="goPage(getMenuItemTarget(item))"
     >
       <MenuItemIcon :icon="item.meta.icon" :color="theme?.iconColor" />
       <div
@@ -35,7 +35,7 @@
 
       <template #title>
         <span class="menu-name">
-          {{ formatMenuTitle(item.meta.title) }}
+          {{ formatMenuTitle(getSingleChildTitle(item)) }}
         </span>
         <div v-if="item.meta.showBadge" class="art-badge" />
         <div v-if="item.meta.showTextBadge && (level > 0 || menuOpen)" class="art-text-badge">
@@ -143,17 +143,68 @@
   }
 
   /**
-   * 判断菜单项是否包含可见的子菜单
+   * 判断菜单项是否包含多个可见的子菜单
+   * 只有多于1个子路由时才显示为展开菜单
    * @param item 菜单项数据
-   * @returns 是否包含可见的子菜单
+   * @returns 是否包含多个可见的子菜单
    */
-  const hasChildren = (item: AppRouteRecord): boolean => {
+  const hasMultipleChildren = (item: AppRouteRecord): boolean => {
     if (!item.children || item.children.length === 0) {
       return false
     }
     // 递归检查是否有可见的子菜单
     const filteredChildren = filterRoutes(item.children)
-    return filteredChildren.length > 0
+    // 只有多于1个子路由时才返回true
+    return filteredChildren.length > 1
+  }
+
+  /**
+   * 判断菜单项是否只有一个子路由
+   * @param item 菜单项数据
+   * @returns 是否只有一个子路由
+   */
+  const hasSingleChild = (item: AppRouteRecord): boolean => {
+    if (!item.children || item.children.length === 0) {
+      return false
+    }
+    const filteredChildren = filterRoutes(item.children)
+    return filteredChildren.length === 1
+  }
+
+  /**
+   * 获取菜单项的实际跳转目标
+   * 如果只有一个子路由，返回该子路由
+   * @param item 菜单项数据
+   * @returns 实际跳转的菜单项
+   */
+  const getMenuItemTarget = (item: AppRouteRecord): AppRouteRecord => {
+    if (hasSingleChild(item)) {
+      const filteredChildren = filterRoutes(item.children!)
+      return filteredChildren[0]
+    }
+    return item
+  }
+
+  /**
+   * 获取菜单项的路径
+   * 如果只有一个子路由，返回该子路由的路径
+   * @param item 菜单项数据
+   * @returns 菜单项路径
+   */
+  const getMenuItemPath = (item: AppRouteRecord): string => {
+    const target = getMenuItemTarget(item)
+    return target.path || target.meta.title
+  }
+
+  /**
+   * 获取菜单项显示的标题
+   * 如果只有一个子路由，返回该子路由的标题
+   * @param item 菜单项数据
+   * @returns 菜单项标题
+   */
+  const getSingleChildTitle = (item: AppRouteRecord): string => {
+    const target = getMenuItemTarget(item)
+    return target.meta.title
   }
 
   /**

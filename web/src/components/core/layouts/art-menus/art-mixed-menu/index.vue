@@ -117,15 +117,41 @@
   }
 
   /**
+   * 获取菜单项的可见子菜单
+   * @param item 菜单项数据
+   * @returns 可见的子菜单列表
+   */
+  const getVisibleChildren = (item: AppRouteRecord): AppRouteRecord[] => {
+    return item.children?.filter((child) => !child.meta.isHide) || []
+  }
+
+  /**
+   * 获取菜单项的实际显示目标
+   * 如果只有一个子路由，返回该子路由
+   * @param item 菜单项数据
+   * @returns 实际显示的菜单项
+   */
+  const getDisplayTarget = (item: AppRouteRecord): AppRouteRecord => {
+    const visibleChildren = getVisibleChildren(item)
+    if (visibleChildren.length === 1) {
+      return visibleChildren[0]
+    }
+    return item
+  }
+
+  /**
    * 预处理菜单列表
    * 缓存每个菜单项的激活状态和格式化标题
    */
   const processedMenuList = computed<ProcessedMenuItem[]>(() => {
-    return props.list.map((item) => ({
-      ...item,
-      isActive: isMenuItemActive(item),
-      formattedTitle: formatMenuTitle(item.meta.title)
-    }))
+    return props.list.map((item) => {
+      const displayTarget = getDisplayTarget(item)
+      return {
+        ...item,
+        isActive: isMenuItemActive(item),
+        formattedTitle: formatMenuTitle(displayTarget.meta.title)
+      }
+    })
   })
 
   /**
