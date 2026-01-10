@@ -1,177 +1,63 @@
 <template>
   <div class="art-full-height">
-    <ElContainer class="h-full">
-      <!-- 左侧类型筛选 -->
-      <ElAside width="200px" class="type-aside">
-        <ElCard shadow="never" class="h-full type-card">
-          <template #header>
-            <span class="font-medium">通知类型</span>
-          </template>
-          
-          <div class="type-list">
-            <div
-              v-for="item in typeOptions"
-              :key="item.value"
-              class="type-item"
-              :class="{ active: selectedType === item.value }"
-              @click="handleTypeChange(item.value)"
-            >
-              <ElIcon :size="18" :class="item.iconClass">
-                <component :is="item.icon" />
-              </ElIcon>
-              <span>{{ item.label }}</span>
-              <ElBadge v-if="item.count > 0" :value="item.count" :max="99" />
-            </div>
-          </div>
-        </ElCard>
-      </ElAside>
-
-      <!-- 右侧主内容区 -->
-      <ElMain class="main-content">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <ElBreadcrumb separator="/">
-              <ElBreadcrumbItem>通知管理</ElBreadcrumbItem>
-              <ElBreadcrumbItem>{{ currentTypeName }}</ElBreadcrumbItem>
-            </ElBreadcrumb>
-          </div>
-          <div class="toolbar-right">
-            <ElInput
-              v-model="searchText"
-              placeholder="搜索通知标题"
-              clearable
-              size="small"
-              style="width: 200px"
-              :prefix-icon="Search"
-              @input="handleSearch"
-            />
-            <ElSelect v-model="selectedStatus" placeholder="状态" size="small" clearable style="width: 120px" @change="loadData">
-              <ElOption label="全部" :value="-1" />
-              <ElOption label="草稿" :value="0" />
-              <ElOption label="已发布" :value="1" />
-              <ElOption label="已撤回" :value="2" />
-            </ElSelect>
-            <ElButton
-              v-auth="'notification:btn:add'"
-              round
-              type="primary"
-              size="small"
-              :icon="Plus"
-              @click="showDrawer('add')"
-            >
-              新建通知
-            </ElButton>
-          </div>
+    <!-- 搜索区域 -->
+    <div class="search-area">
+      <div class="search-form">
+        <div class="search-item">
+          <span class="search-label">通知类型</span>
+          <ElSelect v-model="selectedType" placeholder="类型" style="width: 140px" @change="handleTypeChange">
+            <ElOption v-for="item in typeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </ElSelect>
         </div>
+        <div class="search-item">
+          <span class="search-label">状态</span>
+          <ElSelect v-model="selectedStatus" placeholder="状态" style="width: 140px" @change="loadData">
+            <ElOption label="全部" :value="-1" />
+            <ElOption label="草稿" :value="0" />
+            <ElOption label="已发布" :value="1" />
+            <ElOption label="已撤回" :value="2" />
+          </ElSelect>
+        </div>
+        <div class="search-item">
+          <span class="search-label">标题</span>
+          <ElInput
+            v-model="searchText"
+            placeholder="搜索通知标题"
+            clearable
+            style="width: 220px"
+            :prefix-icon="Search"
+            @input="handleSearch"
+          />
+        </div>
+      </div>
+    </div>
 
-        <!-- 表格卡片 -->
-        <ElCard class="table-card" shadow="never">
-          <ElTable v-loading="loading" :data="notifications" border stripe>
-            <ElTableColumn type="index" width="60" align="center" label="#" />
-            <ElTableColumn prop="title" label="标题" min-width="200" show-overflow-tooltip />
-            <ElTableColumn prop="type" label="类型" width="100" align="center">
-              <template #default="{ row }">
-                <ElTag :type="getTypeTagType(row.type)" size="small">
-                  {{ getTypeName(row.type) }}
-                </ElTag>
-              </template>
-            </ElTableColumn>
-            <ElTableColumn prop="scope" label="范围" width="100" align="center">
-              <template #default="{ row }">
-                <ElTag :type="getScopeTagType(row.scope)" size="small">
-                  {{ getScopeName(row.scope) }}
-                </ElTag>
-              </template>
-            </ElTableColumn>
-            <ElTableColumn prop="priority" label="优先级" width="80" align="center">
-              <template #default="{ row }">
-                <ElTag :type="getPriorityTagType(row.priority)" size="small">
-                  {{ getPriorityName(row.priority) }}
-                </ElTag>
-              </template>
-            </ElTableColumn>
-            <ElTableColumn prop="status" label="状态" width="80" align="center">
-              <template #default="{ row }">
-                <ElTag :type="getStatusTagType(row.status)" size="small">
-                  {{ getStatusName(row.status) }}
-                </ElTag>
-              </template>
-            </ElTableColumn>
-            <ElTableColumn prop="creator_name" label="创建者" width="100" align="center" />
-            <ElTableColumn prop="publish_time" label="发布时间" width="160" align="center">
-              <template #default="{ row }">
-                {{ row.publish_time ? formatDate(row.publish_time) : '-' }}
-              </template>
-            </ElTableColumn>
-            <ElTableColumn prop="created_at" label="创建时间" width="160" align="center">
-              <template #default="{ row }">
-                {{ formatDate(row.created_at) }}
-              </template>
-            </ElTableColumn>
-            <ElTableColumn label="操作" width="200" align="center" fixed="right">
-              <template #default="{ row }">
-                <ElButton type="primary" size="small" link @click="showDetail(row)">详情</ElButton>
-                <ElButton
-                  v-if="row.status === 0"
-                  v-auth="'notification:btn:update'"
-                  type="warning"
-                  size="small"
-                  link
-                  @click="showDrawer('edit', row)"
-                >
-                  编辑
-                </ElButton>
-                <ElButton
-                  v-if="row.status === 0"
-                  v-auth="'notification:btn:publish'"
-                  type="success"
-                  size="small"
-                  link
-                  @click="handlePublish(row)"
-                >
-                  发布
-                </ElButton>
-                <ElButton
-                  v-if="row.status === 1"
-                  v-auth="'notification:btn:revoke'"
-                  type="warning"
-                  size="small"
-                  link
-                  @click="handleRevoke(row)"
-                >
-                  撤回
-                </ElButton>
-                <ElButton
-                  v-auth="'notification:btn:delete'"
-                  type="danger"
-                  size="small"
-                  link
-                  @click="handleDelete(row)"
-                >
-                  删除
-                </ElButton>
-              </template>
-            </ElTableColumn>
-          </ElTable>
-
-          <!-- 分页 -->
-          <div class="pagination-wrapper">
-            <span class="total-text">共 {{ total }} 条</span>
-            <ElPagination
-              v-model:current-page="currentPage"
-              v-model:page-size="pageSize"
-              :page-sizes="[10, 20, 50]"
-              :total="total"
-              layout="sizes, prev, pager, next"
-              small
-              @size-change="loadData"
-              @current-change="loadData"
-            />
-          </div>
-        </ElCard>
-      </ElMain>
-    </ElContainer>
+    <!-- 表格卡片 -->
+    <ElCard class="art-table-card" shadow="never">
+      <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
+        <template #left>
+          <ElButton
+            v-auth="'notification:btn:add'"
+            type="primary"
+            :icon="Plus"
+            @click="showDrawer('add')"
+          >
+            新建通知
+          </ElButton>
+        </template>
+      </ArtTableHeader>
+      
+      <ArtTable
+        :data="data"
+        :loading="loading"
+        :columns="columns"
+        :pagination="pagination"
+        :show-table-header="false"
+        row-key="id"
+        @pagination:size-change="handleSizeChange"
+        @pagination:current-change="handleCurrentChange"
+      />
+    </ElCard>
 
     <!-- 通知编辑抽屉 -->
     <NotificationDrawer
@@ -190,9 +76,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Bell, Notification, ChatDotRound, Message } from '@element-plus/icons-vue'
+import { ref, h, onMounted } from 'vue'
+import { ElMessage, ElMessageBox, ElTag, ElButton } from 'element-plus'
+import { Search, Plus } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+import { useTable } from '@/composables/useTable'
+import { usePermission } from '@/composables/usePermission'
+import ArtTable from '@/components/core/tables/art-table/index.vue'
+import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
 import {
   fetchNotificationList,
   publishNotification,
@@ -207,38 +98,30 @@ import NotificationDetailDrawer from './modules/notification-detail-drawer.vue'
 
 defineOptions({ name: 'NotificationManage' })
 
+const { t: $t } = useI18n()
+const { hasPermission } = usePermission()
+
 // Tag类型定义
 type TagType = 'info' | 'warning' | 'success' | 'primary' | 'danger'
 
 // 类型选项
 const typeOptions = [
-  { value: -1, label: '全部', icon: Bell, iconClass: 'text-blue-500', count: 0 },
-  { value: NotificationType.ANNOUNCEMENT, label: '全局公告', icon: Notification, iconClass: 'text-orange-500', count: 0 },
-  { value: NotificationType.MESSAGE, label: '系统消息', icon: Message, iconClass: 'text-green-500', count: 0 },
-  { value: NotificationType.LOGIN, label: '登录通知', icon: ChatDotRound, iconClass: 'text-purple-500', count: 0 }
+  { value: -1, label: '全部' },
+  { value: NotificationType.ANNOUNCEMENT, label: '全局公告' },
+  { value: NotificationType.MESSAGE, label: '系统消息' },
+  { value: NotificationType.LOGIN, label: '登录通知' }
 ]
 
 // 响应式数据
-const loading = ref(false)
-const notifications = ref<NotificationInfo[]>([])
 const selectedType = ref<NotificationType | -1>(-1)
 const selectedStatus = ref<NotificationStatus | -1>(-1)
 const searchText = ref('')
-const currentPage = ref(1)
-const pageSize = ref(20)
-const total = ref(0)
 
 // 抽屉状态
 const drawerVisible = ref(false)
 const drawerType = ref<'add' | 'edit'>('add')
 const currentNotification = ref<NotificationInfo | undefined>(undefined)
 const detailVisible = ref(false)
-
-// 计算属性
-const currentTypeName = computed(() => {
-  const item = typeOptions.find(t => t.value === selectedType.value)
-  return item?.label || '全部'
-})
 
 // 格式化日期
 const formatDate = (dateStr: string) => {
@@ -290,39 +173,124 @@ const getStatusTagType = (status: number): TagType => {
   return map[status] || 'info'
 }
 
+// 使用 useTable 管理通知列表
+const {
+  columns,
+  columnChecks,
+  data,
+  loading,
+  pagination,
+  searchParams,
+  handleSizeChange,
+  handleCurrentChange,
+  getData,
+  refreshUpdate
+} = useTable<typeof fetchNotificationList>({
+  core: {
+    apiFn: fetchNotificationList,
+    apiParams: {},
+    paginationKey: { current: 'page', size: 'pageSize' },
+    columnsFactory: () => [
+      { type: 'index', width: 80, label: $t('table.column.index'), align: 'center' },
+      { prop: 'title', label: '标题', align: 'center', showOverflowTooltip: true },
+      {
+        prop: 'type',
+        label: '类型',
+        width: 100,
+        align: 'center',
+        formatter: (row: NotificationInfo) => h(ElTag, { type: getTypeTagType(row.type), size: 'small' }, () => getTypeName(row.type))
+      },
+      {
+        prop: 'scope',
+        label: '范围',
+        width: 100,
+        align: 'center',
+        formatter: (row: NotificationInfo) => h(ElTag, { type: getScopeTagType(row.scope), size: 'small' }, () => getScopeName(row.scope))
+      },
+      {
+        prop: 'priority',
+        label: '优先级',
+        width: 80,
+        align: 'center',
+        formatter: (row: NotificationInfo) => h(ElTag, { type: getPriorityTagType(row.priority), size: 'small' }, () => getPriorityName(row.priority))
+      },
+      {
+        prop: 'status',
+        label: '状态',
+        width: 80,
+        align: 'center',
+        formatter: (row: NotificationInfo) => h(ElTag, { type: getStatusTagType(row.status), size: 'small' }, () => getStatusName(row.status))
+      },
+      { prop: 'creator_name', label: '创建者', width: 100, align: 'center' },
+      {
+        prop: 'publish_time',
+        label: '发布时间',
+        width: 160,
+        align: 'center',
+        formatter: (row: NotificationInfo) => row.publish_time ? formatDate(row.publish_time) : '-'
+      },
+      {
+        prop: 'created_at',
+        label: '创建时间',
+        width: 160,
+        align: 'center',
+        formatter: (row: NotificationInfo) => formatDate(row.created_at)
+      },
+      {
+        prop: 'actions',
+        label: '操作',
+        width: 200,
+        align: 'center',
+        fixed: 'right',
+        formatter: (row: NotificationInfo) => {
+          const buttons = []
+          buttons.push(h(ElButton, { type: 'primary', size: 'small', onClick: () => showDetail(row) }, () => '详情'))
+          if (row.status === 0 && hasPermission('notification:btn:update')) {
+            buttons.push(h(ElButton, { type: 'warning', size: 'small', onClick: () => showDrawer('edit', row) }, () => '编辑'))
+          }
+          if (row.status === 0 && hasPermission('notification:btn:publish')) {
+            buttons.push(h(ElButton, { type: 'success', size: 'small', onClick: () => handlePublish(row) }, () => '发布'))
+          }
+          if (row.status === 1 && hasPermission('notification:btn:revoke')) {
+            buttons.push(h(ElButton, { type: 'warning', size: 'small', onClick: () => handleRevoke(row) }, () => '撤回'))
+          }
+          if (hasPermission('notification:btn:delete')) {
+            buttons.push(h(ElButton, { type: 'danger', size: 'small', onClick: () => handleDelete(row) }, () => '删除'))
+          }
+          return h('div', { class: 'flex gap-2 justify-center' }, buttons)
+        }
+      }
+    ]
+  },
+  performance: {
+    enableCache: true,
+    cacheTime: 5 * 60 * 1000,
+    debounceTime: 300
+  }
+})
+
+// 刷新数据
+const refreshData = () => refreshUpdate()
+
 // 加载数据
 const loadData = async () => {
-  try {
-    loading.value = true
-    const res = await fetchNotificationList({
-      page: currentPage.value,
-      pageSize: pageSize.value,
-      type: selectedType.value === -1 ? undefined : selectedType.value,
-      status: selectedStatus.value === -1 ? undefined : selectedStatus.value,
-      title: searchText.value || undefined
-    })
-    if (res.success && res.data) {
-      notifications.value = res.data.result || []
-      total.value = res.data.total || 0
-    }
-  } catch (e) {
-    console.error('加载通知列表失败:', e)
-    ElMessage.error('加载数据失败')
-  } finally {
-    loading.value = false
-  }
+  Object.assign(searchParams, {
+    type: selectedType.value === -1 ? undefined : selectedType.value,
+    status: selectedStatus.value === -1 ? undefined : selectedStatus.value,
+    title: searchText.value || undefined
+  })
+  getData()
 }
 
 // 类型切换
-const handleTypeChange = (type: NotificationType | -1) => {
-  selectedType.value = type
-  currentPage.value = 1
+const handleTypeChange = () => {
+  ;(searchParams as any).page = 1
   loadData()
 }
 
 // 搜索
 const handleSearch = () => {
-  currentPage.value = 1
+  ;(searchParams as any).page = 1
   loadData()
 }
 
@@ -352,7 +320,7 @@ const handlePublish = async (row: NotificationInfo) => {
     const res = await publishNotification(row.id)
     if (res.success) {
       ElMessage.success(`发布成功！已推送给 ${res.data?.total_users || 0} 个用户`)
-      loadData()
+      refreshUpdate()
     } else {
       ElMessage.error(res.msg || '发布失败')
     }
@@ -375,7 +343,7 @@ const handleRevoke = async (row: NotificationInfo) => {
     const res = await revokeNotification(row.id)
     if (res.success) {
       ElMessage.success('撤回成功')
-      loadData()
+      refreshUpdate()
     } else {
       ElMessage.error(res.msg || '撤回失败')
     }
@@ -398,7 +366,7 @@ const handleDelete = async (row: NotificationInfo) => {
     const res = await deleteNotification(row.id)
     if (res.success) {
       ElMessage.success('删除成功')
-      loadData()
+      refreshUpdate()
     } else {
       ElMessage.error(res.msg || '删除失败')
     }
@@ -412,118 +380,67 @@ onMounted(() => loadData())
 </script>
 
 <style lang="scss" scoped>
-:deep(.el-container) {
-  height: 100%;
-}
-
-.type-aside {
-  height: 100%;
-  border-right: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.type-card {
-  height: 100%;
-  border-radius: 0;
-  border: none;
-  
-  :deep(.el-card__header) {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-  
-  :deep(.el-card__body) {
-    padding: 8px;
-  }
-}
-
-.type-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.type-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: var(--el-fill-color-light);
-  }
-  
-  &.active {
-    background: var(--el-color-primary-light-9);
-    color: var(--el-color-primary);
-  }
-  
-  span {
-    flex: 1;
-    font-size: 14px;
-  }
-}
-
-.main-content {
-  height: 100%;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--el-fill-color-lighter);
-}
-
-.toolbar {
+.search-area {
   flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
   background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
 }
 
-.toolbar-left {
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+}
+
+.search-item {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.table-card {
-  flex: 1;
-  margin: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
   
-  :deep(.el-card__body) {
-    flex: 1;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  :deep(.el-input),
+  :deep(.el-select) {
+    --el-component-size: 36px;
   }
 }
 
-.pagination-wrapper {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid var(--el-border-color-lighter);
+.search-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  white-space: nowrap;
 }
 
-.total-text {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
+.art-table-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  margin-top: 0;
+  
+  :deep(.el-card__body) {
+    flex: 1;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  
+  .table-header {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+  }
+  
+  :deep(.art-table) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
 }
 </style>

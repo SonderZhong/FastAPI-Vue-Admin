@@ -10,14 +10,14 @@ from typing import Optional, List
 
 from fastapi import APIRouter, Depends, Path, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from tortoise.models import Q
 
 from annotation.auth import AuthController, Auth
 from annotation.log import Log, OperationType
 from models import SystemNotification, UserNotification, SystemUser
-from models.notification import NotificationType, NotificationScope, NotificationStatus
-from utils.casbin import DepartmentHelper
+from models.notification import NotificationScope, NotificationStatus
+from schemas.notification import CreateNotificationParams, UpdateNotificationParams
+from utils.casbin import DepartmentHelper, UserType
 from utils.notification import ws_manager, NotificationService
 from utils.response import ResponseUtil
 
@@ -25,30 +25,6 @@ notificationAPI = APIRouter(prefix="/notification")
 
 # WebSocket 路由（不需要认证依赖，在内部处理）
 notificationWsAPI = APIRouter(prefix="/notification")
-
-
-# ==================== 请求参数模型 ====================
-
-class CreateNotificationParams(BaseModel):
-    """创建通知参数"""
-    title: str
-    content: str
-    type: int = NotificationType.MESSAGE
-    scope: int = NotificationScope.ALL
-    scope_ids: List[str] = []
-    priority: int = 0
-    expire_time: Optional[str] = None
-
-
-class UpdateNotificationParams(BaseModel):
-    """更新通知参数"""
-    title: Optional[str] = None
-    content: Optional[str] = None
-    type: Optional[int] = None
-    scope: Optional[int] = None
-    scope_ids: Optional[List[str]] = None
-    priority: Optional[int] = None
-    expire_time: Optional[str] = None
 
 
 # ==================== WebSocket 端点 ====================
@@ -136,7 +112,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             ws_manager.disconnect(websocket, user_id)
         try:
             await websocket.close(code=4001, reason=str(e))
-        except:
+        except Exception:
             pass
 
 
@@ -213,16 +189,16 @@ async def create_notification(
     current_user: dict = Depends(AuthController.get_current_user)
 ):
     """创建通知（草稿状态）"""
-    user_type = current_user.get("user_type", 3)
+    user_type = current_user.get("user_type", UserType.NORMAL_USER)
     user_id = current_user.get("id")
     sub_departments = current_user.get("sub_departments", [])
     
     # 权限检查
-    if user_type == 3:
+    if user_type == UserType.NORMAL_USER:
         return ResponseUtil.error(msg="普通用户无权创建通知")
     
     # 部门管理员只能创建部门范围的通知
-    if user_type == 2:
+    if user_type == UserType.DEPT_ADMIN:
         if params.scope == NotificationScope.ALL:
             return ResponseUtil.error(msg="部门管理员无权创建全局通知")
         if params.scope == NotificationScope.DEPARTMENT:
@@ -236,7 +212,7 @@ async def create_notification(
     if params.expire_time:
         try:
             expire_time = datetime.fromisoformat(params.expire_time.replace("Z", "+00:00"))
-        except:
+        except Exception:
             pass
     
     notification = await SystemNotification.create(
@@ -272,11 +248,26 @@ async def update_notification(
         return ResponseUtil.error(msg="只有草稿状态的通知可以编辑")
     
     # 权限检查
-    user_type = current_user.get("user_type", 3)
+    user_type = current_user.get("user_type", UserType.NORMAL_USER)
     user_id = current_user.get("id")
+    department_id = current_user.get("department_id")
+    sub_departments = current_user.get("sub_departments", [])
     
-    if user_type >= 2 and str(notification.creator_id) != user_id:
-        return ResponseUtil.error(msg="无权编辑此通知")
+    # 数据权限检查
+    if user_type >= UserType.DEPT_ADMIN:
+        # 部门管理员和普通用户只能编辑自己创建的通知
+        if str(notification.creator_id) != user_id:
+            return ResponseUtil.error(msg="无权编辑此通知")
+    
+    # 部门管理员只能创建部门范围的通知
+    if user_type == UserType.DEPT_ADMIN and params.scope is not None:
+        if params.scope == NotificationScope.ALL:
+            return ResponseUtil.error(msg="部门管理员无权创建全局通知")
+        if params.scope == NotificationScope.DEPARTMENT and params.scope_ids:
+            dept_ids = set([department_id] + sub_departments) if department_id else set(sub_departments)
+            for dept_id in params.scope_ids:
+                if dept_id not in dept_ids:
+                    return ResponseUtil.error(msg="无权向该部门发送通知")
     
     update_data = params.dict(exclude_none=True)
     if "expire_time" in update_data and update_data["expire_time"]:
@@ -284,7 +275,7 @@ async def update_notification(
             update_data["expire_time"] = datetime.fromisoformat(
                 update_data["expire_time"].replace("Z", "+00:00")
             )
-        except:
+        except ValueError:
             del update_data["expire_time"]
     
     if update_data:
@@ -369,6 +360,15 @@ async def revoke_notification(
     if notification.status != NotificationStatus.PUBLISHED:
         return ResponseUtil.error(msg="只有已发布的通知可以撤回")
     
+    # 数据权限检查
+    user_type = current_user.get("user_type", UserType.NORMAL_USER)
+    user_id = current_user.get("id")
+    
+    if user_type >= UserType.DEPT_ADMIN:
+        # 部门管理员和普通用户只能撤回自己创建的通知
+        if str(notification.creator_id) != user_id:
+            return ResponseUtil.error(msg="无权撤回此通知")
+    
     notification.status = NotificationStatus.REVOKED
     await notification.save()
     
@@ -387,6 +387,15 @@ async def delete_notification(
     notification = await SystemNotification.get_or_none(id=id, is_del=False)
     if not notification:
         return ResponseUtil.error(msg="通知不存在")
+    
+    # 数据权限检查
+    user_type = current_user.get("user_type", UserType.NORMAL_USER)
+    user_id = current_user.get("id")
+    
+    if user_type >= UserType.DEPT_ADMIN:
+        # 部门管理员和普通用户只能删除自己创建的通知
+        if str(notification.creator_id) != user_id:
+            return ResponseUtil.error(msg="无权删除此通知")
     
     notification.is_del = True
     await notification.save()
@@ -407,32 +416,105 @@ async def get_notification_list(
     current_user: dict = Depends(AuthController.get_current_user)
 ):
     """获取通知列表（管理端）"""
-    user_type = current_user.get("user_type", 3)
+    user_type = current_user.get("user_type", UserType.NORMAL_USER)
     user_id = current_user.get("id")
+    department_id = current_user.get("department_id")
+    sub_departments = current_user.get("sub_departments", [])
     
-    filter_args = {"is_del": False}
+    # 基础过滤条件
+    base_filter = Q(is_del=False)
     
     if type is not None:
-        filter_args["type"] = type
+        base_filter &= Q(type=type)
     if status is not None:
-        filter_args["status"] = status
+        base_filter &= Q(status=status)
     if title:
-        filter_args["title__icontains"] = title
+        base_filter &= Q(title__icontains=title)
     
-    # 部门管理员只能看自己创建的
-    if user_type >= 2:
-        filter_args["creator_id"] = user_id
+    # 根据用户类型过滤数据权限
+    if user_type == UserType.SUPER_ADMIN:
+        # 超级管理员：看所有通知
+        pass
+    elif user_type == UserType.ADMIN:
+        # 管理员：看所有通知
+        pass
+    elif user_type == UserType.DEPT_ADMIN:
+        # 部门管理员：看自己创建的 + 全局通知 + 发给自己部门及下属部门的通知
+        dept_ids = set([department_id] + sub_departments) if department_id else set(sub_departments)
+        
+        # 自己创建的 OR 全局通知
+        scope_filter = Q(creator_id=user_id) | Q(scope=NotificationScope.ALL)
+        base_filter &= scope_filter
+        
+        # 对于部门范围的通知，需要在Python层面过滤（JSON数组查询不可靠）
+        # 先获取所有符合基础条件的，再过滤部门范围的
+    else:
+        # 普通用户：只能看自己创建的
+        base_filter &= Q(creator_id=user_id)
     
-    total = await SystemNotification.filter(**filter_args).count()
-    result = await SystemNotification.filter(**filter_args).offset(
-        (page - 1) * pageSize
-    ).limit(pageSize).prefetch_related("creator").values(
-        "id", "title", "content", "type", "scope", "scope_ids",
-        "status", "priority", "publish_time", "expire_time",
-        "created_at", "updated_at",
-        creator_id="creator_id",
-        creator_name="creator__nickname"
-    )
+    # 部门管理员需要特殊处理部门范围和用户范围的通知
+    if user_type == UserType.DEPT_ADMIN:
+        # 获取部门管理员管辖的所有部门下的用户ID
+        dept_ids = set([department_id] + sub_departments) if department_id else set(sub_departments)
+        managed_user_ids = set()
+        if dept_ids:
+            users_in_depts = await SystemUser.filter(
+                is_del=False, 
+                department_id__in=list(dept_ids)
+            ).values_list("id", flat=True)
+            managed_user_ids = set(str(u) for u in users_in_depts)
+        
+        # 获取所有符合条件的通知
+        all_notifications = await SystemNotification.filter(
+            Q(is_del=False) & 
+            (Q(type=type) if type is not None else Q()) &
+            (Q(status=status) if status is not None else Q()) &
+            (Q(title__icontains=title) if title else Q())
+        ).order_by("-created_at").prefetch_related("creator").values(
+            "id", "title", "content", "type", "scope", "scope_ids",
+            "status", "priority", "publish_time", "expire_time",
+            "created_at", "updated_at",
+            creator_id="creator_id",
+            creator_name="creator__nickname"
+        )
+        
+        # Python层面过滤
+        filtered_result = []
+        for n in all_notifications:
+            # 自己创建的
+            if str(n.get("creator_id")) == user_id:
+                filtered_result.append(n)
+                continue
+            # 全局通知
+            if n.get("scope") == NotificationScope.ALL:
+                filtered_result.append(n)
+                continue
+            # 部门范围的通知，检查是否包含自己管辖的部门
+            if n.get("scope") == NotificationScope.DEPARTMENT:
+                n_scope_ids = n.get("scope_ids") or []
+                if any(str(dept_id) in [str(s) for s in n_scope_ids] for dept_id in dept_ids):
+                    filtered_result.append(n)
+                continue
+            # 用户范围的通知，检查是否包含自己管辖部门下的用户
+            if n.get("scope") == NotificationScope.USER:
+                n_scope_ids = n.get("scope_ids") or []
+                if any(str(s) in managed_user_ids for s in n_scope_ids):
+                    filtered_result.append(n)
+                continue
+        
+        total = len(filtered_result)
+        result = filtered_result[(page - 1) * pageSize: page * pageSize]
+    else:
+        total = await SystemNotification.filter(base_filter).count()
+        result = await SystemNotification.filter(base_filter).order_by("-created_at").offset(
+            (page - 1) * pageSize
+        ).limit(pageSize).prefetch_related("creator").values(
+            "id", "title", "content", "type", "scope", "scope_ids",
+            "status", "priority", "publish_time", "expire_time",
+            "created_at", "updated_at",
+            creator_id="creator_id",
+            creator_name="creator__nickname"
+        )
     
     return ResponseUtil.success(data={
         "result": result,
@@ -456,6 +538,48 @@ async def get_notification_info(
     
     if not notification:
         return ResponseUtil.error(msg="通知不存在")
+    
+    # 数据权限检查
+    user_type = current_user.get("user_type", UserType.NORMAL_USER)
+    user_id = current_user.get("id")
+    department_id = current_user.get("department_id")
+    sub_departments = current_user.get("sub_departments", [])
+    
+    # 检查是否有权限查看
+    can_view = False
+    if user_type <= UserType.ADMIN:
+        # 超级管理员和管理员可以查看所有
+        can_view = True
+    elif user_type == UserType.DEPT_ADMIN:
+        # 部门管理员：自己创建的 + 全局通知 + 发给自己部门的通知 + 发给自己管辖用户的通知
+        if str(notification.creator_id) == user_id:
+            can_view = True
+        elif notification.scope == NotificationScope.ALL:
+            can_view = True
+        elif notification.scope == NotificationScope.DEPARTMENT:
+            dept_ids = set([department_id] + sub_departments) if department_id else set(sub_departments)
+            n_scope_ids = notification.scope_ids or []
+            if any(str(dept_id) in [str(s) for s in n_scope_ids] for dept_id in dept_ids):
+                can_view = True
+        elif notification.scope == NotificationScope.USER:
+            # 检查是否包含自己管辖部门下的用户
+            dept_ids = set([department_id] + sub_departments) if department_id else set(sub_departments)
+            if dept_ids:
+                users_in_depts = await SystemUser.filter(
+                    is_del=False, 
+                    department_id__in=list(dept_ids)
+                ).values_list("id", flat=True)
+                managed_user_ids = set(str(u) for u in users_in_depts)
+                n_scope_ids = notification.scope_ids or []
+                if any(str(s) in managed_user_ids for s in n_scope_ids):
+                    can_view = True
+    else:
+        # 普通用户：只能查看自己创建的
+        if str(notification.creator_id) == user_id:
+            can_view = True
+    
+    if not can_view:
+        return ResponseUtil.error(msg="无权查看此通知")
     
     # 获取已读统计
     total_count = await UserNotification.filter(notification_id=id).count()

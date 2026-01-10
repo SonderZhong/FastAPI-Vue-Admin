@@ -454,6 +454,7 @@
       "expand": "Expand",
       "index": "Index"
     },
+    "index": "No.",
     "zebra": "Zebra",
     "border": "Border",
     "headerBackground": "Header BG"
@@ -466,6 +467,7 @@
     "delete": "Delete",
     "export": "Export",
     "import": "Import",
+    "upload": "Upload",
     "info": "View Details",
     "resetPassword": "Reset Password",
     "assignPermission": "Assign Permission",
@@ -778,7 +780,13 @@
     "uploadFailed": "Upload failed",
     "fileTooLarge": "File size exceeds limit (max {size}MB)",
     "fileTypeNotAllowed": "File type not allowed",
-    "confirmDelete": "Are you sure you want to delete file \"{name}\"?"
+    "confirmDelete": "Are you sure you want to delete file \"{name}\"?",
+    "buttons": {
+      "list": "View File List",
+      "upload": "Upload File",
+      "delete": "Delete File",
+      "info": "View File Details"
+    }
   },
   "personalLoginRecord": {
     "title": "Login Records",

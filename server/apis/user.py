@@ -12,6 +12,7 @@ from fastapi import APIRouter, Request, Depends, Path, Query, File, UploadFile, 
 from starlette.responses import JSONResponse
 from models import SystemUser, SystemDepartment, SystemUserRole, SystemLoginLog, SystemOperationLog
 from models.permission import PermissionType
+from models import SystemPermission, SystemRole
 from schemas.common import BaseResponse, DeleteListParams
 from schemas.user import AddUserParams, UpdateUserParams, GetUserInfoResponse, GetUserListResponse, \
     AddUserRoleParams, UpdateUserRoleParams, GetUserRoleInfoResponse, GetUserPermissionListResponse, \
@@ -550,20 +551,23 @@ async def get_user_role_list(
 @Auth(permission_list=["user:btn:permissionList", "GET:/user/permissionList/*"])
 async def get_user_permission_list(request: Request, id: str = Path(description="用户ID"),
                                    current_user: dict = Depends(AuthController.get_current_user)):
+    # 获取当前操作者的用户类型，用于过滤权限
+    # user_type: 0=超级管理员, 1=管理员, 2=部门管理员, 3=普通用户
+    operator_user_type = current_user.get("user_type", 3)
+    
     # 使用 Casbin 获取用户的所有权限
     user_permissions = await CasbinEnforcer.get_user_permissions(id)
-    
-    # 获取权限详情
-    from models import SystemPermission, SystemRole
     
     result = []
     
     # 获取菜单和按钮权限详情
     all_permission_ids = user_permissions["menus"] + user_permissions["buttons"]
     if all_permission_ids:
+        # 根据操作者用户类型过滤: 只能看到 min_user_type >= 当前用户类型的权限
         permissions = await SystemPermission.filter(
             id__in=all_permission_ids,
-            is_del=False
+            is_del=False,
+            min_user_type__gte=operator_user_type
         ).all()
         
         # 获取角色信息
@@ -632,11 +636,12 @@ async def get_user_permission_list(request: Request, id: str = Path(description=
                 else:
                     casbin_method_str = ",".join(sorted(api_method.split(",") if "," in api_method else [api_method]))
                 
-                # 查找匹配的权限记录
+                # 查找匹配的权限记录（根据操作者用户类型过滤）
                 matching_perms = await SystemPermission.filter(
                     api_path=api_path,
                     menu_type=PermissionType.API,
-                    is_del=False
+                    is_del=False,
+                    min_user_type__gte=operator_user_type
                 ).all()
                 
                 for perm in matching_perms:

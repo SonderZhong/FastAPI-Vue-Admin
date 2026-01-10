@@ -3,11 +3,11 @@
 # 生成时间: 2026-01-08 01:10:47
 
 # 已初始化标记
-initialized: true
+initialized: false
 
 app:
   name: "FastAPI-Vue-Admin"
-  version: "1.0.3"
+  version: "1.0.4"
   host: "0.0.0.0"
   port: 9090
   env: "dev"
@@ -27,7 +27,7 @@ database:
   host: "host.docker.internal"
   port: 3306
   username: "root"
-  password: "zxc123@*"
+  password: ""
   database: "fva"
   pool_size: 10
   pool_timeout: 30
