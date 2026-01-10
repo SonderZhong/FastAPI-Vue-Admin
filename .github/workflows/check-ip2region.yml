@@ -2,8 +2,9 @@ name: Check ip2region Update
 
 on:
   schedule:
-    # 每6小时检查一次
-    - cron: '0 */6 * * *'
+    # 每天凌晨2点检查一次 (UTC时间，北京时间为上午10点)
+    # 北京时间凌晨2点，使用 '0 18 * * *' (UTC 18:00 = 北京时间 02:00)
+    - cron: '0 18 * * *'
   workflow_dispatch: # 允许手动触发
 
 jobs:
