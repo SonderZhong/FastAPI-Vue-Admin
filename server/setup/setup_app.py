@@ -122,7 +122,7 @@ async def test_database(config: DatabaseConfig):
                 user=config.username,
                 password=config.password,
                 database="postgres",
-                timeout=5
+                timeout=10
             )
             # 检查数据库是否存在
             exists = await conn.fetchval(
@@ -134,7 +134,9 @@ async def test_database(config: DatabaseConfig):
             await conn.close()
         return {"success": True, "msg": "数据库连接成功，数据库已就绪"}
     except Exception as e:
-        return {"success": False, "msg": f"连接失败: {str(e)}"}
+        import traceback
+        error_detail = traceback.format_exc()
+        return {"success": False, "msg": f"连接失败: {type(e).__name__}: {str(e) or repr(e)}", "detail": error_detail}
 
 
 @setup_app.post("/api/setup/test-redis")
@@ -465,7 +467,7 @@ initialized: true
 
 app:
   name: "{config.app.name}"
-  version: "1.0.5"
+  version: "1.0.6"
   host: "{config.app.host}"
   port: {config.app.port}
   env: "{config.app.env}"

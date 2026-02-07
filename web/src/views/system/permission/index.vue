@@ -72,6 +72,18 @@
               </ElBreadcrumb>
             </div>
             <div class="toolbar-right">
+              <!-- 添加根菜单按钮 - 常驻显示 -->
+              <ElButton
+                v-auth="'permission:btn:add'"
+                round
+                type="primary"
+                size="small"
+                :icon="Plus"
+                @click="showMenuDrawer('add')"
+              >
+                {{ $t('permission.addRootMenu') }}
+              </ElButton>
+              
               <template v-if="selectedPermission.menu_type === 0">
                 <ElButton
                   v-auth="'permission:btn:add'"

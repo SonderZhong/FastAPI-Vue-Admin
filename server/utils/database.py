@@ -30,17 +30,20 @@ def _build_db_connection(db_config) -> Dict[str, Dict[str, Any]]:
             "user": db_config.username,
             "password": db_config.password.get_secret_value() if db_config.password else None,
             "database": db_config.database,
-            "charset": getattr(db_config, 'charset', 'utf8mb4'),
-            "connect_timeout": 10,
         }
     }
 
-    # MySQL 需要在连接参数中设置时区
+    # MySQL 特定配置
     if db_config.engine == "mysql":
+        conn_config["credentials"]["charset"] = getattr(db_config, 'charset', 'utf8mb4')
         conn_config["credentials"]["init_command"] = "SET time_zone = '+08:00'"
+        conn_config["credentials"]["connect_timeout"] = 10
 
-    if db_config.engine == "postgresql":
-        conn_config["credentials"]["sslmode"] = "disable"
+    # PostgreSQL 特定配置
+    elif db_config.engine == "postgresql":
+        conn_config["credentials"]["ssl"] = False
+        conn_config["credentials"]["timeout"] = 10 
+        conn_config["credentials"]["server_settings"] = {"client_encoding": "utf8"}
     elif db_config.engine == "sqlite":
         conn_config["credentials"].pop("host", None)
         conn_config["credentials"].pop("port", None)

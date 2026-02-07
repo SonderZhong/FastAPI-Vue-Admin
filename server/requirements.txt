@@ -4,6 +4,7 @@ starlette==0.47.2
 tortoise-orm==0.25.1
 aiomysql==0.2.0
 aiosqlite==0.21.0
+asyncpg==0.31.0
 redis==6.2.0
 aioredis==2.0.1
 pydantic==2.11.7
