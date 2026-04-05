@@ -12,6 +12,7 @@ services:
       - ./server/uploads:/app/uploads
       - ./server/logs:/app/logs
       - ./server/data:/app/data
+      - ./server/fva.db:/app/fva.db  # SQLite 数据库文件持久化
     environment:
       - TZ=Asia/Shanghai
     extra_hosts:

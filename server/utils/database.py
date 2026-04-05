@@ -44,9 +44,14 @@ def _build_db_connection(db_config) -> Dict[str, Dict[str, Any]]:
         conn_config["credentials"]["ssl"] = False
         conn_config["credentials"]["timeout"] = 10 
         conn_config["credentials"]["server_settings"] = {"client_encoding": "utf8"}
+    
+    # SQLite 特定配置
     elif db_config.engine == "sqlite":
-        conn_config["credentials"].pop("host", None)
-        conn_config["credentials"].pop("port", None)
+        # SQLite 只需要文件路径，移除其他凭据
+        db_path = db_config.database if db_config.database else "fva.db"
+        conn_config["credentials"] = {
+            "file_path": db_path
+        }
 
     return {"default": conn_config}
 
@@ -112,7 +117,10 @@ async def init_db():
         }
 
         # 初始化Tortoise ORM
-        logger.info(f"开始初始化数据库连接（{db_config.engine}://{db_config.host}:{db_config.port}/{db_config.database}）")
+        if db_config.engine == "sqlite":
+            logger.info(f"开始初始化数据库连接（{db_config.engine}://{db_config.database}）")
+        else:
+            logger.info(f"开始初始化数据库连接（{db_config.engine}://{db_config.host}:{db_config.port}/{db_config.database}）")
         await Tortoise.init(config=tortoise_config)
 
         # 配置SQL日志

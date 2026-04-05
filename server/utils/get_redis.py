@@ -55,10 +55,18 @@ class RedisUtil:
         return config.redis()
 
     @classmethod
-    async def create_redis_connection(cls) -> AsyncRedis:
+    async def create_redis_connection(cls):
         redis_cfg = cls._get_redis_config()
         logger.debug("获取Redis配置...")
         logger.debug(redis_cfg)
+        
+        # 检查是否使用内存模式
+        if hasattr(redis_cfg, 'mode') and redis_cfg.mode == 'memory':
+            logger.info("使用内存模拟Redis模式")
+            from utils.memory_redis import MemoryRedis
+            return MemoryRedis()
+        
+        # 服务器模式
         conn_params = {
             "decode_responses": True,
             "socket_timeout": redis_cfg.socket_timeout,
@@ -95,12 +103,14 @@ class RedisUtil:
             raise
 
     @classmethod
-    async def close_redis_connection(
-            cls,
-            conn: AsyncRedis,
-    ):
+    async def close_redis_connection(cls, conn):
         """关闭Redis连接"""
         try:
+            # 内存模式不需要关闭连接
+            if hasattr(conn, '__class__') and conn.__class__.__name__ == 'MemoryRedis':
+                logger.info("内存Redis模式，无需关闭连接")
+                return
+            
             await conn.aclose()
             logger.info("Redis连接已关闭")
         except RedisError as e:
@@ -112,10 +122,7 @@ class RedisUtil:
         return f"{RedisKeyConfig.SYSTEM_CONFIG.key}:{key}"
 
     @classmethod
-    async def init_system_config(
-            cls,
-            conn: AsyncRedis,
-    ):
+    async def init_system_config(cls, conn):
         """初始化系统配置到Redis"""
         try:
             # 获取所有系统配置
@@ -131,51 +138,51 @@ class RedisUtil:
             if existing_keys:
                 try:
                     await conn.delete(*existing_keys)
-                except RedisError:
+                except (RedisError, Exception):
                     # 忽略不存在的键
                     pass
 
             # 重新设置所有系统配置到Redis（带前缀）
-            async with conn.pipeline() as pipe:
+            # 内存模式不支持 pipeline，直接逐个设置
+            if hasattr(conn, '__class__') and conn.__class__.__name__ == 'MemoryRedis':
                 for item in configs:
                     redis_key = cls._get_config_key(item['key'])
-                    await pipe.set(redis_key, item["value"])
-                await pipe.execute()
+                    await conn.set(redis_key, item["value"])
+            else:
+                async with conn.pipeline() as pipe:
+                    for item in configs:
+                        redis_key = cls._get_config_key(item['key'])
+                        await pipe.set(redis_key, item["value"])
+                    await pipe.execute()
 
             logger.info(f"系统配置已同步到Redis（共{len(configs)}条）")
 
-        except RedisError as e:
+        except (RedisError, Exception) as e:
             logger.error(f"初始化系统配置到Redis失败: {e}")
             raise
 
     @classmethod
-    async def get_system_config(
-            cls,
-            conn: AsyncRedis,
-            key: str
-    ) -> str:
+    async def get_system_config(cls, conn, key: str) -> str:
         """从Redis获取系统配置值"""
         try:
             redis_key = cls._get_config_key(key)
             value = await conn.get(redis_key)
-            return value.decode('utf-8') if value else ""
-        except RedisError as e:
+            # 内存模式返回字符串，服务器模式返回字节
+            if isinstance(value, bytes):
+                return value.decode('utf-8')
+            return value or ""
+        except (RedisError, Exception) as e:
             logger.error(f"获取系统配置失败 key={key}: {e}")
             return ""
 
     @classmethod
-    async def set_system_config(
-            cls,
-            conn: AsyncRedis,
-            key: str,
-            value: str
-    ) -> bool:
+    async def set_system_config(cls, conn, key: str, value: str) -> bool:
         """设置系统配置到Redis"""
         try:
             redis_key = cls._get_config_key(key)
             await conn.set(redis_key, value)
             logger.info(f"系统配置已更新 key={redis_key}")
             return True
-        except RedisError as e:
+        except (RedisError, Exception) as e:
             logger.error(f"设置系统配置失败 key={key}: {e}")
             return False

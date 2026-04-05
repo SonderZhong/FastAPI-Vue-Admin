@@ -344,14 +344,36 @@ jwt:
 
 # 数据库配置
 database:
-  engine: mysql               # 数据库类型
-  host: 127.0.0.1
-  port: 3306
-  username: root
-  password: your-password
-  database: fva
+  engine: sqlite              # 数据库类型：sqlite（默认）/ mysql / postgresql
+  host: ""                    # SQLite 不需要，MySQL/PostgreSQL 需要
+  port: 0                     # SQLite 不需要，MySQL/PostgreSQL 需要
+  username: ""                # SQLite 不需要，MySQL/PostgreSQL 需要
+  password: ""                # SQLite 不需要，MySQL/PostgreSQL 需要
+  database: fva.db            # SQLite：数据库文件路径；MySQL/PostgreSQL：数据库名称
   charset: utf8mb4
   timezone: Asia/Shanghai
+
+# MySQL 配置示例（如需使用）
+# database:
+#   engine: mysql
+#   host: 127.0.0.1
+#   port: 3306
+#   username: root
+#   password: your_password
+#   database: fva
+#   charset: utf8mb4
+#   timezone: Asia/Shanghai
+
+# PostgreSQL 配置示例（如需使用）
+# database:
+#   engine: postgresql
+#   host: 127.0.0.1
+#   port: 5432
+#   username: postgres
+#   password: your_password
+#   database: fva
+#   charset: utf8mb4
+#   timezone: Asia/Shanghai
 
 # Redis 配置
 redis:

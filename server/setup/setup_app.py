@@ -22,16 +22,17 @@ CONFIG_PATH = BASE_DIR / "config.yaml"
 
 class DatabaseConfig(BaseModel):
     """数据库配置"""
-    engine: str = "mysql"
-    host: str = "127.0.0.1"
-    port: int = 3306
-    username: str = "root"
+    engine: str = "sqlite"
+    host: str = ""
+    port: int = 0
+    username: str = ""
     password: str = ""
-    database: str = "fva"
+    database: str = "fva.db"
 
 
 class RedisConfig(BaseModel):
     """Redis配置"""
+    mode: str = "memory"
     host: str = "127.0.0.1"
     port: int = 6379
     password: str = ""
@@ -97,7 +98,16 @@ async def setup_page():
 async def test_database(config: DatabaseConfig):
     """测试数据库连接"""
     try:
-        if config.engine == "mysql":
+        if config.engine == "sqlite":
+            # SQLite 不需要测试连接，只需确保可以创建文件
+            import aiosqlite
+            import os
+            db_path = config.database if config.database else "fva.db"
+            # 测试是否可以创建/打开数据库文件
+            async with aiosqlite.connect(db_path) as conn:
+                await conn.execute("SELECT 1")
+            return {"success": True, "msg": "SQLite 数据库就绪"}
+        elif config.engine == "mysql":
             import aiomysql
             conn = await aiomysql.connect(
                 host=config.host,
@@ -143,6 +153,11 @@ async def test_database(config: DatabaseConfig):
 async def test_redis(config: RedisConfig):
     """测试Redis连接"""
     try:
+        # 内存模式无需测试
+        if config.mode == "memory":
+            return {"success": True, "msg": "内存模式无需测试连接"}
+        
+        # 服务器模式测试连接
         import redis.asyncio as aioredis
         r = aioredis.Redis(
             host=config.host,
@@ -168,8 +183,12 @@ async def init_database_tables(db_config: DatabaseConfig):
     """初始化数据库表结构"""
     from tortoise import Tortoise
     
-    # 先确保数据库存在
-    if db_config.engine == "mysql":
+    # 根据数据库类型构建连接 URL
+    if db_config.engine == "sqlite":
+        db_path = db_config.database if db_config.database else "fva.db"
+        db_url = f"sqlite://{db_path}"
+    elif db_config.engine == "mysql":
+        # 先确保数据库存在
         import aiomysql
         conn = await aiomysql.connect(
             host=db_config.host,
@@ -198,7 +217,7 @@ async def init_database_tables(db_config: DatabaseConfig):
             f"mysql://{db_config.username}:{db_config.password}@"
             f"{db_config.host}:{db_config.port}/{db_config.database}"
         )
-    else:
+    else:  # postgresql
         import asyncpg
         conn = await asyncpg.connect(
             host=db_config.host,
@@ -289,12 +308,16 @@ async def init_admin_and_data(db_config: DatabaseConfig, admin_config: AdminConf
     # 当前时间，用于所有导入数据
     now = datetime.now()
     
-    if db_config.engine == "mysql":
+    # 根据数据库类型构建连接 URL
+    if db_config.engine == "sqlite":
+        db_path = db_config.database if db_config.database else "fva.db"
+        db_url = f"sqlite://{db_path}"
+    elif db_config.engine == "mysql":
         db_url = (
             f"mysql://{db_config.username}:{db_config.password}@"
             f"{db_config.host}:{db_config.port}/{db_config.database}"
         )
-    else:
+    else:  # postgresql
         db_url = (
             f"postgres://{db_config.username}:{db_config.password}@"
             f"{db_config.host}:{db_config.port}/{db_config.database}"
@@ -467,7 +490,7 @@ initialized: true
 
 app:
   name: "{config.app.name}"
-  version: "1.0.6"
+  version: "1.0.7"
   host: "{config.app.host}"
   port: {config.app.port}
   env: "{config.app.env}"
@@ -496,6 +519,7 @@ database:
   charset: "utf8mb4"
 
 redis:
+  mode: "{config.redis.mode}"
   host: "{config.redis.host}"
   port: {config.redis.port}
   password: "{config.redis.password}"
@@ -516,7 +540,7 @@ redis:
         
         return {
             "success": True,
-            "msg": "系统初始化完成！配置已保存，数据库已初始化，管理员账号已创建。",
+            "msg": "系统初始化完成！请重启应用以生效",
             "data": {
                 "admin_username": config.admin.username,
                 "app_port": config.app.port

@@ -134,10 +134,10 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - mysql
       - redis
+    volumes:
+      - ./server/fva.db:/app/fva.db  # SQLite 数据库文件持久化
     environment:
-      - DATABASE_HOST=mysql
       - REDIS_HOST=redis
 
   frontend:
@@ -147,6 +147,28 @@ services:
     depends_on:
       - backend
 
+  redis:
+    image: redis:7
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
+```
+
+::: tip 💡 使用 MySQL
+如果需要使用 MySQL，可以添加 MySQL 服务：
+
+```yaml
+services:
+  backend:
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - DATABASE_HOST=mysql
+      - REDIS_HOST=redis
+
   mysql:
     image: mysql:8.0
     environment:
@@ -155,22 +177,31 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
-  redis:
-    image: redis:7
-    volumes:
-      - redis_data:/data
-
 volumes:
   mysql_data:
   redis_data:
 ```
+:::
 
 ## 环境变量
 
 生产环境建议通过环境变量配置敏感信息：
 
+### SQLite（默认）
+
 | 变量 | 说明 |
 |------|------|
+| DATABASE_FILE | SQLite 数据库文件路径（默认：fva.db） |
+| REDIS_HOST | Redis 主机 |
+| REDIS_PORT | Redis 端口 |
+| REDIS_PASSWORD | Redis 密码 |
+| JWT_SECRET | JWT 密钥 |
+
+### MySQL / PostgreSQL
+
+| 变量 | 说明 |
+|------|------|
+| DATABASE_ENGINE | 数据库类型（mysql/postgresql） |
 | DATABASE_HOST | 数据库主机 |
 | DATABASE_PORT | 数据库端口 |
 | DATABASE_USER | 数据库用户 |

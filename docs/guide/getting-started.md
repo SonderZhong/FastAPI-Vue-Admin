@@ -11,16 +11,24 @@
 | Python | 3.9+ | 推荐 3.11+ |
 | Node.js | 20.19.0+ | 推荐使用 LTS 版本 |
 | pnpm | 8.8.0+ | 前端包管理器 |
-| MySQL | 8.0+ | 关系型数据库 |
-| Redis | 6.0+ | 缓存数据库 |
+| Redis | 6.0+ | 可选，默认使用内存模式 |
+| MySQL | 8.0+ | 可选，默认使用 SQLite |
+| PostgreSQL | 12+ | 可选，默认使用 SQLite |
 
 ::: tip 💡 版本检查
 ```bash
 python --version    # Python 3.11.x
 node --version      # v20.19.x
 pnpm --version      # 8.x.x
-mysql --version     # mysql Ver 8.0.x
+
+# 可选：如果使用 Redis 服务器模式
 redis-server -v     # Redis server v=7.x.x
+
+# 可选：如果使用 MySQL
+mysql --version     # mysql Ver 8.0.x
+
+# 可选：如果使用 PostgreSQL
+psql --version      # psql (PostgreSQL) 12.x
 ```
 :::
 
@@ -68,12 +76,19 @@ python main.py
 首次启动时，系统会检测到 `config.yaml` 不存在，自动进入**初始化向导页面**：
 
 1. 访问 http://localhost:9090
-2. 按照页面提示配置数据库连接
-3. 配置 Redis 连接
-4. 设置管理员账号
-5. 完成初始化
+2. 选择数据库类型（SQLite / MySQL / PostgreSQL）
+3. 配置数据库连接（SQLite 无需配置，开箱即用）
+4. 选择 Redis 模式（内存模式 / 服务器模式）
+5. 配置 Redis 连接（内存模式无需配置）
+6. 设置管理员账号
+7. 完成初始化
 
 初始化完成后，系统会自动创建 `config.yaml` 配置文件。
+
+**数据库选择建议：**
+- **SQLite**（默认）：适合开发、测试和小型应用，无需额外安装
+- **MySQL**：适合中大型应用，需要预先安装 MySQL 8.0+
+- **PostgreSQL**：适合企业级应用，需要预先安装 PostgreSQL 12+
 :::
 
 ## 🎨 前端配置
@@ -148,10 +163,10 @@ services:
     ports:
       - "9090:9090"
     depends_on:
-      - mysql
       - redis
+    volumes:
+      - ./server/fva.db:/app/fva.db  # SQLite 数据库持久化
     environment:
-      - DATABASE_HOST=mysql
       - REDIS_HOST=redis
 
   frontend:
@@ -163,6 +178,27 @@ services:
     depends_on:
       - backend
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
+```
+
+**使用 MySQL：** 如需使用 MySQL，添加 MySQL 服务并修改 backend 配置：
+
+```yaml
+services:
+  backend:
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      - DATABASE_HOST=mysql
+      - REDIS_HOST=redis
+
   mysql:
     image: mysql:8.0
     environment:
@@ -170,11 +206,6 @@ services:
       MYSQL_DATABASE: fva
     volumes:
       - mysql_data:/var/lib/mysql
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
 
 volumes:
   mysql_data:
@@ -208,21 +239,40 @@ npm install -g pnpm
 
 ### Q: 数据库连接失败
 
+**SQLite：**
+- 确保应用有权限在 `server` 目录下创建和写入文件
+- 检查磁盘空间是否充足
+
+**MySQL：**
 1. 确保 MySQL 服务已启动
 2. 检查 `config.yaml` 中的数据库配置
 3. 确保数据库用户有足够权限
 
+**PostgreSQL：**
+1. 确保 PostgreSQL 服务已启动
+2. 检查 `config.yaml` 中的数据库配置
+3. 确保数据库用户有创建数据库的权限
+
 ### Q: Redis 连接失败
 
+**内存模式（默认）：**
+- 无需安装 Redis 服务器
+- 数据存储在应用内存中
+- 适合开发和小规模部署
+
+**服务器模式：**
 1. 确保 Redis 服务已启动
 2. 检查 `config.yaml` 中的 Redis 配置
 3. 如果 Redis 设置了密码，确保配置正确
+
+详细配置请参考 [Redis 配置指南](./redis.md)
 
 ## 📚 下一步
 
 恭喜你完成了环境搭建！接下来可以：
 
 - 📁 了解 [项目结构](./structure.md) - 熟悉代码组织方式
+- 🗄️ 配置 [数据库](./database-migration.md) - 了解如何切换到 MySQL/PostgreSQL
 - 🛣️ 学习 [路由和菜单](./router.md) - 配置系统菜单
 - 🔐 掌握 [权限控制](./permission.md) - 理解权限机制
 - 🤖 探索 [MCP 服务](./mcp.md) - 使用 AI 辅助开发

@@ -33,6 +33,7 @@ FastAPI-Vue-Admin 是一个基于 **FastAPI + Tortoise-ORM + Vue 3 + Element Plu
 - 🛡️ **企业级权限** - Casbin RBAC，菜单/按钮/API 三级管控
 - 🤖 **AI 驱动开发** - 内置 MCP 服务，AI 辅助生成代码
 - 🎨 **精美 UI** - Element Plus + UnoCSS，支持暗黑模式
+- 🗄️ **灵活数据库** - 支持 SQLite / MySQL / PostgreSQL，开箱即用
 - 🐳 **一键部署** - Docker Compose 编排
 
 ## 🛠️ 技术栈
@@ -41,8 +42,8 @@ FastAPI-Vue-Admin 是一个基于 **FastAPI + Tortoise-ORM + Vue 3 + Element Plu
 |------|------|
 | FastAPI | Vue 3 |
 | Tortoise-ORM | Element Plus |
-| MySQL 8.0+ | TypeScript |
-| Redis 6.0+ | Vite |
+| SQLite / MySQL / PostgreSQL | TypeScript |
+| Redis（内存模式/服务器模式） | Vite |
 | Casbin | Pinia |
 | Pydantic | UnoCSS |
 
@@ -52,9 +53,9 @@ FastAPI-Vue-Admin 是一个基于 **FastAPI + Tortoise-ORM + Vue 3 + Element Plu
 
 - Python 3.9+
 - Node.js 20+
-- MySQL 8.0+
-- Redis 6.0+
+- Redis 6.0+（可选，默认使用内存模式）
 - pnpm 8+
+- MySQL 8.0+ / PostgreSQL 12+ (可选，默认使用 SQLite)
 
 ### 启动后端
 

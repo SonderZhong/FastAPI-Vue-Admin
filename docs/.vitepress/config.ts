@@ -5,16 +5,16 @@ export default defineConfig({
   description: '基于 FastAPI + Vue 3 的现代化后台管理系统模板',
   lang: 'zh-CN',
   base: '/FastAPI-Vue-Admin/',
-  
+
   ignoreDeadLinks: [
     /^http:\/\/localhost/,
     /^http:\/\/127\.0\.0\.1/
   ],
-  
+
   sitemap: {
     hostname: 'https://sonderzhong.github.io/FastAPI-Vue-Admin/'
   },
-  
+
   head: [
     ['link', { rel: 'icon', href: '/FastAPI-Vue-Admin/favicon.ico' }]
   ],
@@ -25,7 +25,7 @@ export default defineConfig({
 
   themeConfig: {
     logo: '/logo.png',
-    
+
     nav: [
       { text: '指南', link: '/guide/', activeMatch: '/guide/' },
       { text: '配置', link: '/config/', activeMatch: '/config/' },
@@ -56,6 +56,7 @@ export default defineConfig({
           text: '后端指南',
           items: [
             { text: '后端知识库', link: '/guide/backend' },
+            { text: '数据库配置', link: '/guide/database-migration' },
             { text: '权限控制', link: '/guide/permission' },
             { text: 'MCP 服务', link: '/guide/mcp' }
           ]

@@ -284,55 +284,70 @@ class RedisSettings(BaseConfig):
     Redis配置类（单一Redis连接）
     管理缓存、会话等存储
     """
+    mode: str = 'memory'
+    """
+    Redis运行模式
+    - 'memory'：内存模拟模式（默认），无需Redis服务器，适合开发和测试
+    - 'server'：服务器模式，连接真实的Redis服务器，适合生产环境
+    """
+    
     host: str = '127.0.0.1'
     """
-    Redis主机地址
+    Redis主机地址（仅server模式生效）
     - 本地：'127.0.0.1'（默认）
     - 远程：服务器IP地址或域名
     """
 
     port: int = 6379
     """
-    Redis端口号
+    Redis端口号（仅server模式生效）
     默认6379（Redis标准端口）
     """
 
     password: SecretStr = SecretStr('')
     """
-    Redis登录密码（敏感信息）
+    Redis登录密码（敏感信息，仅server模式生效）
     - 开发环境：可留空（关闭认证）
     - 生产环境：必须设置强密码
     """
 
     database: int = 1
     """
-    Redis数据库索引（0-15，默认2）
-    - 单节点模式：有效，用于逻辑隔离不同业务数据（如0存会话、2存缓存）
+    Redis数据库索引（0-15，默认1，仅server模式生效）
+    - 单节点模式：有效，用于逻辑隔离不同业务数据（如0存会话、1存缓存）
     - 集群模式：通常无效（集群不支持select命令）
     建议不同业务使用不同索引，避免key冲突
     """
 
     max_connections: int = 10
     """
-    Redis连接池最大连接数
+    Redis连接池最大连接数（仅server模式生效）
     需根据并发量调整，建议不超过Redis服务器的maxclients配置
     过大可能导致Redis拒绝连接
     """
 
     socket_timeout: int = 5
     """
-    Redis连接超时时间（单位：秒）
+    Redis连接超时时间（单位：秒，仅server模式生效）
     超过此时长未建立连接会抛出异常
     建议设置为5秒，避免请求长时间阻塞
     """
 
     retry_on_timeout: bool = True
     """
-    超时是否自动重试
+    超时是否自动重试（仅server模式生效）
     - True：超时后自动重试一次（默认，提高可用性）
     - False：超时后直接抛出异常
     适合对可用性要求高的场景，需注意重试可能导致重复操作
     """
+    
+    @field_validator('mode')
+    def validate_mode(cls, v):
+        """验证Redis模式合法性"""
+        supported = ['memory', 'server']
+        if v not in supported:
+            raise ValueError(f"不支持的Redis模式: {v}，支持的模式: {supported}")
+        return v
 
 
 class UploadSettings(BaseConfig):

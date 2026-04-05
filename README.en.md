@@ -33,6 +33,7 @@ FastAPI-Vue-Admin is a modern full-stack admin framework based on **FastAPI + To
 - 🛡️ **Enterprise RBAC** - Casbin-based menu/button/API permission control
 - 🤖 **AI-Driven Development** - Built-in MCP service for AI-assisted code generation
 - 🎨 **Beautiful UI** - Element Plus + UnoCSS with dark mode support
+- 🗄️ **Flexible Database** - Support SQLite / MySQL / PostgreSQL, ready out of the box
 - 🐳 **One-Click Deploy** - Docker Compose orchestration
 
 ## 🛠️ Tech Stack
@@ -41,8 +42,8 @@ FastAPI-Vue-Admin is a modern full-stack admin framework based on **FastAPI + To
 |---------|----------|
 | FastAPI | Vue 3 |
 | Tortoise-ORM | Element Plus |
-| MySQL 8.0+ | TypeScript |
-| Redis 6.0+ | Vite |
+| SQLite / MySQL / PostgreSQL | TypeScript |
+| Redis (Memory/Server Mode) | Vite |
 | Casbin | Pinia |
 | Pydantic | UnoCSS |
 
@@ -52,9 +53,9 @@ FastAPI-Vue-Admin is a modern full-stack admin framework based on **FastAPI + To
 
 - Python 3.9+
 - Node.js 20+
-- MySQL 8.0+
-- Redis 6.0+
+- Redis 6.0+ (Optional, memory mode by default)
 - pnpm 8+
+- MySQL 8.0+ / PostgreSQL 12+ (Optional, SQLite by default)
 
 ### Start Backend
 

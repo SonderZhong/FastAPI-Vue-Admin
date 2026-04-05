@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,9 +19,13 @@
             --border-color: #e4e7ed;
             --bg-color: #f5f7fa;
         }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
             background: var(--bg-color);
@@ -30,7 +35,7 @@
             justify-content: center;
             padding: 20px;
         }
-        
+
         .container {
             background: white;
             border-radius: 8px;
@@ -39,32 +44,32 @@
             max-width: 760px;
             overflow: hidden;
         }
-        
+
         .header {
             background: linear-gradient(135deg, var(--primary-color) 0%, #7c8ce8 100%);
             color: white;
             padding: 32px 24px;
             text-align: center;
         }
-        
+
         .header h1 {
             font-size: 24px;
             font-weight: 500;
             margin-bottom: 8px;
         }
-        
+
         .header p {
             opacity: 0.9;
             font-size: 14px;
         }
-        
+
         .progress-bar {
             display: flex;
             justify-content: center;
             gap: 40px;
             margin-top: 20px;
         }
-        
+
         .progress-item {
             display: flex;
             flex-direction: column;
@@ -73,37 +78,39 @@
             font-size: 12px;
             opacity: 0.7;
         }
-        
-        .progress-item.active { opacity: 1; }
-        
+
+        .progress-item.active {
+            opacity: 1;
+        }
+
         .progress-num {
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 13px;
             font-weight: 500;
         }
-        
+
         .progress-item.active .progress-num {
             background: white;
             color: var(--primary-color);
         }
-        
+
         .content {
             padding: 24px;
         }
-        
+
         .section {
             margin-bottom: 24px;
             padding: 20px;
             background: var(--bg-color);
             border-radius: 6px;
         }
-        
+
         .section-title {
             font-size: 15px;
             font-weight: 500;
@@ -115,7 +122,7 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .section-desc {
             font-size: 13px;
             color: var(--text-secondary);
@@ -125,28 +132,30 @@
             border-radius: 4px;
             border-left: 3px solid var(--info-color);
         }
-        
+
         .section-desc.warning {
             border-left-color: var(--warning-color);
             background: #fffbe6;
         }
-        
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
         }
-        
+
         .form-group {
             margin-bottom: 16px;
         }
-        
-        .form-group:last-child { margin-bottom: 0; }
-        
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
         .form-group.full {
             grid-column: 1 / -1;
         }
-        
+
         label {
             display: block;
             font-size: 13px;
@@ -154,13 +163,14 @@
             margin-bottom: 6px;
             font-weight: 500;
         }
-        
+
         label .required {
             color: var(--error-color);
             margin-left: 2px;
         }
-        
-        input, select {
+
+        input,
+        select {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid var(--border-color);
@@ -170,34 +180,35 @@
             background: white;
             color: var(--text-color);
         }
-        
-        input:focus, select:focus {
+
+        input:focus,
+        select:focus {
             outline: none;
             border-color: var(--primary-color);
             box-shadow: 0 0 0 2px var(--primary-light);
         }
-        
+
         input::placeholder {
             color: #c0c4cc;
         }
-        
+
         .tip {
             font-size: 12px;
             color: #909399;
             margin-top: 4px;
             line-height: 1.5;
         }
-        
+
         .tip.highlight {
             color: var(--warning-color);
         }
-        
+
         .btn-row {
             display: flex;
             gap: 10px;
             margin-top: 12px;
         }
-        
+
         .btn {
             padding: 8px 16px;
             border-radius: 4px;
@@ -211,12 +222,12 @@
             background: white;
             color: var(--text-color);
         }
-        
+
         .btn:hover {
             border-color: var(--primary-color);
             color: var(--primary-color);
         }
-        
+
         .btn-primary {
             width: 100%;
             padding: 12px;
@@ -233,16 +244,16 @@
             justify-content: center;
             gap: 8px;
         }
-        
+
         .btn-primary:hover {
             background: var(--primary-hover);
         }
-        
+
         .btn-primary:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
-        
+
         .status {
             padding: 10px 12px;
             border-radius: 4px;
@@ -252,28 +263,28 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .status.success {
             display: flex;
             background: #f6ffed;
             color: var(--success-color);
             border: 1px solid #b7eb8f;
         }
-        
+
         .status.error {
             display: flex;
             background: #fff2f0;
             color: var(--error-color);
             border: 1px solid #ffccc7;
         }
-        
+
         .status.loading {
             display: flex;
             background: #fffbe6;
             color: var(--warning-color);
             border: 1px solid #ffe58f;
         }
-        
+
         .spinner {
             width: 14px;
             height: 14px;
@@ -282,17 +293,19 @@
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-        
+
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
-        
+
         .footer {
             padding: 16px 24px;
             background: var(--bg-color);
             border-top: 1px solid var(--border-color);
         }
-        
+
         .result-box {
             display: none;
             padding: 20px;
@@ -301,9 +314,11 @@
             border-radius: 4px;
             margin-bottom: 16px;
         }
-        
-        .result-box.show { display: block; }
-        
+
+        .result-box.show {
+            display: block;
+        }
+
         .result-box h3 {
             color: var(--success-color);
             font-size: 16px;
@@ -312,29 +327,47 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .result-box p {
             color: var(--text-secondary);
             font-size: 14px;
             line-height: 1.8;
         }
-        
+
+        .result-box ol {
+            color: var(--text-color);
+            font-size: 14px;
+        }
+
+        .result-box ol li {
+            margin-bottom: 8px;
+        }
+
+        .result-box code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 13px;
+            color: #c7254e;
+        }
+
         .result-box .info-item {
             display: flex;
             gap: 8px;
             margin-top: 8px;
         }
-        
+
         .result-box .info-label {
             color: #999;
             min-width: 80px;
         }
-        
+
         .result-box .info-value {
             color: var(--text-color);
             font-weight: 500;
         }
-        
+
         code {
             background: #f0f0f0;
             padding: 2px 6px;
@@ -343,13 +376,19 @@
             font-size: 12px;
             color: #c7254e;
         }
-        
+
         @media (max-width: 600px) {
-            .form-row { grid-template-columns: 1fr; }
-            .progress-bar { gap: 20px; }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-bar {
+                gap: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -378,12 +417,20 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="content">
             <div id="resultBox" class="result-box">
                 <h3>✓ 初始化完成</h3>
-                <p>系统已成功初始化，请重启应用后访问系统。</p>
-                <div class="info-item">
+                <p>系统配置已保存，数据库已初始化。</p>
+                <p style="margin-top: 12px;"><strong>⚠️ 请按以下步骤操作：</strong></p>
+                <ol style="margin-top: 8px; padding-left: 20px; line-height: 1.8;">
+                    <li>关闭当前终端窗口（Ctrl+C 或 Command+C）</li>
+                    <li>重新运行命令：<code
+                            style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">python main.py</code>
+                    </li>
+                    <li>使用以下账号登录系统</li>
+                </ol>
+                <div class="info-item" style="margin-top: 12px;">
                     <span class="info-label">管理员账号：</span>
                     <span class="info-value" id="resultUsername">admin</span>
                 </div>
@@ -392,7 +439,7 @@
                     <span class="info-value" id="resultUrl">http://localhost:9090</span>
                 </div>
             </div>
-            
+
             <form id="setupForm">
                 <!-- 应用配置 -->
                 <div class="section">
@@ -437,50 +484,72 @@
                         <span class="icon">🗄️</span>
                         数据库配置
                     </div>
-                    <div class="section-desc warning">
-                        <strong>⚠️ Docker 部署注意：</strong>如果应用运行在 Docker 容器中，需要连接宿主机上的 MySQL/PostgreSQL，请将主机地址填写为 <code>host.docker.internal</code>，而不是 <code>127.0.0.1</code>。
+                    <div class="section-desc">
+                        选择数据库类型。<strong>SQLite</strong> 无需额外配置，适合开发和小型应用；<strong>MySQL/PostgreSQL</strong> 适合生产环境和大型应用。
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>数据库类型 <span class="required">*</span></label>
-                            <select name="db_engine" id="dbEngine">
-                                <option value="mysql">MySQL (推荐)</option>
-                                <option value="postgresql">PostgreSQL</option>
-                            </select>
-                            <div class="tip">选择您已安装的数据库类型</div>
+                    <div class="form-group full">
+                        <label>数据库类型 <span class="required">*</span></label>
+                        <select name="db_engine" id="dbEngine">
+                            <option value="sqlite">SQLite（推荐，开箱即用）</option>
+                            <option value="mysql">MySQL</option>
+                            <option value="postgresql">PostgreSQL</option>
+                        </select>
+                        <div class="tip">SQLite 适合开发和小型应用，MySQL/PostgreSQL 适合生产环境</div>
+                    </div>
+
+                    <!-- SQLite 配置 -->
+                    <div id="sqliteConfig">
+                        <div class="form-group full">
+                            <label>数据库文件路径</label>
+                            <input type="text" name="db_database_sqlite" value="fva.db">
+                            <div class="tip">数据库文件将保存在 server 目录下，无需手动创建</div>
                         </div>
-                        <div class="form-group">
+                        <div class="section-desc" style="margin-top: 12px;">
+                            ✓ SQLite 无需额外安装和配置，系统会自动创建数据库文件。
+                        </div>
+                    </div>
+
+                    <!-- MySQL/PostgreSQL 配置 -->
+                    <div id="serverDbConfig" style="display: none;">
+                        <div class="section-desc warning">
+                            <strong>⚠️ Docker 部署注意：</strong>如果应用运行在 Docker 容器中，需要连接宿主机上的数据库，请将主机地址填写为
+                            <code>host.docker.internal</code>，而不是 <code>127.0.0.1</code>。
+                        </div>
+                        <div class="form-group full">
                             <label>数据库名 <span class="required">*</span></label>
-                            <input type="text" name="db_database" value="fva" required>
+                            <input type="text" name="db_database" value="fva">
                             <div class="tip">数据库不存在时会自动创建</div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>主机地址 <span class="required">*</span></label>
-                            <input type="text" name="db_host" value="127.0.0.1" required>
-                            <div class="tip highlight">本地部署填 <code>127.0.0.1</code>，Docker 部署填 <code>host.docker.internal</code></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>主机地址 <span class="required">*</span></label>
+                                <input type="text" name="db_host" value="127.0.0.1">
+                                <div class="tip highlight">本地部署填 <code>127.0.0.1</code>，Docker 部署填
+                                    <code>host.docker.internal</code>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>端口 <span class="required">*</span></label>
+                                <input type="number" name="db_port" id="dbPort" value="3306">
+                                <div class="tip">MySQL 默认 3306，PostgreSQL 默认 5432</div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>端口 <span class="required">*</span></label>
-                            <input type="number" name="db_port" id="dbPort" value="3306" required>
-                            <div class="tip">MySQL 默认 3306，PostgreSQL 默认 5432</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>用户名 <span class="required">*</span></label>
+                                <input type="text" name="db_username" value="root">
+                                <div class="tip">数据库登录用户名</div>
+                            </div>
+                            <div class="form-group">
+                                <label>密码</label>
+                                <input type="password" name="db_password" placeholder="数据库密码">
+                                <div class="tip">数据库登录密码，无密码可留空</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>用户名 <span class="required">*</span></label>
-                            <input type="text" name="db_username" value="root" required>
-                            <div class="tip">数据库登录用户名</div>
+                        <div class="btn-row">
+                            <button type="button" class="btn" onclick="testDatabase()">🔌 测试连接</button>
                         </div>
-                        <div class="form-group">
-                            <label>密码</label>
-                            <input type="password" name="db_password" placeholder="数据库密码">
-                            <div class="tip">数据库登录密码，无密码可留空</div>
-                        </div>
-                    </div>
-                    <div class="btn-row">
-                        <button type="button" class="btn" onclick="testDatabase()">🔌 测试连接</button>
+                        <div id="dbStatus" class="status"></div>
                     </div>
                     <div id="dbStatus" class="status"></div>
                 </div>
@@ -491,35 +560,54 @@
                         <span class="icon">📦</span>
                         Redis 缓存配置
                     </div>
-                    <div class="section-desc warning">
-                        <strong>⚠️ Docker 部署注意：</strong>如果应用运行在 Docker 容器中，需要连接宿主机上的 Redis，请将主机地址填写为 <code>host.docker.internal</code>，而不是 <code>127.0.0.1</code>。
+                    <div class="section-desc">
+                        Redis 用于缓存用户会话、验证码等数据。支持内存模式（无需安装 Redis）和服务器模式（连接真实 Redis 服务）。
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>主机地址 <span class="required">*</span></label>
-                            <input type="text" name="redis_host" value="127.0.0.1" required>
-                            <div class="tip highlight">本地部署填 <code>127.0.0.1</code>，Docker 部署填 <code>host.docker.internal</code></div>
-                        </div>
-                        <div class="form-group">
-                            <label>端口 <span class="required">*</span></label>
-                            <input type="number" name="redis_port" value="6379" required>
-                            <div class="tip">Redis 默认端口为 6379</div>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>密码</label>
-                            <input type="password" name="redis_password" placeholder="无密码可留空">
-                            <div class="tip">Redis 认证密码，未设置密码可留空</div>
-                        </div>
-                        <div class="form-group">
-                            <label>数据库编号</label>
-                            <input type="number" name="redis_database" value="1" min="0" max="15">
-                            <div class="tip">Redis 默认有 16 个数据库 (0-15)，建议使用非 0 号库</div>
+                    <div class="form-group full">
+                        <label>运行模式 <span class="required">*</span></label>
+                        <select name="redis_mode" id="redisMode" onchange="toggleRedisFields()" required>
+                            <option value="memory" selected>内存模式（推荐，无需 Redis 服务器）</option>
+                            <option value="server">服务器模式（连接真实 Redis）</option>
+                        </select>
+                        <div class="tip">
+                            <strong>内存模式：</strong>使用内存模拟 Redis，适合开发和小规模部署，无需安装 Redis 服务器<br>
+                            <strong>服务器模式：</strong>连接真实 Redis 服务器，适合生产环境和高并发场景
                         </div>
                     </div>
-                    <div class="btn-row">
-                        <button type="button" class="btn" onclick="testRedis()">🔌 测试连接</button>
+                    <div id="redisServerFields" style="display: none;">
+                        <div class="section-desc warning">
+                            <strong>⚠️ Docker 部署注意：</strong>如果应用运行在 Docker 容器中，需要连接宿主机上的 Redis，请将主机地址填写为
+                            <code>host.docker.internal</code>，而不是 <code>127.0.0.1</code>。
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>主机地址 <span class="required">*</span></label>
+                                <input type="text" name="redis_host" value="127.0.0.1">
+                                <div class="tip highlight">本地部署填 <code>127.0.0.1</code>，Docker 部署填
+                                    <code>host.docker.internal</code>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>端口 <span class="required">*</span></label>
+                                <input type="number" name="redis_port" value="6379">
+                                <div class="tip">Redis 默认端口为 6379</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>密码</label>
+                                <input type="password" name="redis_password" placeholder="无密码可留空">
+                                <div class="tip">Redis 认证密码，未设置密码可留空</div>
+                            </div>
+                            <div class="form-group">
+                                <label>数据库编号</label>
+                                <input type="number" name="redis_database" value="1" min="0" max="15">
+                                <div class="tip">Redis 默认有 16 个数据库 (0-15)，建议使用非 0 号库</div>
+                            </div>
+                        </div>
+                        <div class="btn-row">
+                            <button type="button" class="btn" onclick="testRedis()">🔌 测试连接</button>
+                        </div>
                     </div>
                     <div id="redisStatus" class="status"></div>
                 </div>
@@ -591,7 +679,7 @@
                 </div>
             </form>
         </div>
-        
+
         <div class="footer">
             <button type="button" class="btn-primary" id="submitBtn" onclick="submitForm()">
                 🎉 完成初始化
@@ -602,8 +690,20 @@
 
     <script>
         // 数据库类型切换
-        document.getElementById('dbEngine').addEventListener('change', function() {
-            document.getElementById('dbPort').value = this.value === 'mysql' ? '3306' : '5432';
+        document.getElementById('dbEngine').addEventListener('change', function () {
+            const engine = this.value;
+            const sqliteConfig = document.getElementById('sqliteConfig');
+            const serverDbConfig = document.getElementById('serverDbConfig');
+
+            if (engine === 'sqlite') {
+                sqliteConfig.style.display = 'block';
+                serverDbConfig.style.display = 'none';
+            } else {
+                sqliteConfig.style.display = 'none';
+                serverDbConfig.style.display = 'block';
+                // 根据数据库类型设置默认端口
+                document.getElementById('dbPort').value = engine === 'mysql' ? '3306' : '5432';
+            }
         });
 
         // 生成随机密钥
@@ -619,6 +719,46 @@
         function getFormData() {
             const form = document.getElementById('setupForm');
             const formData = new FormData(form);
+            const dbEngine = formData.get('db_engine');
+            const redisMode = formData.get('redis_mode');
+
+            // 根据数据库类型构建配置
+            let databaseConfig = {
+                engine: dbEngine
+            };
+
+            if (dbEngine === 'sqlite') {
+                databaseConfig.host = '';
+                databaseConfig.port = 0;
+                databaseConfig.username = '';
+                databaseConfig.password = '';
+                databaseConfig.database = formData.get('db_database_sqlite') || 'fva.db';
+            } else {
+                databaseConfig.host = formData.get('db_host');
+                databaseConfig.port = parseInt(formData.get('db_port'));
+                databaseConfig.username = formData.get('db_username');
+                databaseConfig.password = formData.get('db_password');
+                databaseConfig.database = formData.get('db_database');
+            }
+
+            // 根据 Redis 模式构建配置
+            let redisConfig = {
+                mode: redisMode
+            };
+
+            if (redisMode === 'server') {
+                redisConfig.host = formData.get('redis_host');
+                redisConfig.port = parseInt(formData.get('redis_port'));
+                redisConfig.password = formData.get('redis_password');
+                redisConfig.database = parseInt(formData.get('redis_database'));
+            } else {
+                // 内存模式使用默认值
+                redisConfig.host = '127.0.0.1';
+                redisConfig.port = 6379;
+                redisConfig.password = '';
+                redisConfig.database = 1;
+            }
+
             return {
                 app: {
                     name: formData.get('app_name'),
@@ -626,20 +766,8 @@
                     port: parseInt(formData.get('app_port')),
                     env: formData.get('app_env')
                 },
-                database: {
-                    engine: formData.get('db_engine'),
-                    host: formData.get('db_host'),
-                    port: parseInt(formData.get('db_port')),
-                    username: formData.get('db_username'),
-                    password: formData.get('db_password'),
-                    database: formData.get('db_database')
-                },
-                redis: {
-                    host: formData.get('redis_host'),
-                    port: parseInt(formData.get('redis_port')),
-                    password: formData.get('redis_password'),
-                    database: parseInt(formData.get('redis_database'))
-                },
+                database: databaseConfig,
+                redis: redisConfig,
                 jwt: {
                     secret_key: formData.get('jwt_secret'),
                     salt: formData.get('jwt_salt'),
@@ -652,6 +780,20 @@
                     email: formData.get('admin_email')
                 }
             };
+        }
+
+        function toggleRedisFields() {
+            const mode = document.getElementById('redisMode').value;
+            const serverFields = document.getElementById('redisServerFields');
+            const statusEl = document.getElementById('redisStatus');
+
+            if (mode === 'memory') {
+                serverFields.style.display = 'none';
+                statusEl.className = 'status';
+                statusEl.innerHTML = '';
+            } else {
+                serverFields.style.display = 'block';
+            }
         }
 
         function showStatus(elementId, type, message) {
@@ -667,6 +809,11 @@
 
         async function testDatabase() {
             const data = getFormData();
+            if (data.database.engine === 'sqlite') {
+                showStatus('dbStatus', 'success', 'SQLite 无需测试连接，系统会自动创建数据库文件');
+                return;
+            }
+
             showStatus('dbStatus', 'loading', '正在测试数据库连接...');
             try {
                 const res = await fetch('/api/setup/test-database', {
@@ -683,6 +830,13 @@
 
         async function testRedis() {
             const data = getFormData();
+
+            // 内存模式无需测试
+            if (data.redis.mode === 'memory') {
+                showStatus('redisStatus', 'success', '内存模式无需测试连接，系统将使用内存模拟 Redis');
+                return;
+            }
+
             showStatus('redisStatus', 'loading', '正在测试 Redis 连接...');
             try {
                 const res = await fetch('/api/setup/test-redis', {
@@ -711,18 +865,20 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
-                
+
                 if (result.success) {
-                    showStatus('submitStatus', 'success', result.msg);
+                    showStatus('submitStatus', 'success', result.msg + ' - 请重启应用以生效');
                     btn.innerHTML = '✓ 初始化完成';
-                    
+
                     // 显示结果
                     document.getElementById('resultBox').classList.add('show');
                     document.getElementById('resultUsername').textContent = result.data.admin_username;
                     document.getElementById('resultUrl').textContent = 'http://localhost:' + result.data.app_port;
-                    
+
                     // 隐藏表单
                     document.getElementById('setupForm').style.display = 'none';
+
+                    // 不自动刷新，让用户手动重启服务
                 } else {
                     showStatus('submitStatus', 'error', result.msg);
                     btn.disabled = false;
@@ -736,4 +892,5 @@
         }
     </script>
 </body>
+
 </html>
