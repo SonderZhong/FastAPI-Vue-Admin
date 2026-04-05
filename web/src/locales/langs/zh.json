@@ -42,11 +42,20 @@
   "setting": {
     "menuType": {
       "title": "菜单布局",
-      "list": ["垂直", "水平", "混合", "双列"]
+      "list": [
+        "垂直",
+        "水平",
+        "混合",
+        "双列"
+      ]
     },
     "theme": {
       "title": "主题风格",
-      "list": ["浅色", "深色", "系统"]
+      "list": [
+        "浅色",
+        "深色",
+        "系统"
+      ]
     },
     "menu": {
       "title": "菜单风格"
@@ -56,11 +65,17 @@
     },
     "box": {
       "title": "盒子样式",
-      "list": ["边框", "阴影"]
+      "list": [
+        "边框",
+        "阴影"
+      ]
     },
     "container": {
       "title": "容器宽度",
-      "list": ["铺满", "定宽"]
+      "list": [
+        "铺满",
+        "定宽"
+      ]
     },
     "basics": {
       "title": "基础配置",
@@ -99,8 +114,14 @@
   "notice": {
     "title": "通知",
     "btnRead": "标为已读",
-    "bar": ["通知", "公告", "消息"],
-    "text": ["暂无"],
+    "bar": [
+      "通知",
+      "公告",
+      "消息"
+    ],
+    "text": [
+      "暂无"
+    ],
     "viewAll": "查看全部"
   },
   "worktab": {
@@ -130,7 +151,12 @@
     "password": "密码",
     "captcha": "验证码",
     "loginDays": "登录有效期",
-    "placeholder": ["请输入用户名/邮箱/手机号", "请输入密码", "请输入验证码", "请拖动滑块完成验证"],
+    "placeholder": [
+      "请输入用户名/邮箱/手机号",
+      "请输入密码",
+      "请输入验证码",
+      "请拖动滑块完成验证"
+    ],
     "sliderText": "按住滑块拖动",
     "sliderSuccessText": "验证成功",
     "rememberPwd": "记住密码",
@@ -312,6 +338,7 @@
       "cache": "缓存管理",
       "server": "服务器监控",
       "notification": "通知管理",
+      "dictionary": "数据字典",
       "file": "文件管理",
       "userCenter": "个人中心"
     },
@@ -1191,11 +1218,11 @@
       "department": "部门",
       "deleteConfirm": "确定删除该导入记录吗？",
       "batchDeleteConfirm": "确定删除选中的 {count} 条导入记录吗？",
-        "auditConfirm": "确定{action}选中的 {count} 条导入记录吗？",
-        "singleAuditConfirm": "确定{action}编码 \"{code}\" 吗？",
-        "approveAllConfirm": "确定审核通过所有待审核的导入记录吗？",
-        "approve": "通过",
-        "reject": "拒绝",
+      "auditConfirm": "确定{action}选中的 {count} 条导入记录吗？",
+      "singleAuditConfirm": "确定{action}编码 \"{code}\" 吗？",
+      "approveAllConfirm": "确定审核通过所有待审核的导入记录吗？",
+      "approve": "通过",
+      "reject": "拒绝",
       "deleteSuccess": "删除成功",
       "batchDeleteSuccess": "批量删除成功",
       "auditSuccess": "审核成功",
@@ -1290,5 +1317,36 @@
       "deleteConfirm": "确定要删除该编码项吗？",
       "batchDeleteConfirm": "确定要删除选中的编码项吗？"
     }
+  },
+  "dictionary": {
+    "title": "数据字典",
+    "dictionaryList": "字典列表",
+    "dictionaryItemList": "字典项列表",
+    "searchPlaceholder": "搜索字典名称或编码",
+    "selectDictionaryTip": "请先选择左侧字典",
+    "noDictionary": "暂无字典数据",
+    "addDictionary": "新增字典",
+    "editDictionary": "编辑字典",
+    "addDictionaryItem": "新增字典项",
+    "editDictionaryItem": "编辑字典项",
+    "dictName": "字典名称",
+    "dictCode": "字典编码",
+    "dictType": "字典类型",
+    "itemLabel": "字典项标签",
+    "itemValue": "字典项值",
+    "tagColor": "标签颜色",
+    "dictNamePlaceholder": "请输入字典名称",
+    "dictCodePlaceholder": "请输入字典编码",
+    "dictTypePlaceholder": "请输入字典类型",
+    "itemLabelPlaceholder": "请输入字典项标签",
+    "itemValuePlaceholder": "请输入字典项值",
+    "dictNameRequired": "请输入字典名称",
+    "dictCodeRequired": "请输入字典编码",
+    "dictTypeRequired": "请输入字典类型",
+    "itemLabelRequired": "请输入字典项标签",
+    "itemValueRequired": "请输入字典项值",
+    "deleteDictionaryConfirm": "确定要删除该字典吗？删除后字典项也会被删除！",
+    "deleteDictionaryItemConfirm": "确定要删除该字典项吗？",
+    "batchDeleteItemsConfirm": "确定要删除选中的 {count} 个字典项吗？"
   }
 }

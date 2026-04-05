@@ -93,6 +93,16 @@ export const routes: AppRouteRecord[] = [
         }
       },
       {
+        path: 'dictionary',
+        name: 'Dictionary',
+        component: '/system/dictionary/index',
+        meta: {
+          title: 'menus.system.dictionary',
+          icon: '&#xe66b;',
+          auth: ['dictionary:btn:list']
+        }
+      },
+      {
         path: 'file',
         name: 'FileManagement',
         component: '/system/file/index',

@@ -13,6 +13,7 @@ from apis.casbin import casbinAPI
 from apis.config import configAPI
 from apis.dashboard import dashboardAPI
 from apis.department import departmentAPI
+from apis.dictionary import dictionaryAPI
 from apis.doc import docAPI
 from apis.file import fileAPI, authFileAPI, fileAccessAPI
 from apis.log import logAPI
@@ -91,6 +92,10 @@ system_api_list = [
     {
         "api": docAPI,
         "tags": ["API文档"]
+    },
+    {
+        "api": dictionaryAPI,
+        "tags": ["数据字典"]
     }
 ]
 

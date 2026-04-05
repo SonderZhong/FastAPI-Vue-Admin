@@ -41,6 +41,8 @@ class RedisKeyConfig(Enum):
     CAPTCHA_CODES = {"key": "captcha_codes", "remark": "图片验证码"}
     EMAIL_CODES = {"key": "email_codes", "remark": "邮箱验证码"}
     SYSTEM_CONFIG = {"key": "system_config", "remark": "系统配置信息"}
+    SYSTEMDICTIONARY_INFO = {"key": "system_dictionary_info", "remark": "数据字典信息"}
+    SYSTEMDICTIONARYITEM_INFO = {"key": "system_dictionary_item_info", "remark": "数据字典项信息"}
 
 
 class RedisUtil:

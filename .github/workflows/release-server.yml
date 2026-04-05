@@ -21,10 +21,8 @@ jobs:
         id: version
         run: |
           FULL_VERSION=$(grep -oP 'version:\s*"\K[^"]+' server/config.yaml | head -1)
-          STABLE_VERSION=$(echo $FULL_VERSION | sed 's/\.[^.]*$//')
           echo "full=$FULL_VERSION" >> $GITHUB_OUTPUT
-          echo "stable=$STABLE_VERSION" >> $GITHUB_OUTPUT
-          echo "Full version: $FULL_VERSION, Stable version: $STABLE_VERSION"
+          echo "Full version: $FULL_VERSION"
 
       - name: Create server archive
         run: |
@@ -37,12 +35,12 @@ jobs:
               -x "logs/*" \
               -x "uploads/*"
 
-      - name: Check if stable release exists
+      - name: Check if release exists
         id: check_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_TAG="v${{ steps.version.outputs.stable }}"
+          RELEASE_TAG="v${{ steps.version.outputs.full }}"
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
             # 获取现有的 dist 包版本

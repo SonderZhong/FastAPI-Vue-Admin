@@ -42,11 +42,20 @@
   "setting": {
     "menuType": {
       "title": "Menu Layout",
-      "list": ["Vertical", "Horizontal", "Mixed", "Dual"]
+      "list": [
+        "Vertical",
+        "Horizontal",
+        "Mixed",
+        "Dual"
+      ]
     },
     "theme": {
       "title": "Theme Style",
-      "list": ["Light", "Dark", "System"]
+      "list": [
+        "Light",
+        "Dark",
+        "System"
+      ]
     },
     "menu": {
       "title": "Menu Style"
@@ -56,11 +65,17 @@
     },
     "box": {
       "title": "Box Style",
-      "list": ["Border", "Shadow"]
+      "list": [
+        "Border",
+        "Shadow"
+      ]
     },
     "container": {
       "title": "Container Width",
-      "list": ["Full", "Boxed"]
+      "list": [
+        "Full",
+        "Boxed"
+      ]
     },
     "basics": {
       "title": "Basic Config",
@@ -99,8 +114,14 @@
   "notice": {
     "title": "Notice",
     "btnRead": "Mark as read",
-    "bar": ["Notice", "Announcement", "Message"],
-    "text": ["No"],
+    "bar": [
+      "Notice",
+      "Announcement",
+      "Message"
+    ],
+    "text": [
+      "No"
+    ],
     "viewAll": "View all"
   },
   "worktab": {
@@ -317,6 +338,7 @@
       "cache": "Cache Management",
       "server": "Server Monitor",
       "notification": "Notification",
+      "dictionary": "Dictionary",
       "file": "File Management",
       "userCenter": "User Center"
     },
@@ -1201,11 +1223,11 @@
       "department": "Department",
       "deleteConfirm": "Are you sure to delete this import record?",
       "batchDeleteConfirm": "Are you sure to delete {count} selected import records?",
-        "auditConfirm": "Are you sure to {action} {count} selected import records?",
-        "singleAuditConfirm": "Are you sure to {action} code \"{code}\"?",
-        "approveAllConfirm": "Are you sure to approve all pending import records?",
-        "approve": "approve",
-        "reject": "reject",
+      "auditConfirm": "Are you sure to {action} {count} selected import records?",
+      "singleAuditConfirm": "Are you sure to {action} code \"{code}\"?",
+      "approveAllConfirm": "Are you sure to approve all pending import records?",
+      "approve": "approve",
+      "reject": "reject",
       "deleteSuccess": "Delete Success",
       "batchDeleteSuccess": "Batch Delete Success",
       "auditSuccess": "Audit Success",
@@ -1300,5 +1322,36 @@
       "deleteConfirm": "Are you sure to delete this item?",
       "batchDeleteConfirm": "Are you sure to delete selected items?"
     }
+  },
+  "dictionary": {
+    "title": "Dictionary",
+    "dictionaryList": "Dictionary List",
+    "dictionaryItemList": "Dictionary Items",
+    "searchPlaceholder": "Search dictionary name or code",
+    "selectDictionaryTip": "Please select a dictionary from the left",
+    "noDictionary": "No dictionary data",
+    "addDictionary": "Add Dictionary",
+    "editDictionary": "Edit Dictionary",
+    "addDictionaryItem": "Add Item",
+    "editDictionaryItem": "Edit Item",
+    "dictName": "Dictionary Name",
+    "dictCode": "Dictionary Code",
+    "dictType": "Dictionary Type",
+    "itemLabel": "Item Label",
+    "itemValue": "Item Value",
+    "tagColor": "Tag Color",
+    "dictNamePlaceholder": "Please enter dictionary name",
+    "dictCodePlaceholder": "Please enter dictionary code",
+    "dictTypePlaceholder": "Please enter dictionary type",
+    "itemLabelPlaceholder": "Please enter item label",
+    "itemValuePlaceholder": "Please enter item value",
+    "dictNameRequired": "Please enter dictionary name",
+    "dictCodeRequired": "Please enter dictionary code",
+    "dictTypeRequired": "Please enter dictionary type",
+    "itemLabelRequired": "Please enter item label",
+    "itemValueRequired": "Please enter item value",
+    "deleteDictionaryConfirm": "Are you sure to delete this dictionary? All items will be deleted!",
+    "deleteDictionaryItemConfirm": "Are you sure to delete this item?",
+    "batchDeleteItemsConfirm": "Are you sure to delete {count} selected items?"
   }
 }
