@@ -11,6 +11,7 @@
 |------|------|------|
 {{DIST_ROW}}
 {{SERVER_ROW}}
+{{IP2REGION_ROW}}
 
 ---
 
@@ -20,22 +21,25 @@
 # 1. 解压文件
 unzip server-x.x.x.zip -d /path/to/server
 
-# 2. 创建虚拟环境
+# 2. 下载 IP 数据库（如果 Release 中有提供）
+# 将 ip2region_v4.xdb 放到 server/assets/ 目录下
+
+# 3. 创建虚拟环境
 cd /path/to/server
 python -m venv venv
 
-# 3. 激活虚拟环境
+# 4. 激活虚拟环境
 # Windows
 venv\Scripts\activate
 # Linux/Mac
 source venv/bin/activate
 
-# 4. 安装依赖
+# 5. 安装依赖
 pip install -r requirements.txt
 
-# 5. 配置 config.yaml（数据库、Redis等）
+# 6. 配置 config.yaml（数据库、Redis等）
 
-# 6. 启动服务
+# 7. 启动服务
 python main.py
 ```
 

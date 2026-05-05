@@ -3,7 +3,7 @@ name: Release Frontend
 on:
   push:
     paths:
-      - 'web/**'
+      - "web/**"
     branches:
       - main
       - master
@@ -12,7 +12,7 @@ on:
 jobs:
   release-frontend:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -64,9 +64,13 @@ jobs:
             # 获取现有的 server 包版本
             SERVER_ASSET=$(gh release view "$RELEASE_TAG" --json assets -q '.assets[].name' | grep '^server-' | head -1 || echo "")
             echo "server_asset=$SERVER_ASSET" >> $GITHUB_OUTPUT
+            # 检查是否有 ip2region 文件
+            IP2REGION_ASSET=$(gh release view "$RELEASE_TAG" --json assets -q '.assets[].name' | grep '^ip2region_v4' | head -1 || echo "")
+            echo "ip2region_asset=$IP2REGION_ASSET" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "server_asset=" >> $GITHUB_OUTPUT
+            echo "ip2region_asset=" >> $GITHUB_OUTPUT
           fi
           echo "tag=$RELEASE_TAG" >> $GITHUB_OUTPUT
 
@@ -88,9 +92,12 @@ jobs:
           RELEASE_TAG="${{ steps.check_release.outputs.tag }}"
           DIST_FILE="dist-${{ steps.version.outputs.full }}.zip"
           SERVER_FILE="${{ steps.check_release.outputs.server_asset }}"
-          
+          IP2REGION_FILE="${{ steps.check_release.outputs.ip2region_asset }}"
+
           # 构建下载链接
           DIST_LINK="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${DIST_FILE}"
+          DIST_ROW="| 前端 | [${DIST_FILE}](${DIST_LINK}) | Vue 3 + Element Plus 构建产物 |"
+
           if [ -n "$SERVER_FILE" ]; then
             SERVER_LINK="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${SERVER_FILE}"
             SERVER_ROW="| 后端 | [${SERVER_FILE}](${SERVER_LINK}) | FastAPI + Tortoise-ORM 服务端 |"
@@ -98,12 +105,18 @@ jobs:
             SERVER_ROW="| 后端 | 暂无 | 等待后端发布 |"
           fi
 
-          DIST_ROW="| 前端 | [${DIST_FILE}](${DIST_LINK}) | Vue 3 + Element Plus 构建产物 |"
-          
+          if [ -n "$IP2REGION_FILE" ]; then
+            IP2REGION_LINK="https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${IP2REGION_FILE}"
+            IP2REGION_ROW="| IP数据库 | [${IP2REGION_FILE}](${IP2REGION_LINK}) | ip2region 离线IP地址定位库 |"
+          else
+            IP2REGION_ROW=""
+          fi
+
           RELEASE_BODY=$(cat .github/RELEASE_TEMPLATE.md)
           RELEASE_BODY="${RELEASE_BODY//\{\{RELEASE_TAG\}\}/$RELEASE_TAG}"
           RELEASE_BODY="${RELEASE_BODY//\{\{DIST_ROW\}\}/$DIST_ROW}"
           RELEASE_BODY="${RELEASE_BODY//\{\{SERVER_ROW\}\}/$SERVER_ROW}"
+          RELEASE_BODY="${RELEASE_BODY//\{\{IP2REGION_ROW\}\}/$IP2REGION_ROW}"
 
           if [ "${{ steps.check_release.outputs.exists }}" == "true" ]; then
             gh release upload "$RELEASE_TAG" "$DIST_FILE" --clobber
@@ -116,4 +129,3 @@ jobs:
               "$DIST_FILE"
             echo "Created new release $RELEASE_TAG"
           fi
-
