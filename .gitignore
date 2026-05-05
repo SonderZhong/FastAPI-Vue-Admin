@@ -37,13 +37,14 @@ docs/.vitepress/cache/
 # 数据库
 *.db
 *.sqlite
+*.db-*
 
 # 上传文件
 server/data/
 server/assets/uploads/
 server/uploads/
 
-# IP 地理位置数据库（通过 Release 分发，不提交到 git）
+# IP 地理位置数据库
 server/assets/ip2region_v4.xdb
 server/assets/*.mmdb
 server/assets/*.xdb

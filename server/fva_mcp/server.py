@@ -21,9 +21,9 @@ from fastmcp import FastMCP
 mcp = FastMCP(
     name="fva-helper",
     instructions="""
-    FVA Helper - FastAPI-Vue-Admin助手工具。
+    FVA Helper - 教科研平台助手工具。
     提供数据库操作、用户管理、角色管理、权限管理等功能。
-    """
+    """,
 )
 
 # 导入并注册工具
@@ -32,6 +32,7 @@ import tools.redis_tools as redis_tools
 import tools.model_tools as model_tools
 import tools.schema_tools as schema_tools
 import tools.api_tools as api_tools
+import tools.dictionary_tools as dictionary_tools
 
 # 注册数据库工具
 db_tools.register(mcp)
@@ -48,6 +49,9 @@ schema_tools.register(mcp)
 # 注册API工具
 api_tools.register(mcp)
 
+# 注册数据字典工具
+dictionary_tools.register(mcp)
+
 
 def run_stdio():
     """运行 MCP 服务器（stdio 模式）"""
@@ -57,34 +61,38 @@ def run_stdio():
 def run_sse(host: str = "0.0.0.0", port: int = 9091):
     """运行 MCP 服务器（SSE 模式）"""
     # 获取所有已注册的工具
-    tools = list(mcp._tool_manager._tools.keys()) if hasattr(mcp, '_tool_manager') else []
-    
+    tools = (
+        list(mcp._tool_manager._tools.keys()) if hasattr(mcp, "_tool_manager") else []
+    )
+
     print("\n" + "=" * 60)
     print("  🔧 FVA Helper MCP 服务")
     print("=" * 60)
     print(f"\n  ➜ SSE 端点: http://{host}:{port}/sse")
     print(f"  ➜ 消息端点: http://{host}:{port}/messages/")
-    
+
     if tools:
         print(f"\n  📋 已注册工具 ({len(tools)} 个):")
         for tool in tools:
             print(f"     • {tool}")
-    
+
     print("\n" + "=" * 60 + "\n")
-    
+
     mcp.run(transport="sse", host=host, port=port)
 
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="FVA Helper MCP 服务器")
-    parser.add_argument("--mode", choices=["stdio", "sse"], default="stdio", help="传输模式")
+    parser.add_argument(
+        "--mode", choices=["stdio", "sse"], default="stdio", help="传输模式"
+    )
     parser.add_argument("--host", default="0.0.0.0", help="SSE 模式监听地址")
     parser.add_argument("--port", type=int, default=9091, help="SSE 模式监听端口")
-    
+
     args = parser.parse_args()
-    
+
     if args.mode == "sse":
         run_sse(args.host, args.port)
     else:
