@@ -36,57 +36,56 @@
 
   const formItems = computed(() => [
     {
-      label: '鐢ㄦ埛鍚?',
+      label: '用户名',
       key: 'username',
       type: 'input',
-      placeholder: '璇疯緭鍏ョ敤鎴峰悕',
+      placeholder: '请输入用户名',
       clearable: true
     },
     {
-      label: '鏄电О',
+      label: '昵称',
       key: 'nickname',
       type: 'input',
-      placeholder: '璇疯緭鍏ユ樀绉?',
+      placeholder: '请输入昵称',
       clearable: true
     },
     {
-      label: '閭',
+      label: '邮箱',
       key: 'email',
       type: 'input',
-      placeholder: '璇疯緭鍏ラ偖绠?',
+      placeholder: '请输入邮箱',
       clearable: true
     },
     {
-      label: '鎵嬫満鍙?',
+      label: '手机号',
       key: 'phone',
       type: 'input',
-      placeholder: '璇疯緭鍏ユ墜鏈哄彿',
+      placeholder: '请输入手机号',
       clearable: true
     },
     {
-      label: '鎬у埆',
+      label: '性别',
       key: 'gender',
       type: 'select',
-      placeholder: '璇烽€夋嫨鎬у埆',
+      placeholder: '请选择性别',
       clearable: true,
       options: genderDict.options.value
     },
     {
-      label: '鐘舵€?',
+      label: '状态',
       key: 'status',
       type: 'select',
-      placeholder: '璇烽€夋嫨鐘舵€?,
+      placeholder: '请选择状态',
       clearable: true,
       options: statusDict.options.value
     }
   ])
 
-  async function handleReset() {
+  function handleReset() {
     emit('reset')
   }
 
-  async function handleSearch() {
-    await searchBarRef.value.validate()
+  function handleSearch() {
     emit('search', formData.value)
   }
 

@@ -41,13 +41,13 @@ docs/.vitepress/cache/
 
 # 上传文件
 server/data/
-server/assets/uploads/
+server/resources/uploads/
 server/uploads/
 
 # IP 地理位置数据库
-server/assets/ip2region_v4.xdb
-server/assets/*.mmdb
-server/assets/*.xdb
+server/resources/ip2region_v4.xdb
+server/resources/*.mmdb
+server/resources/*.xdb
 
 
 # 日志
