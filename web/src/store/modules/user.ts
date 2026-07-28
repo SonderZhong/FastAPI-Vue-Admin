@@ -29,6 +29,8 @@ export const useUserStore = defineStore(
     const lockPassword = ref('')
     // 用户信息
     const info = ref<Partial<Api.Auth.UserInfo>>({})
+    const availableTenants = ref<Auth.TenantOption[]>([])
+    const needSelectTenant = ref(false)
     // 搜索历史记录
     const searchHistory = ref<AppRouteRecord[]>([])
     // 访问令牌
@@ -49,6 +51,17 @@ export const useUserStore = defineStore(
      */
     const setUserInfo = (newInfo: Api.Auth.UserInfo) => {
       info.value = newInfo
+      if (newInfo.available_tenants) {
+        availableTenants.value = newInfo.available_tenants
+      }
+    }
+
+    const setAvailableTenants = (list: Auth.TenantOption[]) => {
+      availableTenants.value = list || []
+    }
+
+    const setNeedSelectTenant = (value: boolean) => {
+      needSelectTenant.value = value
     }
 
     /**
@@ -129,6 +142,8 @@ export const useUserStore = defineStore(
       notificationWs.disconnect()
       // 清空用户信息
       info.value = {}
+      availableTenants.value = []
+      needSelectTenant.value = false
       // 重置登录状态
       isLogin.value = false
       // 重置锁屏状态
@@ -161,9 +176,13 @@ export const useUserStore = defineStore(
       accessToken,
       refreshToken,
       getUserInfo,
+      availableTenants,
+      needSelectTenant,
       getSettingState,
       getWorktabState,
       setUserInfo,
+      setAvailableTenants,
+      setNeedSelectTenant,
       setLoginStatus,
       setLanguage,
       setSearchHistory,

@@ -16,12 +16,44 @@ import { loadingService } from '@/utils/ui'
 import { useCommon } from '@/composables/useCommon'
 import { useWorktabStore } from '@/store/modules/worktab'
 import { fetchGetUserInfo, fetchGetUserRoutes } from '@/api/auth'
+import { StorageKeyManager } from '@/utils/storage/storage-key-manager'
+import { $t } from '@/locales'
 
 // 是否已注册动态路由
 const isRouteRegistered = ref(false)
 
 // 跟踪是否需要关闭 loading
 const pendingLoading = ref(false)
+const storageKeyManager = new StorageKeyManager()
+
+const hydrateUserStateFromStorage = (userStore: ReturnType<typeof useUserStore>) => {
+  try {
+    const storageKey = storageKeyManager.getStorageKey('userStore')
+    const persisted = localStorage.getItem(storageKey)
+    if (!persisted) {
+      return
+    }
+
+    const parsed = JSON.parse(persisted)
+    if (parsed?.accessToken && !userStore.accessToken) {
+      userStore.setToken(parsed.accessToken, parsed.refreshToken)
+    }
+    if (parsed?.info && (!userStore.info || Object.keys(userStore.info).length === 0)) {
+      userStore.setUserInfo(parsed.info)
+    }
+    if (Array.isArray(parsed?.availableTenants) && userStore.availableTenants.length === 0) {
+      userStore.setAvailableTenants(parsed.availableTenants)
+    }
+    if (typeof parsed?.needSelectTenant === 'boolean') {
+      userStore.setNeedSelectTenant(parsed.needSelectTenant)
+    }
+    if (parsed?.isLogin && !userStore.isLogin) {
+      userStore.setLoginStatus(true)
+    }
+  } catch (error) {
+    console.warn('[RouterGuard] hydrate user state failed:', error)
+  }
+}
 
 /**
  * 设置路由全局前置守卫
@@ -126,9 +158,14 @@ async function handleLoginStatus(
   userStore: ReturnType<typeof useUserStore>,
   next: NavigationGuardNext
 ): Promise<boolean> {
+  hydrateUserStateFromStorage(userStore)
   if (!userStore.isLogin && to.path !== RoutesAlias.Login && !to.meta.noLogin) {
     userStore.logOut()
     next(RoutesAlias.Login)
+    return false
+  }
+  if (userStore.needSelectTenant && to.path !== RoutesAlias.SelectTenant) {
+    next(RoutesAlias.SelectTenant)
     return false
   }
   return true
@@ -157,7 +194,7 @@ async function handleDynamicRoutes(
 
         // 检查响应是否成功
         if (!response.success || !response.data) {
-          throw new Error(response.msg || '获取用户信息失败')
+          throw new Error(response.msg || $t('login.errors.userInfoFailed'))
         }
 
         userStore.setUserInfo(response.data as any)
@@ -220,7 +257,7 @@ async function processBackendMenu(router: Router): Promise<void> {
     const response = await fetchGetUserRoutes()
 
     if (!response.success || !response.data) {
-      throw new Error(response.msg || '获取用户路由失败')
+      throw new Error(response.msg || $t('router.errors.userRoutesFailed'))
     }
 
     // 转换后端路由数据为前端路由格式
@@ -319,7 +356,7 @@ function filterEmptyMenus(menuList: AppRouteRecord[]): AppRouteRecord[] {
  */
 async function registerAndStoreMenu(router: Router, menuList: AppRouteRecord[]): Promise<void> {
   if (!isValidMenuList(menuList)) {
-    throw new Error('获取菜单列表失败，请重新登录')
+    throw new Error($t('router.errors.menuListFailed'))
   }
   const menuStore = useMenuStore()
   // 递归过滤掉为空的菜单项
@@ -336,7 +373,7 @@ async function registerAndStoreMenu(router: Router, menuList: AppRouteRecord[]):
 function handleMenuError(error: unknown): void {
   console.error('菜单处理失败:', error)
   useUserStore().logOut()
-  throw error instanceof Error ? error : new Error('获取菜单列表失败，请重新登录')
+  throw error instanceof Error ? error : new Error($t('router.errors.menuListFailed'))
 }
 
 /**

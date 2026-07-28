@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 /**
  * 认证状态管理
- * 管理验证码、注册配置、登录天数选项等认证相关状态
+ * 管理验证码、注册配置等认证相关状态
  */
 export const useAuthStore = defineStore(
   'authStore',
@@ -18,23 +18,14 @@ export const useAuthStore = defineStore(
     const captcha_image = ref<string | null>(null)
     // 验证码类型：0=算术题，1=字母数字
     const captcha_type = ref<string>('0')
-    // 登录天数选项
-    const login_days_options = ref<Api.Auth.LoginDaysOption[]>([
-      { label: '1天', value: 1 },
-      { label: '3天', value: 3 },
-      { label: '7天', value: 7 },
-      { label: '15天', value: 15 },
-      { label: '30天', value: 30 }
-    ])
-
     /**
      * 设置验证码数据
      * @param data 验证码数据
      */
-    const setCaptchaData = (data: { 
+    const setCaptchaData = (data: {
       uuid: string | null
       captcha: string | null
-      type?: string 
+      type?: string
     }) => {
       captcha_uuid.value = data.uuid
       captcha_image.value = data.captcha
@@ -47,10 +38,10 @@ export const useAuthStore = defineStore(
      * 设置系统配置
      * @param config 系统配置
      */
-    const setSystemConfig = (config: { 
+    const setSystemConfig = (config: {
       captcha_enabled: boolean
       register_enabled: boolean
-      captcha_type?: string 
+      captcha_type?: string
     }) => {
       captcha_enabled.value = config.captcha_enabled
       register_enabled.value = config.register_enabled
@@ -73,7 +64,6 @@ export const useAuthStore = defineStore(
       captcha_uuid,
       captcha_image,
       captcha_type,
-      login_days_options,
       setCaptchaData,
       setSystemConfig,
       clearCaptchaData

@@ -6,30 +6,30 @@ import request from '@/utils/http'
 
 /** 通知类型 */
 export enum NotificationType {
-  LOGIN = 0,        // 登录通知
+  LOGIN = 0, // 登录通知
   ANNOUNCEMENT = 1, // 全局公告
-  MESSAGE = 2       // 系统消息
+  MESSAGE = 2 // 系统消息
 }
 
 /** 通知范围 */
 export enum NotificationScope {
-  ALL = 0,          // 全部用户
-  DEPARTMENT = 1,   // 指定部门
-  USER = 2          // 指定用户
+  ALL = 0, // 全部用户
+  DEPARTMENT = 1, // 指定部门
+  USER = 2 // 指定用户
 }
 
 /** 通知状态 */
 export enum NotificationStatus {
-  DRAFT = 0,        // 草稿
-  PUBLISHED = 1,    // 已发布
-  REVOKED = 2       // 已撤回
+  DRAFT = 0, // 草稿
+  PUBLISHED = 1, // 已发布
+  REVOKED = 2 // 已撤回
 }
 
 /** 通知优先级 */
 export enum NotificationPriority {
-  NORMAL = 0,       // 普通
-  IMPORTANT = 1,    // 重要
-  URGENT = 2        // 紧急
+  NORMAL = 0, // 普通
+  IMPORTANT = 1, // 重要
+  URGENT = 2 // 紧急
 }
 
 /** 通知信息 */

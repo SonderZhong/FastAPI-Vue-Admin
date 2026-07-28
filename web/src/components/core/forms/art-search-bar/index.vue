@@ -83,7 +83,7 @@
               </ElButton>
             </div>
             <div v-if="shouldShowExpandToggle" class="filter-toggle" @click="toggleExpand">
-              <span>{{ expandToggleText }}</span>
+              <span class="toggle-text">{{ expandToggleText }}</span>
               <div class="icon-wrapper">
                 <ElIcon>
                   <ArrowUpBold v-if="isExpanded" />
@@ -370,19 +370,26 @@
       }
 
       .filter-toggle {
-        display: flex;
+        display: inline-flex;
         align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
+        flex-shrink: 0;
         margin-left: 10px;
-        line-height: 32px;
+        gap: 4px;
+        min-height: 32px;
         color: var(--main-color);
         cursor: pointer;
+        white-space: nowrap;
         transition: color 0.2s ease;
 
         &:hover {
           color: var(--ElColor-primary);
         }
 
-        span {
+        .toggle-text {
+          display: inline-flex;
+          align-items: center;
           font-size: 14px;
           user-select: none;
         }
@@ -390,7 +397,6 @@
         .icon-wrapper {
           display: flex;
           align-items: center;
-          margin-left: 4px;
           font-size: 14px;
           transition: transform 0.2s ease;
         }

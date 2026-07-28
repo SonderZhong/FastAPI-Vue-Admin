@@ -51,9 +51,6 @@
                     </ElTag>
                   </div>
                   <div class="text-xs text-gray-500 truncate">{{ dict.dict_code }}</div>
-                  <div v-if="dict.dict_type" class="text-xs text-gray-400 truncate mt-1">
-                    类型: {{ dict.dict_type }}
-                  </div>
                 </div>
                 <div class="flex items-center gap-1 ml-2">
                   <ElButton
@@ -211,12 +208,6 @@
             :disabled="dialogType === 'edit'"
           />
         </ElFormItem>
-        <ElFormItem :label="$t('dictionary.dictType')" prop="dict_type">
-          <ElInput
-            v-model="formData.dict_type"
-            :placeholder="$t('dictionary.dictTypePlaceholder')"
-          />
-        </ElFormItem>
         <ElFormItem :label="$t('common.status')" prop="status">
           <ElRadioGroup v-model="formData.status">
             <ElRadio :label="1">{{ $t('common.enabled') }}</ElRadio>
@@ -337,7 +328,6 @@
   const formData = reactive({
     dict_name: '',
     dict_code: '',
-    dict_type: '',
     status: 1,
     sort: 0,
     remark: ''
@@ -346,8 +336,7 @@
   // 表单验证规则
   const formRules: FormRules = {
     dict_name: [{ required: true, message: t('dictionary.dictNameRequired'), trigger: 'blur' }],
-    dict_code: [{ required: true, message: t('dictionary.dictCodeRequired'), trigger: 'blur' }],
-    dict_type: [{ required: true, message: t('dictionary.dictTypeRequired'), trigger: 'blur' }]
+    dict_code: [{ required: true, message: t('dictionary.dictCodeRequired'), trigger: 'blur' }]
   }
 
   // 过滤后的字典列表
@@ -410,7 +399,6 @@
     Object.assign(formData, {
       dict_name: dict.dict_name,
       dict_code: dict.dict_code,
-      dict_type: dict.dict_type,
       status: dict.status,
       sort: dict.sort,
       remark: dict.remark || ''
@@ -469,7 +457,6 @@
     Object.assign(formData, {
       dict_name: '',
       dict_code: '',
-      dict_type: '',
       status: 1,
       sort: 0,
       remark: ''

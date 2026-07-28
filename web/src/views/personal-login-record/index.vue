@@ -8,7 +8,10 @@
             <img class="bg" src="@imgs/user/bg.webp" />
             <div class="avatar-section">
               <!-- 如果有头像则使用el-avatar显示头像，否则使用el-avatar显示用户名作为文字头像 -->
-              <ElAvatar :size="60" :src="getAvatarUrl(userInfo?.avatar) || '@imgs/user/avatar.webp'">
+              <ElAvatar
+                :size="60"
+                :src="getAvatarUrl(userInfo?.avatar) || '@imgs/user/avatar.webp'"
+              >
                 {{ userInfo?.username }}
               </ElAvatar>
               <div class="status-indicator"></div>

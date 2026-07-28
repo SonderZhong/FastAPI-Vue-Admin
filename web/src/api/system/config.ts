@@ -201,7 +201,10 @@ export const fetchGroupConfigs = (group: string) =>
  * @param configs 配置列表
  * @returns 操作结果
  */
-export const fetchUpdateGroupConfigs = (group: string, configs: Array<{ key: string; value: string }>) =>
+export const fetchUpdateGroupConfigs = (
+  group: string,
+  configs: Array<{ key: string; value: string }>
+) =>
   request.put<null>({
     url: `/api/config/group/${group}`,
     data: { configs }

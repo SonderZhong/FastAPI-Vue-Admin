@@ -40,15 +40,15 @@ export const setPageTitle = (to: RouteLocationNormalized): void => {
  */
 export const formatMenuTitle = (title: string): string => {
   if (title) {
-    if (title.startsWith('menus.')) {
-      // 使用 te() 方法检查翻译键值是否存在，避免控制台警告
-      if (i18n.global.te(title)) {
-        return $t(title)
-      } else {
-        // 如果翻译不存在，返回键值的最后部分作为fallback
-        return title.split('.').pop() || title
-      }
+    if (i18n.global.te(title)) {
+      return $t(title)
     }
+
+    if (title.startsWith('menus.')) {
+      // 如果翻译不存在，返回键值的最后部分作为 fallback
+      return title.split('.').pop() || title
+    }
+
     return title
   }
   return ''

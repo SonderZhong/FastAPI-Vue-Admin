@@ -24,6 +24,12 @@ export const staticRoutes: AppRouteRecordRaw[] = [
     meta: { title: 'menus.login.title', isHideTab: true, setTheme: true }
   },
   {
+    path: RoutesAlias.SelectTenant,
+    name: 'SelectTenant',
+    component: () => import('@views/auth/select-tenant/index.vue'),
+    meta: { title: 'selectTenant.title', isHideTab: true, noLogin: true, setTheme: true }
+  },
+  {
     path: RoutesAlias.Register,
     name: 'Register',
     component: () => import('@views/auth/register/index.vue'),

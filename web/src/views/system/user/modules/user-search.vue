@@ -9,6 +9,9 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, onMounted, ref } from 'vue'
+  import { useDictionary } from '@/composables/useDictionary'
+
   interface Props {
     modelValue: Record<string, any>
   }
@@ -22,69 +25,63 @@
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
-  // 表单数据双向绑定
   const searchBarRef = ref()
   const formData = computed({
     get: () => props.modelValue,
     set: (val) => emit('update:modelValue', val)
   })
 
-  // 表单配置
+  const genderDict = useDictionary('user_gender')
+  const statusDict = useDictionary('common_status')
+
   const formItems = computed(() => [
     {
-      label: '用户名',
+      label: '鐢ㄦ埛鍚?',
       key: 'username',
       type: 'input',
-      placeholder: '请输入用户名',
+      placeholder: '璇疯緭鍏ョ敤鎴峰悕',
       clearable: true
     },
     {
-      label: '昵称',
+      label: '鏄电О',
       key: 'nickname',
       type: 'input',
-      placeholder: '请输入昵称',
+      placeholder: '璇疯緭鍏ユ樀绉?',
       clearable: true
     },
     {
-      label: '邮箱',
+      label: '閭',
       key: 'email',
       type: 'input',
-      placeholder: '请输入邮箱',
+      placeholder: '璇疯緭鍏ラ偖绠?',
       clearable: true
     },
     {
-      label: '手机号',
+      label: '鎵嬫満鍙?',
       key: 'phone',
       type: 'input',
-      placeholder: '请输入手机号',
+      placeholder: '璇疯緭鍏ユ墜鏈哄彿',
       clearable: true
     },
     {
-      label: '性别',
+      label: '鎬у埆',
       key: 'gender',
       type: 'select',
-      placeholder: '请选择性别',
+      placeholder: '璇烽€夋嫨鎬у埆',
       clearable: true,
-      options: [
-        { label: '男', value: 1 },
-        { label: '女', value: 2 }
-      ]
+      options: genderDict.options.value
     },
     {
-      label: '状态',
+      label: '鐘舵€?',
       key: 'status',
       type: 'select',
-      placeholder: '请选择状态',
+      placeholder: '璇烽€夋嫨鐘舵€?,
       clearable: true,
-      options: [
-        { label: '启用', value: 1 },
-        { label: '禁用', value: 0 }
-      ]
+      options: statusDict.options.value
     }
   ])
 
-  // 事件处理
-  function handleReset() {
+  async function handleReset() {
     emit('reset')
   }
 
@@ -92,4 +89,8 @@
     await searchBarRef.value.validate()
     emit('search', formData.value)
   }
+
+  onMounted(async () => {
+    await Promise.all([genderDict.load(), statusDict.load()])
+  })
 </script>

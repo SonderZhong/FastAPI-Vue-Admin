@@ -1,7 +1,11 @@
 <template>
   <template v-for="item in filteredMenuItems" :key="item.path">
     <!-- 包含子菜单的项目（多于1个子路由时才展开） -->
-    <ElSubMenu v-if="hasMultipleChildren(item)" :index="item.path || item.meta.title" :level="level">
+    <ElSubMenu
+      v-if="hasMultipleChildren(item)"
+      :index="item.path || item.meta.title"
+      :level="level"
+    >
       <template #title>
         <MenuItemIcon :icon="item.meta.icon" :color="theme?.iconColor" />
         <span class="menu-name">

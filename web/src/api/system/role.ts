@@ -1,5 +1,5 @@
 /**
- * 角色管理 API - 适配 Casbin 方案C
+ * 角色管理 API
  */
 
 import request from '@/utils/http'
@@ -30,18 +30,18 @@ export interface RoleInfo {
   created_at: string
   /** 更新时间 */
   updated_at: string
-  /** Casbin 权限数据 */
-  permissions?: CasbinPermission[]
+  /** 角色关联的权限摘要 */
+  permissions?: RolePermissionBinding[]
   menu_ids?: string[]
   button_ids?: string[]
-  api_permissions?: ApiPermission[]
+  api_ids?: string[]
 }
 
-/** Casbin 权限项 */
-export interface CasbinPermission {
-  /** 权限对象（权限ID或API路径） */
+/** 角色权限绑定摘要 */
+export interface RolePermissionBinding {
+  /** 权限对象（权限ID） */
   obj: string
-  /** 权限动作（menu/button 或 HTTP方法） */
+  /** 权限动作（menu/button/api） */
   act: string
 }
 
@@ -53,7 +53,7 @@ export interface ApiPermission {
   method: string
 }
 
-/** 角色权限信息接口 - Casbin 方案C */
+/** 角色权限信息接口 */
 export interface RolePermissionInfo {
   /** 权限ID */
   permission_id: string
@@ -65,7 +65,7 @@ export interface RolePermissionInfo {
   permission_auth: string
   /** 权限类型：0-菜单，1-按钮，2-接口 */
   permission_type: number
-  /** 权限类型（Casbin）：menu/button/api */
+  /** 权限类型：menu/button/api */
   perm_type: string
   /** 角色ID */
   role_id: string
@@ -139,34 +139,26 @@ export interface RoleListResponse {
   pageSize: number
 }
 
-/** 角色详情响应数据 - Casbin 方案C */
+/** 角色详情响应数据 */
 export interface RoleInfoResponse extends RoleInfo {
-  /** Casbin 权限列表 */
-  permissions?: CasbinPermission[]
+  /** 角色权限绑定摘要 */
+  permissions?: RolePermissionBinding[]
   /** 菜单权限ID列表 */
   menu_ids?: string[]
   /** 按钮权限ID列表 */
   button_ids?: string[]
-  /** API权限列表 */
-  api_permissions?: ApiPermission[]
+  /** API权限ID列表 */
+  api_ids?: string[]
 }
 
-/** 角色权限列表响应数据 - Casbin 方案C */
+/** 角色权限列表响应数据 */
 export interface RolePermissionListResponse {
-  /** 角色权限列表 */
   result: RolePermissionInfo[]
-  /** 总数 */
-  total: number
-  /** 实际拥有的权限ID列表 */
-  actual_permission_ids: string[]
-  /** 菜单权限ID列表 */
-  menu_ids: string[]
-  /** 按钮权限ID列表 */
-  button_ids: string[]
-  /** API权限ID列表 */
-  api_permission_ids: string[]
-  /** API权限列表 */
-  api_permissions: ApiPermission[]
+  actual_permission_ids?: string[]
+  menu_ids?: string[]
+  button_ids?: string[]
+  api_ids?: string[]
+  api_permission_ids?: string[]
 }
 
 /**
@@ -184,7 +176,7 @@ export const fetchRoleList = (params: RoleQueryParams) => {
 /**
  * 获取角色详情
  * @param id 角色ID
- * @returns 角色详情数据（包含 Casbin 权限）
+ * @returns 角色详情数据
  */
 export const fetchRoleInfo = (id: string) => {
   return request.get<RoleInfoResponse>({
@@ -241,7 +233,7 @@ export const deleteRoleList = (params: DeleteRoleListParams) => {
 }
 
 /**
- * 获取角色权限列表（从 Casbin 获取）
+ * 获取角色权限列表
  * @param roleId 角色ID
  * @returns 角色权限列表
  */
@@ -265,7 +257,7 @@ export const fetchRolePermissionInfo = (roleId: string, permissionId: string) =>
 }
 
 /**
- * 分配角色权限（覆盖式，使用 Casbin）
+ * 分配角色权限
  * @param roleId 角色ID
  * @param params 权限参数
  * @returns 操作结果
@@ -278,7 +270,7 @@ export const assignRolePermissions = (roleId: string, params: RolePermissionPara
 }
 
 /**
- * 添加角色权限（增量式，使用 Casbin）
+ * 添加角色权限
  * @param roleId 角色ID
  * @param params 权限参数
  * @returns 操作结果
@@ -291,7 +283,7 @@ export const addRolePermissions = (roleId: string, params: RolePermissionParams)
 }
 
 /**
- * 删除角色权限（从 Casbin 移除）
+ * 删除角色权限
  * @param roleId 角色ID
  * @param permissionId 权限ID
  * @returns 操作结果

@@ -70,12 +70,12 @@
             <div class="step-indicator">
               <div class="step" :class="{ active: currentStep >= 1, completed: currentStep > 1 }">
                 <div class="step-number">1</div>
-                <div class="step-label">基本信息</div>
+                <div class="step-label">{{ $t('register.steps.basic') }}</div>
               </div>
               <div class="step-divider"></div>
               <div class="step" :class="{ active: currentStep >= 2, completed: currentStep > 2 }">
                 <div class="step-number">2</div>
-                <div class="step-label">附加信息</div>
+                <div class="step-label">{{ $t('register.steps.additional') }}</div>
               </div>
             </div>
 
@@ -133,7 +133,9 @@
               </ElFormItem>
 
               <div class="step-actions">
-                <ElButton class="next-btn" type="primary" @click="nextStep"> 下一步 </ElButton>
+                <ElButton class="next-btn" type="primary" @click="nextStep">{{
+                  $t('register.nextStep')
+                }}</ElButton>
               </div>
             </div>
 
@@ -217,7 +219,9 @@
               </ElFormItem>
 
               <div class="step-actions">
-                <ElButton class="back-btn" @click="prevStep"> 上一步 </ElButton>
+                <ElButton class="back-btn" @click="prevStep">{{
+                  $t('register.prevStep')
+                }}</ElButton>
                 <ElButton
                   class="register-btn"
                   type="primary"
@@ -374,7 +378,7 @@
 
       // 检查响应是否成功
       if (!response.success || !response.data) {
-        throw new Error(response.msg || '获取系统配置失败')
+        throw new Error(response.msg || t('register.errors.loadConfigFailed'))
       }
 
       const captchaData = response.data
@@ -408,19 +412,19 @@
 
       const response = await fetchEmailCode({
         username: formData.username || formData.email,
-        title: '注册验证码',
+        title: t('register.emailCodeTitle'),
         mail: formData.email
       })
 
       // 检查响应是否成功
       if (!response.success) {
-        throw new Error(response.msg || '发送验证码失败')
+        throw new Error(response.msg || t('register.errors.sendCodeFailed'))
       }
 
-      ElMessage.success(response.msg || '验证码已发送至您的邮箱，请注意查收')
+      ElMessage.success(response.msg || t('register.errors.sendCodeSuccess'))
       startCountdown()
     } catch (error: any) {
-      ElMessage.error(error.message || '发送验证码失败，请稍后重试')
+      ElMessage.error(error.message || t('register.errors.sendCodeRetry'))
       console.error('Failed to send email code:', error)
     } finally {
       emailCodeLoading.value = false
@@ -505,7 +509,7 @@
 
       // 检查响应是否成功
       if (!response.success) {
-        throw new Error(response.msg || '注册失败')
+        throw new Error(response.msg || t('register.errors.registerFailed'))
       }
 
       ElNotification({
@@ -520,7 +524,7 @@
         router.push(RoutesAlias.Login)
       }, 1500)
     } catch (error: any) {
-      ElMessage.error(error.message || '注册失败，请稍后重试')
+      ElMessage.error(error.message || t('register.errors.registerRetry'))
       console.log('注册失败:', error)
     } finally {
       loading.value = false

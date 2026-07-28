@@ -3,27 +3,28 @@
  */
 export enum RoutesAlias {
   // 布局和认证
-  Layout = '/index/index', // 布局容器
-  Login = '/auth/login', // 登录
-  Register = '/auth/register', // 注册
-  ForgetPassword = '/auth/forget-password', // 忘记密码
+  Layout = '/index/index',
+  Login = '/auth/login',
+  SelectTenant = '/auth/select-tenant',
+  Register = '/auth/register',
+  ForgetPassword = '/auth/forget-password',
 
   // 异常页面
-  Exception403 = '/exception/403', // 403
-  Exception404 = '/exception/404', // 404
-  Exception500 = '/exception/500', // 500
+  Exception403 = '/exception/403',
+  Exception404 = '/exception/404',
+  Exception500 = '/exception/500',
 
   // 结果页面
-  Success = '/result/success', // 成功
-  Fail = '/result/fail', // 失败
+  Success = '/result/success',
+  Fail = '/result/fail',
 
-  // 仪表板
-  Dashboard = '/dashboard/console', // 工作台
+  // 仪表盘
+  Dashboard = '/dashboard/console',
 
   // 系统管理
-  User = '/system/user', // 账户
-  Role = '/system/role', // 角色
-  UserCenter = '/user-center', // 用户中心
-  Menu = '/system/menu', // 菜单
-  Permission = '/system/permission' // 权限管理
+  User = '/system/user',
+  Role = '/system/role',
+  UserCenter = '/user-center',
+  Menu = '/system/menu',
+  Permission = '/system/permission'
 }

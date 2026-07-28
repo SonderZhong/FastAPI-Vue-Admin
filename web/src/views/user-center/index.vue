@@ -94,6 +94,16 @@
               </div>
               <i class="iconfont-sys arrow">&#xe66c;</i>
             </div>
+            <div v-if="tenantList.length > 1" class="nav-item" @click="showTenantDialog = true">
+              <div class="nav-icon login-icon">
+                <i class="iconfont-sys">&#xe6bd;</i>
+              </div>
+              <div class="nav-content">
+                <h4>切换租户</h4>
+                <p>当前：{{ currentTenantName }}</p>
+              </div>
+              <i class="iconfont-sys arrow">&#xe66c;</i>
+            </div>
           </div>
         </div>
       </div>
@@ -106,11 +116,7 @@
               <i class="iconfont-sys">&#xe7ae;</i>
               基本信息
             </h1>
-            <el-button
-              type="primary"
-              @click="handleBasicInfoEdit"
-              :loading="basicInfoLoading"
-            >
+            <el-button type="primary" @click="handleBasicInfoEdit" :loading="basicInfoLoading">
               <el-icon v-if="!basicInfoLoading" class="mr-1">
                 <Check v-if="isEdit" />
                 <Edit v-else />
@@ -344,6 +350,32 @@
         </span>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="showTenantDialog"
+      title="切换租户"
+      width="520px"
+      :close-on-click-modal="false"
+    >
+      <ElRadioGroup v-model="selectedTenantId" class="tenant-switch-list">
+        <div v-for="tenant in tenantList" :key="tenant.id" class="tenant-switch-item">
+          <ElRadio :label="tenant.id">
+            <div class="tenant-switch-meta">
+              <span>{{ tenant.name }}</span>
+              <small v-if="tenant.code">{{ tenant.code }}</small>
+            </div>
+          </ElRadio>
+        </div>
+      </ElRadioGroup>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showTenantDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleTenantSwitch" :loading="basicInfoLoading">
+            确认切换
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -357,8 +389,10 @@
     updateUserEmail,
     updateUserPhone,
     updateBaseUserInfo,
-    fetchGetUserInfo
+    fetchGetUserInfo,
+    fetchSelectTenant
   } from '@/api/auth'
+  import { resetRouterState } from '@/router/guards/beforeEach'
   import { uploadAvatar } from '@/api/system/file'
   import { getAvatarUrl } from '@/utils'
 
@@ -367,6 +401,12 @@
   const router = useRouter()
   const userStore = useUserStore()
   const userInfo = computed(() => userStore.getUserInfo)
+  const tenantList = computed(() => userStore.availableTenants || [])
+  const currentTenantName = computed(() => {
+    const current = tenantList.value.find((item) => item.id === userInfo.value.tenant_id)
+    return current?.name || userInfo.value.tenant_id || '未选择租户'
+  })
+  const selectedTenantId = ref('')
 
   // 状态管理
   const isEdit = ref(false)
@@ -379,6 +419,7 @@
   const showPasswordDialog = ref(false)
   const showEmailDialog = ref(false)
   const showPhoneDialog = ref(false)
+  const showTenantDialog = ref(false)
 
   // 表单引用
   const ruleFormRef = ref<FormInstance>()
@@ -386,6 +427,18 @@
   const emailFormRef = ref<FormInstance>()
   const phoneFormRef = ref<FormInstance>()
   const avatarInputRef = ref<HTMLInputElement>()
+
+  watch(
+    () => [tenantList.value, userInfo.value.tenant_id] as const,
+    ([list, tenantId]) => {
+      if (!list.length) {
+        selectedTenantId.value = ''
+        return
+      }
+      selectedTenantId.value = tenantId || selectedTenantId.value || list[0].id
+    },
+    { immediate: true, deep: true }
+  )
 
   // 基本信息表单
   const form = reactive({
@@ -644,6 +697,37 @@
   // 跳转到我的通知页
   const goToMyNotification = () => {
     router.push('/my-notification')
+  }
+
+  const handleTenantSwitch = async () => {
+    if (!selectedTenantId.value) {
+      ElMessage.warning('请先选择租户')
+      return
+    }
+
+    try {
+      basicInfoLoading.value = true
+      const response = await fetchSelectTenant(selectedTenantId.value)
+      if (!response.success) {
+        throw new Error(response.msg || '切换租户失败')
+      }
+
+      const userInfoResponse = await fetchGetUserInfo()
+      if (!userInfoResponse.success || !userInfoResponse.data) {
+        throw new Error(userInfoResponse.msg || '刷新用户信息失败')
+      }
+
+      userStore.setUserInfo(userInfoResponse.data)
+      userStore.setNeedSelectTenant(false)
+      resetRouterState()
+      showTenantDialog.value = false
+      ElMessage.success('租户切换成功')
+      router.replace('/')
+    } catch (error: any) {
+      ElMessage.error(error?.message || '切换租户失败')
+    } finally {
+      basicInfoLoading.value = false
+    }
   }
 
   // 触发头像上传

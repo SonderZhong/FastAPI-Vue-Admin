@@ -171,6 +171,18 @@ export const fetchDeleteOperationLog = (id: string) =>
     showSuccessMessage: true
   })
 
+/**
+ * 批量删除操作日志
+ * @param params 批量参数
+ * @returns 删除结果
+ */
+export const fetchDeleteOperationLogList = (params: DeleteListParams) =>
+  request.post<null>({
+    url: '/api/log/deleteList/operation',
+    data: params,
+    showSuccessMessage: true
+  })
+
 // 个人登录日志搜索参数
 export interface PersonalLoginLogSearchParams {
   page?: number

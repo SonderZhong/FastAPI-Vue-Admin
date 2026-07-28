@@ -13,6 +13,8 @@ export interface PermissionInfo {
   parent_id?: string
   /** 权限名称（英文标识） */
   name?: string
+  /** 权限编码/标识 */
+  code?: string
   /** 权限标题（显示名称） */
   title?: string
   /** 路由路径 */
@@ -294,15 +296,18 @@ export const addApiPermission = (data: {
  * @param data API权限数据
  * @returns 操作结果
  */
-export const updateApiPermission = (id: string, data: {
-  parent_id?: string
-  title: string
-  api_path: string
-  api_method: string[]
-  data_scope?: number
-  min_user_type?: number
-  remark?: string
-}) => {
+export const updateApiPermission = (
+  id: string,
+  data: {
+    parent_id?: string
+    title: string
+    api_path: string
+    api_method: string[]
+    data_scope?: number
+    min_user_type?: number
+    remark?: string
+  }
+) => {
   return request.put<null>({
     url: `/api/permission/api/update/${id}`,
     data

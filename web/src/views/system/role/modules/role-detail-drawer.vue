@@ -21,7 +21,9 @@
           </ElDescriptionsItem>
           <ElDescriptionsItem :label="$t('common.status', '状态')">
             <ElTag :type="roleData.status === 1 ? 'success' : 'danger'" size="small">
-              {{ roleData.status === 1 ? $t('common.enabled', '启用') : $t('common.disabled', '禁用') }}
+              {{
+                roleData.status === 1 ? $t('common.enabled', '启用') : $t('common.disabled', '禁用')
+              }}
             </ElTag>
           </ElDescriptionsItem>
           <ElDescriptionsItem :label="$t('common.department', '所属部门')">
@@ -68,12 +70,7 @@
           <ElIcon class="mr-1"><Setting /></ElIcon>
           {{ $t('role.assignPermissions', '分配权限') }}
         </ElButton>
-        <ElButton
-          v-auth="'role:btn:update'"
-          type="primary"
-          class="w-full"
-          @click="$emit('edit')"
-        >
+        <ElButton v-auth="'role:btn:update'" type="primary" class="w-full" @click="$emit('edit')">
           <ElIcon class="mr-1"><Edit /></ElIcon>
           {{ $t('buttons.edit', '编辑角色') }}
         </ElButton>
@@ -93,79 +90,87 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { dayjs } from 'element-plus'
-import { InfoFilled, Key, Setting, Edit, Delete } from '@element-plus/icons-vue'
-import { fetchRolePermissionList, type RoleInfo } from '@/api/system/role'
+  import { ref, computed, watch } from 'vue'
+  import { dayjs } from 'element-plus'
+  import { InfoFilled, Key, Setting, Edit, Delete } from '@element-plus/icons-vue'
+  import {
+    fetchRolePermissionList,
+    type RoleInfo,
+    type RolePermissionInfo
+  } from '@/api/system/role'
 
-interface Props {
-  modelValue: boolean
-  roleData?: RoleInfo | null
-}
-
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'edit'): void
-  (e: 'permission'): void
-  (e: 'delete'): void
-  (e: 'refresh'): void
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  modelValue: false,
-  roleData: null
-})
-
-const emit = defineEmits<Emits>()
-
-const visible = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
-})
-
-const permissionLoading = ref(false)
-const menuCount = ref(0)
-const buttonCount = ref(0)
-
-/**
- * 加载权限统计
- */
-const loadPermissionStats = async () => {
-  if (!props.roleData?.id) return
-
-  try {
-    permissionLoading.value = true
-    const response = await fetchRolePermissionList(props.roleData.id)
-    
-    if (response.success && response.data) {
-      const permissions = response.data.result || []
-      menuCount.value = permissions.filter(p => p.permission_type === 0).length
-      buttonCount.value = permissions.filter(p => p.permission_type === 1).length
-    }
-  } catch (error) {
-    console.error('加载权限统计失败:', error)
-  } finally {
-    permissionLoading.value = false
+  interface Props {
+    modelValue: boolean
+    roleData?: RoleInfo | null
   }
-}
 
-// 监听抽屉打开
-watch(
-  () => props.modelValue,
-  (newVal) => {
-    if (newVal && props.roleData) {
-      loadPermissionStats()
-    }
+  interface Emits {
+    (e: 'update:modelValue', value: boolean): void
+    (e: 'edit'): void
+    (e: 'permission'): void
+    (e: 'delete'): void
+    (e: 'refresh'): void
   }
-)
 
-// 监听角色数据变化
-watch(
-  () => props.roleData?.id,
-  () => {
-    if (props.modelValue && props.roleData) {
-      loadPermissionStats()
+  const props = withDefaults(defineProps<Props>(), {
+    modelValue: false,
+    roleData: null
+  })
+
+  const emit = defineEmits<Emits>()
+
+  const visible = computed({
+    get: () => props.modelValue,
+    set: (value) => emit('update:modelValue', value)
+  })
+
+  const permissionLoading = ref(false)
+  const menuCount = ref(0)
+  const buttonCount = ref(0)
+
+  /**
+   * 加载权限统计
+   */
+  const loadPermissionStats = async () => {
+    if (!props.roleData?.id) return
+
+    try {
+      permissionLoading.value = true
+      const response = await fetchRolePermissionList(props.roleData.id)
+
+      if (response.success && response.data) {
+        const permissions = response.data.result || []
+        menuCount.value = permissions.filter(
+          (p: RolePermissionInfo) => p.permission_type === 0
+        ).length
+        buttonCount.value = permissions.filter(
+          (p: RolePermissionInfo) => p.permission_type === 1
+        ).length
+      }
+    } catch (error) {
+      console.error('加载权限统计失败:', error)
+    } finally {
+      permissionLoading.value = false
     }
   }
-)
+
+  // 监听抽屉打开
+  watch(
+    () => props.modelValue,
+    (newVal) => {
+      if (newVal && props.roleData) {
+        loadPermissionStats()
+      }
+    }
+  )
+
+  // 监听角色数据变化
+  watch(
+    () => props.roleData?.id,
+    () => {
+      if (props.modelValue && props.roleData) {
+        loadPermissionStats()
+      }
+    }
+  )
 </script>

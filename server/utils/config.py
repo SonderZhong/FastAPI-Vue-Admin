@@ -69,6 +69,14 @@ class AppSettings(BaseConfig):
     - False：禁用，生产环境可关闭以减少接口暴露面
     """
 
+    permission_verify_enabled: bool = True
+    """
+    是否启用 @Auth 装饰器的权限验证
+    - True：启用（默认），按当前用户的按钮权限 / API权限进行验证
+    - False：禁用，@Auth 直接放行，适合本地调试或适配阶段
+    注意：该开关仅影响 @Auth 装饰器，不影响显式使用 Depends(AuthController.get_current_user) 的身份认证
+    """
+
     host: str = '0.0.0.0'
     """
     应用绑定的主机地址
@@ -169,185 +177,75 @@ class JwtSettings(BaseConfig):
     """
 
 
-class DatabaseSettings(BaseConfig):
-    """
-    数据库配置类（单一数据库连接）
-    管理数据库实例的连接参数，适配Tortoise-ORM
-    """
-    engine: str = "mysql"
-    """
-    数据库引擎类型
-    指定连接的数据库类型，支持：
-    - 'mysql'：MySQL数据库（默认）
-    - 'postgresql'：PostgreSQL数据库
-    - 'sqlite'：SQLite数据库（文件型，无需服务）
-    - 'oracle'：Oracle数据库
-    不同引擎对应不同的驱动和连接参数
-    """
-
+class DatabaseNodeSettings(BaseConfig):
+    """单个数据库节点配置"""
+    alias: str = "system"
+    engine: str = "sqlite"
     host: str = "127.0.0.1"
-    """
-    数据库主机地址
-    - 本地数据库：'localhost'或'127.0.0.1'（默认）
-    - 远程数据库：服务器IP地址或域名（如db.prod.com）
-    - SQLite：无需设置（忽略此参数）
-    """
-
     port: int = 3306
-    """
-    数据库端口号
-    - MySQL：3306（默认）
-    - PostgreSQL：5432
-    - Oracle：1521
-    - SQLite：无需设置（自动忽略）
-    需与数据库服务的配置一致，否则无法连接
-    """
-
-    username: str = 'root'
-    """
-    数据库登录用户名
-    - 开发环境：通常使用root（权限高，方便调试）
-    - 生产环境：必须使用最小权限用户（仅授予必要操作权限）
-    SQLite无需设置（文件权限由操作系统控制）
-    """
-
-    password: SecretStr = SecretStr('root')
-    """
-    数据库登录密码（敏感信息）
-    - 开发环境：可使用简单密码（如root）
-    - 生产环境：必须使用强密码（含大小写、数字、特殊字符）
-    """
-
-    database: str = 'FVA'
-    """
-    数据库名称/路径
-    - 关系型数据库（MySQL/PostgreSQL）：数据库名称（如FVA_prod）
-    - SQLite：数据库文件路径（如./data/app.db）
-    需确保数据库已创建（SQLite会自动创建文件）
-    """
-
+    username: str = "root"
+    password: SecretStr = SecretStr("root")
+    database: str = "fva.db"
     pool_size: int = 10
-    """
-    数据库连接池大小
-    控制并发连接数：
-    - 开发环境：5-10（足够调试）
-    - 生产环境：根据并发量调整（10-50，不宜过大）
-    连接池过大会占用过多数据库资源，过小会导致连接等待
-    """
-
     pool_timeout: int = 30
-    """
-    连接池获取连接的超时时间（单位：秒）
-    超过此时长未获取到连接会抛出异常
-    建议设置为30秒，避免请求无限等待
-    """
-
     echo: bool = False
-    """
-    是否打印SQL执行日志
-    - True：打印所有SQL语句及参数（开发调试用）
-    - False：不打印（生产环境必须关闭，避免性能损耗和数据泄露）
-    """
-
     charset: str = "utf8mb4"
-    """
-    数据库字符集
-    - MySQL：建议使用utf8mb4（支持emoji等4字节字符）
-    - PostgreSQL：通常使用UTF8
-    """
-
     timezone: str = "Asia/Shanghai"
-    """
-    数据库时区设置
-    影响时间字段的存储和查询
-    默认为'Asia/Shanghai'（中国标准时间）
-    需与应用服务器时区保持一致，避免时间偏移
-    """
 
     @field_validator('engine')
     def validate_engine(cls, v):
-        """
-        验证数据库引擎合法性
-
-        :param v: 引擎名称
-        :return: 验证后的引擎名称
-        :raises ValueError: 当引擎不被支持时抛出
-        """
         supported = ['mysql', 'postgresql', 'sqlite']
         if v not in supported:
             raise ValueError(f"不支持的数据库引擎: {v}，支持的引擎: {supported}")
         return v
 
 
-class RedisSettings(BaseConfig):
-    """
-    Redis配置类（单一Redis连接）
-    管理缓存、会话等存储
-    """
-    mode: str = 'memory'
-    """
-    Redis运行模式
-    - 'memory'：内存模拟模式（默认），无需Redis服务器，适合开发和测试
-    - 'server'：服务器模式，连接真实的Redis服务器，适合生产环境
-    """
-    
-    host: str = '127.0.0.1'
-    """
-    Redis主机地址（仅server模式生效）
-    - 本地：'127.0.0.1'（默认）
-    - 远程：服务器IP地址或域名
-    """
+class DatabaseSettings(BaseConfig):
+    """数据库配置（支持多数据源）"""
+    nodes: List[DatabaseNodeSettings] = [DatabaseNodeSettings()]
 
+    def get_node(self, alias: str = "system") -> DatabaseNodeSettings:
+        for node in self.nodes:
+            if node.alias == alias:
+                return node
+        raise ValueError(f"数据库节点 '{alias}' 不存在")
+
+    def get_all_nodes(self) -> List[DatabaseNodeSettings]:
+        return self.nodes
+
+
+class RedisNodeSettings(BaseConfig):
+    """单个 Redis 节点配置"""
+    alias: str = "system"
+    mode: str = "memory"
+    host: str = "127.0.0.1"
     port: int = 6379
-    """
-    Redis端口号（仅server模式生效）
-    默认6379（Redis标准端口）
-    """
-
-    password: SecretStr = SecretStr('')
-    """
-    Redis登录密码（敏感信息，仅server模式生效）
-    - 开发环境：可留空（关闭认证）
-    - 生产环境：必须设置强密码
-    """
-
+    password: SecretStr = SecretStr("")
     database: int = 1
-    """
-    Redis数据库索引（0-15，默认1，仅server模式生效）
-    - 单节点模式：有效，用于逻辑隔离不同业务数据（如0存会话、1存缓存）
-    - 集群模式：通常无效（集群不支持select命令）
-    建议不同业务使用不同索引，避免key冲突
-    """
-
     max_connections: int = 10
-    """
-    Redis连接池最大连接数（仅server模式生效）
-    需根据并发量调整，建议不超过Redis服务器的maxclients配置
-    过大可能导致Redis拒绝连接
-    """
-
     socket_timeout: int = 5
-    """
-    Redis连接超时时间（单位：秒，仅server模式生效）
-    超过此时长未建立连接会抛出异常
-    建议设置为5秒，避免请求长时间阻塞
-    """
-
     retry_on_timeout: bool = True
-    """
-    超时是否自动重试（仅server模式生效）
-    - True：超时后自动重试一次（默认，提高可用性）
-    - False：超时后直接抛出异常
-    适合对可用性要求高的场景，需注意重试可能导致重复操作
-    """
-    
+
     @field_validator('mode')
     def validate_mode(cls, v):
-        """验证Redis模式合法性"""
         supported = ['memory', 'server']
         if v not in supported:
             raise ValueError(f"不支持的Redis模式: {v}，支持的模式: {supported}")
         return v
+
+
+class RedisSettings(BaseConfig):
+    """Redis 配置（支持多实例）"""
+    nodes: List[RedisNodeSettings] = [RedisNodeSettings()]
+
+    def get_node(self, alias: str = "system") -> RedisNodeSettings:
+        for node in self.nodes:
+            if node.alias == alias:
+                return node
+        raise ValueError(f"Redis节点 '{alias}' 不存在")
+
+    def get_all_nodes(self) -> List[RedisNodeSettings]:
+        return self.nodes
 
 
 class UploadSettings(BaseConfig):

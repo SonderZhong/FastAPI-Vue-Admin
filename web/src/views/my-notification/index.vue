@@ -97,11 +97,25 @@
               <h3>我的通知</h3>
             </div>
             <div class="header-actions">
-              <ElButton @click="handleMarkAllRead" :disabled="unreadCount === 0" size="small" type="success" plain round>
+              <ElButton
+                @click="handleMarkAllRead"
+                :disabled="unreadCount === 0"
+                size="small"
+                type="success"
+                plain
+                round
+              >
                 <i class="iconfont-sys mr-1">&#xe621;</i>
                 全部已读
               </ElButton>
-              <ElButton @click="loadData" :loading="loading" size="small" type="primary" plain round>
+              <ElButton
+                @click="loadData"
+                :loading="loading"
+                size="small"
+                type="primary"
+                plain
+                round
+              >
                 <i class="iconfont-sys mr-1">&#xe6cf;</i>
                 刷新
               </ElButton>
@@ -112,13 +126,25 @@
           <div class="search-bar">
             <ElForm :model="searchForm" inline>
               <ElFormItem label="阅读状态">
-                <ElSelect v-model="searchForm.is_read" placeholder="全部" clearable style="width: 120px" @change="handleSearch">
+                <ElSelect
+                  v-model="searchForm.is_read"
+                  placeholder="全部"
+                  clearable
+                  style="width: 120px"
+                  @change="handleSearch"
+                >
                   <ElOption label="未读" :value="false" />
                   <ElOption label="已读" :value="true" />
                 </ElSelect>
               </ElFormItem>
               <ElFormItem label="通知类型">
-                <ElSelect v-model="searchForm.type" placeholder="全部" clearable style="width: 120px" @change="handleSearch">
+                <ElSelect
+                  v-model="searchForm.type"
+                  placeholder="全部"
+                  clearable
+                  style="width: 120px"
+                  @change="handleSearch"
+                >
                   <ElOption label="登录通知" :value="0" />
                   <ElOption label="全局公告" :value="1" />
                   <ElOption label="系统消息" :value="2" />
@@ -135,7 +161,11 @@
           <ArtTable
             :data="tableData"
             :loading="loading"
-            :pagination="{ current: pagination.page, size: pagination.pageSize, total: pagination.total }"
+            :pagination="{
+              current: pagination.page,
+              size: pagination.pageSize,
+              total: pagination.total
+            }"
             @pagination:current-change="handlePageChange"
             @pagination:size-change="handleSizeChange"
           >
@@ -144,7 +174,9 @@
               <template #default="{ row }">
                 <div class="title-cell" @click="handleView(row)">
                   <span class="title" :class="{ 'is-read': row.is_read }">{{ row.title }}</span>
-                  <ElTag v-if="!row.is_read" type="danger" size="small" class="unread-tag">未读</ElTag>
+                  <ElTag v-if="!row.is_read" type="danger" size="small" class="unread-tag"
+                    >未读</ElTag
+                  >
                 </div>
               </template>
             </ElTableColumn>
@@ -175,7 +207,9 @@
             <ElTableColumn label="操作" width="150" fixed="right">
               <template #default="{ row }">
                 <ElButton link type="primary" @click="handleView(row)">查看</ElButton>
-                <ElButton v-if="!row.is_read" link type="success" @click="handleMarkRead(row)">标记已读</ElButton>
+                <ElButton v-if="!row.is_read" link type="success" @click="handleMarkRead(row)"
+                  >标记已读</ElButton
+                >
               </template>
             </ElTableColumn>
           </ArtTable>
@@ -209,546 +243,554 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/store/modules/user'
-import { getAvatarUrl } from '@/utils'
-import ArtTable from '@/components/core/tables/art-table/index.vue'
-import {
-  fetchMyNotifications,
-  markNotificationRead,
-  markAllNotificationsRead,
-  fetchUnreadCount,
-  type UserNotificationInfo
-} from '@/api/system/notification'
+  import { ref, reactive, computed, onMounted } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { ElMessage } from 'element-plus'
+  import { useUserStore } from '@/store/modules/user'
+  import { getAvatarUrl } from '@/utils'
+  import ArtTable from '@/components/core/tables/art-table/index.vue'
+  import {
+    fetchMyNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    fetchUnreadCount,
+    type UserNotificationInfo
+  } from '@/api/system/notification'
 
-defineOptions({ name: 'MyNotification' })
+  defineOptions({ name: 'MyNotification' })
 
-const router = useRouter()
-const userStore = useUserStore()
+  const router = useRouter()
+  const userStore = useUserStore()
 
-const userInfo = computed(() => userStore.getUserInfo)
+  const userInfo = computed(() => userStore.getUserInfo)
 
-const loading = ref(false)
-const tableData = ref<UserNotificationInfo[]>([])
-const detailVisible = ref(false)
-const currentNotification = ref<UserNotificationInfo | null>(null)
-const unreadCount = ref(0)
+  const loading = ref(false)
+  const tableData = ref<UserNotificationInfo[]>([])
+  const detailVisible = ref(false)
+  const currentNotification = ref<UserNotificationInfo | null>(null)
+  const unreadCount = ref(0)
 
-const searchForm = reactive({
-  is_read: undefined as boolean | undefined,
-  type: undefined as number | undefined
-})
+  const searchForm = reactive({
+    is_read: undefined as boolean | undefined,
+    type: undefined as number | undefined
+  })
 
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  total: 0
-})
+  const pagination = reactive({
+    page: 1,
+    pageSize: 10,
+    total: 0
+  })
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString('zh-CN')
-}
-
-const getTypeName = (type: number) => {
-  const names = ['登录通知', '全局公告', '系统消息']
-  return names[type] || '未知'
-}
-
-const getTypeTagType = (type: number): 'info' | 'warning' | 'success' => {
-  const map: Record<number, 'info' | 'warning' | 'success'> = { 0: 'info', 1: 'warning', 2: 'success' }
-  return map[type] || 'info'
-}
-
-const getPriorityName = (priority: number) => {
-  const names = ['普通', '重要', '紧急']
-  return names[priority] || '普通'
-}
-
-const getPriorityTagType = (priority: number): 'info' | 'warning' | 'danger' => {
-  const map: Record<number, 'info' | 'warning' | 'danger'> = { 0: 'info', 1: 'warning', 2: 'danger' }
-  return map[priority] || 'info'
-}
-
-const loadData = async () => {
-  try {
-    loading.value = true
-    const params: any = {
-      page: pagination.page,
-      pageSize: pagination.pageSize
-    }
-    if (searchForm.is_read !== undefined) {
-      params.is_read = searchForm.is_read
-    }
-    if (searchForm.type !== undefined) {
-      params.type = searchForm.type
-    }
-    
-    const res = await fetchMyNotifications(params)
-    if (res.success && res.data) {
-      tableData.value = res.data.result || []
-      pagination.total = res.data.total || 0
-    }
-    
-    // 加载未读数量
-    const countRes = await fetchUnreadCount()
-    if (countRes.success && countRes.data) {
-      unreadCount.value = countRes.data.count
-    }
-  } catch (e) {
-    console.error('加载通知失败:', e)
-  } finally {
-    loading.value = false
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '-'
+    return new Date(dateStr).toLocaleString('zh-CN')
   }
-}
 
-const handleSearch = () => {
-  pagination.page = 1
-  loadData()
-}
-
-const handleReset = () => {
-  searchForm.is_read = undefined
-  searchForm.type = undefined
-  pagination.page = 1
-  loadData()
-}
-
-const handlePageChange = (page: number) => {
-  pagination.page = page
-  loadData()
-}
-
-const handleSizeChange = (size: number) => {
-  pagination.pageSize = size
-  pagination.page = 1
-  loadData()
-}
-
-const handleView = async (row: UserNotificationInfo) => {
-  currentNotification.value = row
-  detailVisible.value = true
-  
-  if (!row.is_read) {
-    await handleMarkRead(row, false)
+  const getTypeName = (type: number) => {
+    const names = ['登录通知', '全局公告', '系统消息']
+    return names[type] || '未知'
   }
-}
 
-const handleMarkRead = async (row: UserNotificationInfo, showMessage = true) => {
-  try {
-    const res = await markNotificationRead(row.id)
-    if (res.success) {
-      row.is_read = true
-      unreadCount.value = Math.max(0, unreadCount.value - 1)
-      if (showMessage) {
-        ElMessage.success('已标记为已读')
+  const getTypeTagType = (type: number): 'info' | 'warning' | 'success' => {
+    const map: Record<number, 'info' | 'warning' | 'success'> = {
+      0: 'info',
+      1: 'warning',
+      2: 'success'
+    }
+    return map[type] || 'info'
+  }
+
+  const getPriorityName = (priority: number) => {
+    const names = ['普通', '重要', '紧急']
+    return names[priority] || '普通'
+  }
+
+  const getPriorityTagType = (priority: number): 'info' | 'warning' | 'danger' => {
+    const map: Record<number, 'info' | 'warning' | 'danger'> = {
+      0: 'info',
+      1: 'warning',
+      2: 'danger'
+    }
+    return map[priority] || 'info'
+  }
+
+  const loadData = async () => {
+    try {
+      loading.value = true
+      const params: any = {
+        page: pagination.page,
+        pageSize: pagination.pageSize
       }
+      if (searchForm.is_read !== undefined) {
+        params.is_read = searchForm.is_read
+      }
+      if (searchForm.type !== undefined) {
+        params.type = searchForm.type
+      }
+
+      const res = await fetchMyNotifications(params)
+      if (res.success && res.data) {
+        tableData.value = res.data.result || []
+        pagination.total = res.data.total || 0
+      }
+
+      // 加载未读数量
+      const countRes = await fetchUnreadCount()
+      if (countRes.success && countRes.data) {
+        unreadCount.value = countRes.data.count
+      }
+    } catch (e) {
+      console.error('加载通知失败:', e)
+    } finally {
+      loading.value = false
     }
-  } catch (e) {
-    console.error('标记已读失败:', e)
   }
-}
 
-const handleMarkAllRead = async () => {
-  try {
-    const res = await markAllNotificationsRead()
-    if (res.success) {
-      tableData.value.forEach(item => item.is_read = true)
-      unreadCount.value = 0
-      ElMessage.success('已全部标记为已读')
+  const handleSearch = () => {
+    pagination.page = 1
+    loadData()
+  }
+
+  const handleReset = () => {
+    searchForm.is_read = undefined
+    searchForm.type = undefined
+    pagination.page = 1
+    loadData()
+  }
+
+  const handlePageChange = (page: number) => {
+    pagination.page = page
+    loadData()
+  }
+
+  const handleSizeChange = (size: number) => {
+    pagination.pageSize = size
+    pagination.page = 1
+    loadData()
+  }
+
+  const handleView = async (row: UserNotificationInfo) => {
+    currentNotification.value = row
+    detailVisible.value = true
+
+    if (!row.is_read) {
+      await handleMarkRead(row, false)
     }
-  } catch (e) {
-    console.error('标记全部已读失败:', e)
   }
-}
 
-// 快捷导航
-const goToUserCenter = () => {
-  router.push('/user-center')
-}
+  const handleMarkRead = async (row: UserNotificationInfo, showMessage = true) => {
+    try {
+      const res = await markNotificationRead(row.id)
+      if (res.success) {
+        row.is_read = true
+        unreadCount.value = Math.max(0, unreadCount.value - 1)
+        if (showMessage) {
+          ElMessage.success('已标记为已读')
+        }
+      }
+    } catch (e) {
+      console.error('标记已读失败:', e)
+    }
+  }
 
-const goToLoginRecord = () => {
-  router.push('/personal-login-record')
-}
+  const handleMarkAllRead = async () => {
+    try {
+      const res = await markAllNotificationsRead()
+      if (res.success) {
+        tableData.value.forEach((item) => (item.is_read = true))
+        unreadCount.value = 0
+        ElMessage.success('已全部标记为已读')
+      }
+    } catch (e) {
+      console.error('标记全部已读失败:', e)
+    }
+  }
 
-const goToOperationRecord = () => {
-  router.push('/personal-operation-record')
-}
+  // 快捷导航
+  const goToUserCenter = () => {
+    router.push('/user-center')
+  }
 
-onMounted(() => {
-  loadData()
-})
+  const goToLoginRecord = () => {
+    router.push('/personal-login-record')
+  }
+
+  const goToOperationRecord = () => {
+    router.push('/personal-operation-record')
+  }
+
+  onMounted(() => {
+    loadData()
+  })
 </script>
 
 <style lang="scss" scoped>
-.my-notification-page {
-  .content {
-    display: flex;
-    gap: 20px;
-    height: 100%;
-
-    .left-wrap {
-      width: 300px;
-      flex-shrink: 0;
+  .my-notification-page {
+    .content {
       display: flex;
-      flex-direction: column;
       gap: 20px;
+      height: 100%;
 
-      .user-wrap {
-        padding: 0;
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--el-bg-color);
+      .left-wrap {
+        width: 300px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
 
-        .profile-header {
-          position: relative;
-          height: 120px;
+        .user-wrap {
+          padding: 0;
+          border-radius: 12px;
+          overflow: hidden;
+          background: var(--el-bg-color);
 
-          .bg {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-          }
+          .profile-header {
+            position: relative;
+            height: 120px;
 
-          .avatar-section {
-            position: absolute;
-            bottom: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-
-            :deep(.el-avatar) {
-              border: 3px solid white;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            .bg {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
             }
 
-            .status-indicator {
+            .avatar-section {
               position: absolute;
-              bottom: 5px;
-              right: 5px;
-              width: 12px;
-              height: 12px;
-              background: var(--el-color-success);
-              border: 2px solid white;
-              border-radius: 50%;
-            }
-          }
-        }
+              bottom: -30px;
+              left: 50%;
+              transform: translateX(-50%);
 
-        .profile-info {
-          padding: 40px 20px 20px;
-          text-align: center;
-
-          .name {
-            margin: 0 0 5px;
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--el-text-color-primary);
-          }
-
-          .position {
-            margin: 0 0 20px;
-            color: var(--el-text-color-regular);
-            font-size: 14px;
-          }
-
-          .quick-stats {
-            display: flex;
-            justify-content: space-around;
-            padding: 15px 0;
-            border-top: 1px solid var(--el-border-color-light);
-
-            .stat-item {
-              text-align: center;
-
-              .stat-number {
-                display: block;
-                font-size: 20px;
-                font-weight: 600;
-                color: var(--el-color-primary);
-                margin-bottom: 5px;
+              :deep(.el-avatar) {
+                border: 3px solid white;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
               }
 
-              .stat-label {
-                font-size: 12px;
-                color: var(--el-text-color-regular);
-              }
-            }
-          }
-        }
-
-        .outer-info {
-          padding: 0 20px 20px;
-
-          .info-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 0;
-            color: var(--el-text-color-regular);
-
-            i {
-              margin-right: 10px;
-              color: var(--el-color-primary);
-              font-size: 16px;
-            }
-
-            span {
-              font-size: 14px;
-            }
-          }
-        }
-      }
-
-      .quick-nav {
-        background: var(--el-bg-color);
-        border-radius: 12px;
-        padding: 20px;
-
-        .nav-header {
-          margin-bottom: 16px;
-
-          h3 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--el-text-color-primary);
-          }
-        }
-
-        .nav-items {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-
-          .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            background: var(--el-fill-color-light);
-            border: 1px solid var(--el-border-color);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-
-            &:hover {
-              border-color: var(--el-color-primary-light-5);
-              background: var(--el-color-primary-light-9);
-              transform: translateX(4px);
-            }
-
-            .nav-icon {
-              width: 40px;
-              height: 40px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 10px;
-              margin-right: 12px;
-
-              i {
-                font-size: 18px;
-                color: #fff;
-              }
-
-              &.user-icon {
-                background: var(--el-color-primary);
-              }
-
-              &.login-icon {
+              .status-indicator {
+                position: absolute;
+                bottom: 5px;
+                right: 5px;
+                width: 12px;
+                height: 12px;
                 background: var(--el-color-success);
-              }
-
-              &.operation-icon {
-                background: var(--el-color-warning);
-              }
-
-              &.notification-icon {
-                background: var(--el-color-info);
+                border: 2px solid white;
+                border-radius: 50%;
               }
             }
+          }
 
-            .nav-content {
-              flex: 1;
+          .profile-info {
+            padding: 40px 20px 20px;
+            text-align: center;
 
-              h4 {
-                margin: 0 0 4px;
-                font-size: 14px;
-                font-weight: 600;
-                color: var(--el-text-color-primary);
-              }
-
-              p {
-                margin: 0;
-                font-size: 12px;
-                color: var(--el-text-color-regular);
-              }
+            .name {
+              margin: 0 0 5px;
+              font-size: 18px;
+              font-weight: 600;
+              color: var(--el-text-color-primary);
             }
 
-            .arrow {
+            .position {
+              margin: 0 0 20px;
+              color: var(--el-text-color-regular);
               font-size: 14px;
-              color: var(--el-text-color-secondary);
-              transition: transform 0.3s ease;
             }
 
-            &:hover .arrow {
-              transform: translateX(4px);
-              color: var(--el-color-primary);
+            .quick-stats {
+              display: flex;
+              justify-content: space-around;
+              padding: 15px 0;
+              border-top: 1px solid var(--el-border-color-light);
+
+              .stat-item {
+                text-align: center;
+
+                .stat-number {
+                  display: block;
+                  font-size: 20px;
+                  font-weight: 600;
+                  color: var(--el-color-primary);
+                  margin-bottom: 5px;
+                }
+
+                .stat-label {
+                  font-size: 12px;
+                  color: var(--el-text-color-regular);
+                }
+              }
+            }
+          }
+
+          .outer-info {
+            padding: 0 20px 20px;
+
+            .info-item {
+              display: flex;
+              align-items: center;
+              padding: 8px 0;
+              color: var(--el-text-color-regular);
+
+              i {
+                margin-right: 10px;
+                color: var(--el-color-primary);
+                font-size: 16px;
+              }
+
+              span {
+                font-size: 14px;
+              }
             }
           }
         }
-      }
-    }
 
-    .right-wrap {
-      flex: 1;
+        .quick-nav {
+          background: var(--el-bg-color);
+          border-radius: 12px;
+          padding: 20px;
 
-      .notification-records {
-        padding: 20px;
-        border-radius: 12px;
-        background: var(--el-bg-color);
-
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-          padding-bottom: 16px;
-          border-bottom: 1px solid var(--el-border-color-light);
-
-          .header-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-
-            .title-icon {
-              width: 36px;
-              height: 36px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 8px;
-              background: var(--el-color-primary);
-
-              i {
-                font-size: 18px;
-                color: #fff;
-              }
-            }
+          .nav-header {
+            margin-bottom: 16px;
 
             h3 {
               margin: 0;
-              font-size: 18px;
+              font-size: 16px;
               font-weight: 600;
               color: var(--el-text-color-primary);
             }
           }
 
-          .header-actions {
+          .nav-items {
             display: flex;
-            gap: 8px;
+            flex-direction: column;
+            gap: 12px;
+
+            .nav-item {
+              display: flex;
+              align-items: center;
+              padding: 16px;
+              background: var(--el-fill-color-light);
+              border: 1px solid var(--el-border-color);
+              border-radius: 10px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+
+              &:hover {
+                border-color: var(--el-color-primary-light-5);
+                background: var(--el-color-primary-light-9);
+                transform: translateX(4px);
+              }
+
+              .nav-icon {
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 10px;
+                margin-right: 12px;
+
+                i {
+                  font-size: 18px;
+                  color: #fff;
+                }
+
+                &.user-icon {
+                  background: var(--el-color-primary);
+                }
+
+                &.login-icon {
+                  background: var(--el-color-success);
+                }
+
+                &.operation-icon {
+                  background: var(--el-color-warning);
+                }
+
+                &.notification-icon {
+                  background: var(--el-color-info);
+                }
+              }
+
+              .nav-content {
+                flex: 1;
+
+                h4 {
+                  margin: 0 0 4px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: var(--el-text-color-primary);
+                }
+
+                p {
+                  margin: 0;
+                  font-size: 12px;
+                  color: var(--el-text-color-regular);
+                }
+              }
+
+              .arrow {
+                font-size: 14px;
+                color: var(--el-text-color-secondary);
+                transition: transform 0.3s ease;
+              }
+
+              &:hover .arrow {
+                transform: translateX(4px);
+                color: var(--el-color-primary);
+              }
+            }
           }
         }
+      }
 
-        .search-bar {
-          margin-bottom: 20px;
-          padding: 15px;
-          background: var(--el-fill-color-light);
-          border-radius: 8px;
+      .right-wrap {
+        flex: 1;
 
-          :deep(.el-form-item) {
-            margin-bottom: 0;
-            margin-right: 16px;
+        .notification-records {
+          padding: 20px;
+          border-radius: 12px;
+          background: var(--el-bg-color);
+
+          .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--el-border-color-light);
+
+            .header-title {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+
+              .title-icon {
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+                background: var(--el-color-primary);
+
+                i {
+                  font-size: 18px;
+                  color: #fff;
+                }
+              }
+
+              h3 {
+                margin: 0;
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--el-text-color-primary);
+              }
+            }
+
+            .header-actions {
+              display: flex;
+              gap: 8px;
+            }
+          }
+
+          .search-bar {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--el-fill-color-light);
+            border-radius: 8px;
+
+            :deep(.el-form-item) {
+              margin-bottom: 0;
+              margin-right: 16px;
+            }
           }
         }
       }
     }
   }
-}
 
-.title-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  
-  .title {
-    color: var(--el-text-color-primary);
-    
-    &:hover {
-      color: var(--el-color-primary);
-    }
-    
-    &.is-read {
-      color: var(--el-text-color-secondary);
-    }
-  }
-  
-  .unread-tag {
-    flex-shrink: 0;
-  }
-}
+  .title-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
 
-.notification-dialog {
-  :deep(.el-dialog__body) {
-    padding-top: 10px;
-  }
-}
+    .title {
+      color: var(--el-text-color-primary);
 
-.notification-detail {
-  .detail-header {
-    h3 {
-      font-size: 18px;
-      font-weight: 500;
-      margin: 0 0 12px;
-    }
-    
-    .meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      
-      .time {
+      &:hover {
+        color: var(--el-color-primary);
+      }
+
+      &.is-read {
         color: var(--el-text-color-secondary);
-        font-size: 13px;
+      }
+    }
+
+    .unread-tag {
+      flex-shrink: 0;
+    }
+  }
+
+  .notification-dialog {
+    :deep(.el-dialog__body) {
+      padding-top: 10px;
+    }
+  }
+
+  .notification-detail {
+    .detail-header {
+      h3 {
+        font-size: 18px;
+        font-weight: 500;
+        margin: 0 0 12px;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .time {
+          color: var(--el-text-color-secondary);
+          font-size: 13px;
+        }
+      }
+    }
+
+    .detail-content {
+      line-height: 1.8;
+      min-height: 100px;
+
+      :deep(p) {
+        margin: 0 0 8px;
+      }
+
+      :deep(img) {
+        max-width: 100%;
+        height: auto;
+      }
+
+      :deep(a) {
+        color: var(--el-color-primary);
+      }
+    }
+
+    .detail-footer {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--el-border-color-lighter);
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .my-notification-page .content {
+      flex-direction: column;
+
+      .left-wrap {
+        width: 100%;
       }
     }
   }
-  
-  .detail-content {
-    line-height: 1.8;
-    min-height: 100px;
-    
-    :deep(p) {
-      margin: 0 0 8px;
-    }
-    
-    :deep(img) {
-      max-width: 100%;
-      height: auto;
-    }
-    
-    :deep(a) {
-      color: var(--el-color-primary);
-    }
-  }
-  
-  .detail-footer {
-    margin-top: 16px;
-    padding-top: 12px;
-    border-top: 1px solid var(--el-border-color-lighter);
-    color: var(--el-text-color-secondary);
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 768px) {
-  .my-notification-page .content {
-    flex-direction: column;
-
-    .left-wrap {
-      width: 100%;
-    }
-  }
-}
 </style>

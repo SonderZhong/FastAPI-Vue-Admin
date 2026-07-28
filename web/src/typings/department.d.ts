@@ -1,36 +1,25 @@
-// 部门信息接口
 export interface DepartmentInfo {
-  /** 部门ID */
   id: string
-  /** 部门名称 */
+  tenant_id: string | null
+  code: string | null
+  ancestor_path: string | null
   name: string
-  /** 父部门ID */
   parent_id: string | null
-  /** 排序权重（0最高） */
   sort: number
-  /** 部门电话 */
   phone: string | null
-  /** 部门负责人 */
-  principal: string
-  /** 部门邮箱 */
+  principal: string | null
   email: string | null
-  /** 备注信息 */
   remark: string | null
-  /** 状态（0正常 1停用） */
-  status: number | null
-  /** 创建时间 */
+  status: number
   created_at: string
-  /** 更新时间 */
   updated_at: string
+  children?: DepartmentInfo[]
 }
 
-// 部门树形结构接口
-export interface DepartmentTree extends DepartmentInfo {
-  /** 子部门 */
+export interface DepartmentTree extends Omit<DepartmentInfo, 'children'> {
   children?: DepartmentTree[]
 }
 
-// 部门列表响应接口
 export interface DepartmentListResponse {
   result: DepartmentInfo[]
   total: number
@@ -38,22 +27,15 @@ export interface DepartmentListResponse {
   pageSize: number
 }
 
-// 添加/修改部门参数接口
 export interface AddDepartmentParams {
-  /** 部门名称 */
+  tenant_id?: string
   name: string
-  /** 父部门ID */
+  code?: string | null
   parent_id: string | null
-  /** 排序权重 */
   sort: number
-  /** 部门电话 */
-  phone: string | null
-  /** 部门负责人 */
-  principal: string
-  /** 部门邮箱 */
-  email: string | null
-  /** 备注信息 */
-  remark: string | null
-  /** 状态 */
-  status: number | null
+  phone?: string | null
+  principal?: string | null
+  email?: string | null
+  remark?: string | null
+  status: number
 }

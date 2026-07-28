@@ -1,15 +1,14 @@
-import { router } from '@/router'
 import { App, Directive, DirectiveBinding } from 'vue'
 import { usePermission } from '@/composables/usePermission'
 
 /**
  * 权限指令（后端控制模式）
- * 
+ *
  * 用法：
  * 1. 基于权限标记：<ElButton v-auth="'code:btn:add'">添加</ElButton>
  * 2. 多个权限（满足任一）：<ElButton v-auth="['code:btn:add', 'code:btn:update']">操作</ElButton>
  * 3. 多个权限（全部满足）：<ElButton v-auth="{marks: ['code:btn:add', 'code:btn:update'], requireAll: true}">操作</ElButton>
- * 
+ *
  * 权限检查逻辑：
  * 1. 检查用户是否拥有对应的权限标记（permission_marks）
  * 2. 检查用户身份是否满足权限要求（minUserType）
@@ -27,7 +26,7 @@ interface AuthBinding extends DirectiveBinding {
 
 function checkAuthPermission(el: HTMLElement, binding: AuthBinding): void {
   const { hasPermission } = usePermission()
-  
+
   let marks: string | string[]
   let requireAll = false
 
@@ -47,7 +46,7 @@ function checkAuthPermission(el: HTMLElement, binding: AuthBinding): void {
 
   // 检查权限
   const hasAuth = hasPermission(marks, requireAll)
-  
+
   if (!hasAuth) {
     removeElement(el)
   }

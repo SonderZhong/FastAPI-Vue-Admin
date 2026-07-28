@@ -2,27 +2,21 @@
 
 ## 权限模型
 
-系统采用 RBAC（基于角色的访问控制）模型，支持三种权限类型：
+当前项目采用基于角色的访问控制模型，权限来源可以概括为：
 
-- **菜单权限** - 控制用户可访问的页面
-- **按钮权限** - 控制用户可执行的操作
-- **API 权限** - 控制用户可调用的接口
+`用户 -> 角色 -> 权限`
 
-## 权限架构
+系统中的权限主要分为三类：
 
-```
-用户 -> 角色 -> 权限
-```
+- 菜单权限：控制用户能看到哪些页面和导航项
+- 按钮权限：控制用户能执行哪些页面操作
+- 接口权限：控制后端接口是否允许访问
 
-- 一个用户可以拥有多个角色
-- 一个角色可以拥有多个权限
-- 权限通过 Casbin 进行管理
+## 前端权限控制
 
-## 前端权限
+前端常见的权限使用方式有两种。
 
-### 按钮权限指令
-
-使用 `v-auth` 指令控制按钮显示：
+### `v-auth` 指令
 
 ```vue
 <template>
@@ -31,65 +25,101 @@
 </template>
 ```
 
-### 权限判断函数
+### 组合式权限判断
 
-```typescript
+```ts
 import { usePermission } from '@/composables/usePermission'
 
 const { hasPermission } = usePermission()
 
-// 单个权限判断
 if (hasPermission('user:btn:add')) {
   // ...
 }
 
-// 多个权限判断（满足其一）
 if (hasPermission(['user:btn:edit', 'user:btn:delete'])) {
   // ...
 }
 ```
 
-## 后端权限
+## 后端权限控制
 
-### API 权限装饰器
+后端接口通过装饰器和权限服务控制访问。
+
+### 接口权限装饰器
 
 ```python
 from annotation.auth import Auth
 
-@router.get("/users")
-@Auth(permission_list=["user:btn:list", "GET:/user"])
-async def get_users():
-    pass
+@router.get("/list")
+@Auth(permission_list=["user:btn:list", "GET:/user/list"])
+async def get_user_list():
+    ...
 ```
 
-### 数据权限
+项目中也会结合登录态、租户信息与数据范围做进一步判断。
 
-系统支持四种数据权限范围：
+## 数据权限
 
-| 值 | 说明 |
-|---|------|
-| 1 | 全部数据 |
-| 2 | 本部门及下属部门 |
-| 3 | 仅本部门 |
-| 4 | 仅本人 |
-
-```python
-from utils.casbin import DataScope
-
-# 获取用户数据权限范围
-data_scope = await CasbinEnforcer.get_data_scope(user_id, permission_id)
-```
-
-## 权限标识规范
-
-推荐使用以下格式：
-
-- 菜单权限：`模块:menu`
-- 按钮权限：`模块:btn:操作`
-- API 权限：`METHOD:/path`
+当前项目包含数据范围控制能力，后端会根据角色配置决定用户可访问的数据集合。
 
 示例：
-- `user:btn:add` - 用户新增按钮
-- `user:btn:edit` - 用户编辑按钮
-- `GET:/user` - 获取用户列表接口
-- `POST:/user` - 创建用户接口
+
+```python
+from utils.permission import PermissionService
+
+data_scope = await PermissionService.get_data_scope(user_id)
+```
+
+常见语义包括：
+
+- 全部数据
+- 本部门及下级部门
+- 仅本部门
+- 仅本人
+
+具体取值与实现以当前后端服务代码为准，不建议在文档里硬编码旧版常量说明而不校验代码。
+
+## 权限标识建议
+
+当前项目中的权限标识通常遵循以下约定：
+
+- 菜单权限：`module:menu`
+- 按钮权限：`module:btn:action`
+- 接口权限：`METHOD:/path`
+
+示例：
+
+- `user:btn:add`
+- `user:btn:edit`
+- `role:btn:assign`
+- `GET:/user/list`
+- `POST:/role/add`
+
+## 路由来源
+
+项目支持根据运行模式加载路由：
+
+- 前端模式：使用本地定义的异步路由
+- 后端模式：通过后端接口返回当前用户可访问路由
+
+这意味着“是否能看到某个系统管理菜单”不仅取决于前端页面本身，也取决于：
+
+- 当前登录账号绑定的角色
+- 后端返回的用户路由
+- 前端路由守卫是否已完成动态注册
+
+## 初始化前的注意点
+
+准备把项目作为模板仓库上传 Git 时，权限文档应尽量描述“当前代码真实存在的行为”，避免继续保留以下不准确内容：
+
+- 旧接口路径示例
+- 已移除字段或旧版用户类型逻辑
+- 未经验证的固定角色说明
+
+如果后续继续调整权限模型，建议同步检查：
+
+- `server/modules/permission/`
+- `server/modules/role/`
+- `server/modules/user/`
+- `web/src/router/`
+- `web/src/store/`

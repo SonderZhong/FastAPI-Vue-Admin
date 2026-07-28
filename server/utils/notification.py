@@ -12,8 +12,8 @@ from redis.asyncio import Redis as AsyncRedis
 
 from utils.log import logger
 from utils.get_redis import RedisKeyConfig
-from models import SystemNotification, UserNotification
-from models.notification import NotificationType, NotificationStatus
+from modules import SystemNotification, UserNotification
+from modules.notification.model import NotificationType, NotificationStatus
 
 
 class ConnectionManager:

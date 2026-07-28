@@ -149,7 +149,7 @@ export const fetchUploadFile = (file: File, folder: string = '') => {
  */
 export const fetchUploadFiles = (files: File[], folder: string = '') => {
   const formData = new FormData()
-  files.forEach(file => formData.append('files', file))
+  files.forEach((file) => formData.append('files', file))
   return request.post<BatchUploadResponse>({
     url: '/api/file/upload/batch',
     params: { folder },
@@ -235,10 +235,13 @@ export interface AvatarUploadResponse {
  * @param userId 用户ID（可选，默认当前用户）
  * @returns 上传结果
  */
-export const uploadAvatar = async (file: File, userId?: string): Promise<{ success: boolean; data?: AvatarUploadResponse; msg?: string }> => {
+export const uploadAvatar = async (
+  file: File,
+  userId?: string
+): Promise<{ success: boolean; data?: AvatarUploadResponse; msg?: string }> => {
   const formData = new FormData()
   formData.append('file', file)
-  
+
   // 如果没有传userId，需要从store获取当前用户ID
   // 这里使用通用文件上传接口，然后需要单独更新用户头像
   // 或者调用专门的用户头像接口
@@ -251,7 +254,7 @@ export const uploadAvatar = async (file: File, userId?: string): Promise<{ succe
         'Content-Type': 'multipart/form-data'
       }
     })
-    
+
     if (response?.success && response.data) {
       return {
         success: true,
@@ -265,7 +268,7 @@ export const uploadAvatar = async (file: File, userId?: string): Promise<{ succe
     }
     return { success: false, msg: response?.msg || '上传失败' }
   }
-  
+
   // 没有userId时使用通用上传接口
   const response = await request.post<UploadResponse>({
     url: '/api/file/upload',
@@ -275,7 +278,7 @@ export const uploadAvatar = async (file: File, userId?: string): Promise<{ succe
       'Content-Type': 'multipart/form-data'
     }
   })
-  
+
   if (response?.success && response.data) {
     return {
       success: true,

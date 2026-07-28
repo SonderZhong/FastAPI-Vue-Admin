@@ -102,19 +102,28 @@
         textStyle: { fontSize: 14, fontWeight: 'normal', color: theme.textColor }
       },
       tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
-      legend: { orient: 'horizontal', bottom: 10, type: 'scroll', textStyle: { color: theme.subTextColor } },
-      series: [{
-        name: t('dashboard.osDistribution'),
-        type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['50%', '50%'],
-        avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 10, borderColor: theme.borderColor, borderWidth: 2 },
-        label: { show: false, position: 'center' },
-        emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold', color: theme.textColor } },
-        labelLine: { show: false },
-        data: data
-      }]
+      legend: {
+        orient: 'horizontal',
+        bottom: 10,
+        type: 'scroll',
+        textStyle: { color: theme.subTextColor }
+      },
+      series: [
+        {
+          name: t('dashboard.osDistribution'),
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['50%', '50%'],
+          avoidLabelOverlap: false,
+          itemStyle: { borderRadius: 10, borderColor: theme.borderColor, borderWidth: 2 },
+          label: { show: false, position: 'center' },
+          emphasis: {
+            label: { show: true, fontSize: 16, fontWeight: 'bold', color: theme.textColor }
+          },
+          labelLine: { show: false },
+          data: data
+        }
+      ]
     }
     osChart.setOption(option)
   }
@@ -134,19 +143,28 @@
         textStyle: { fontSize: 14, fontWeight: 'normal', color: theme.textColor }
       },
       tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
-      legend: { orient: 'horizontal', bottom: 10, type: 'scroll', textStyle: { color: theme.subTextColor } },
-      series: [{
-        name: t('dashboard.browserDistribution'),
-        type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['50%', '50%'],
-        avoidLabelOverlap: false,
-        itemStyle: { borderRadius: 10, borderColor: theme.borderColor, borderWidth: 2 },
-        label: { show: false, position: 'center' },
-        emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold', color: theme.textColor } },
-        labelLine: { show: false },
-        data: data
-      }]
+      legend: {
+        orient: 'horizontal',
+        bottom: 10,
+        type: 'scroll',
+        textStyle: { color: theme.subTextColor }
+      },
+      series: [
+        {
+          name: t('dashboard.browserDistribution'),
+          type: 'pie',
+          radius: ['40%', '70%'],
+          center: ['50%', '50%'],
+          avoidLabelOverlap: false,
+          itemStyle: { borderRadius: 10, borderColor: theme.borderColor, borderWidth: 2 },
+          label: { show: false, position: 'center' },
+          emphasis: {
+            label: { show: true, fontSize: 16, fontWeight: 'bold', color: theme.textColor }
+          },
+          labelLine: { show: false },
+          data: data
+        }
+      ]
     }
     browserChart.setOption(option)
   }
@@ -167,30 +185,32 @@
       },
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: '3%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
-      xAxis: { 
-        type: 'value', 
+      xAxis: {
+        type: 'value',
         boundaryGap: [0, 0.01],
         axisLine: { lineStyle: { color: theme.axisLineColor } },
         axisLabel: { color: theme.subTextColor },
         splitLine: { lineStyle: { color: theme.splitLineColor } }
       },
-      yAxis: { 
-        type: 'category', 
+      yAxis: {
+        type: 'category',
         data: data.map((item) => item.name),
         axisLine: { lineStyle: { color: theme.axisLineColor } },
         axisLabel: { color: theme.subTextColor }
       },
-      series: [{
-        name: t('dashboard.loginCount'),
-        type: 'bar',
-        data: data.map((item) => item.value),
-        itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#409EFF' },
-            { offset: 1, color: '#79bbff' }
-          ])
+      series: [
+        {
+          name: t('dashboard.loginCount'),
+          type: 'bar',
+          data: data.map((item) => item.value),
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#409EFF' },
+              { offset: 1, color: '#79bbff' }
+            ])
+          }
         }
-      }]
+      ]
     }
     locationChart.setOption(option)
   }
@@ -202,7 +222,7 @@
     if (!trendChart) {
       trendChart = echarts.init(trendChartRef.value)
     }
-    
+
     const locationSeries = data.locationSeries.map((item: any) => ({
       name: item.name,
       type: 'line',
@@ -210,7 +230,7 @@
       data: item.data,
       areaStyle: { opacity: 0.1 }
     }))
-    
+
     const option = {
       title: {
         text: t('dashboard.last7DaysLoginTrend'),
@@ -229,14 +249,14 @@
         textStyle: { color: theme.subTextColor }
       },
       grid: { left: '3%', right: '4%', bottom: '15%', top: '15%', containLabel: true },
-      xAxis: { 
-        type: 'category', 
-        boundaryGap: false, 
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
         data: data.dates,
         axisLine: { lineStyle: { color: theme.axisLineColor } },
         axisLabel: { color: theme.subTextColor }
       },
-      yAxis: { 
+      yAxis: {
         type: 'value',
         axisLine: { lineStyle: { color: theme.axisLineColor } },
         axisLabel: { color: theme.subTextColor },

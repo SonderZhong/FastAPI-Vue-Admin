@@ -7,11 +7,11 @@
       <!-- 表格头部 -->
       <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
         <template #left>
-          <ElButton 
-            v-if="selectedRows.length > 0" 
-            v-auth="'operation:btn:delete'" 
-            type="danger" 
-            plain 
+          <ElButton
+            v-if="selectedRows.length > 0"
+            v-auth="'operation:btn:delete'"
+            type="danger"
+            plain
             @click="handleBatchDelete"
           >
             <i class="iconfont-sys mr-1">&#xe6e2;</i>
@@ -49,6 +49,7 @@
   import {
     fetchOperationLogList,
     fetchDeleteOperationLog,
+    fetchDeleteOperationLogList,
     type OperationLogInfo
   } from '@/api/system/log'
   import OperationLogSearch from './modules/operation-log-search.vue'
@@ -220,7 +221,7 @@
           fixed: 'right',
           formatter: (row: OperationLogInfo) => {
             const buttons = []
-            
+
             // 查看详情按钮
             buttons.push(
               h(
@@ -233,7 +234,7 @@
                 () => [t('buttons.info')]
               )
             )
-            
+
             // 删除按钮
             if (hasPermission('operation:btn:delete')) {
               buttons.push(
@@ -248,7 +249,7 @@
                 )
               )
             }
-            
+
             return h('div', { class: 'flex gap-2 justify-center' }, buttons)
           }
         }
@@ -310,10 +311,7 @@
 
     try {
       await ElMessageBox.confirm(
-        t('logManager.operationLog.batchDeleteConfirm').replace(
-          '{count}',
-          selectedRows.value.length.toString()
-        ),
+        t('logManager.operationLog.batchDeleteConfirm', { count: selectedRows.value.length }),
         t('common.warning'),
         {
           confirmButtonText: t('common.confirm'),
@@ -323,9 +321,9 @@
       )
 
       // 批量删除操作
-      for (const row of selectedRows.value) {
-        await fetchDeleteOperationLog(row.id)
-      }
+      await fetchDeleteOperationLogList({
+        ids: selectedRows.value.map((row) => row.id)
+      })
 
       selectedRows.value = []
       refreshData()

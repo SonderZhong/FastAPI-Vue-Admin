@@ -1,582 +1,621 @@
 <template>
   <div class="art-full-height">
-    <ElContainer class="h-full">
-      <!-- 左侧部门树 -->
-      <ElAside width="300px" class="dept-aside">
-        <ElCard shadow="never" class="h-full dept-card">
-          <template #header>
-            <div class="dept-header">
-              <span class="font-medium">{{ $t('department.structure', '部门结构') }}</span>
-              <ElButton
-                v-auth="'department:btn:add'"
-                type="primary"
-                size="small"
-                round
-                :icon="Plus"
-                @click="showDialog('add')"
-              >
-                {{ $t('department.add', '新增') }}
-              </ElButton>
-            </div>
-          </template>
-          
-          <div class="dept-content">
-            <ElInput
-              v-model="treeFilterText"
-              :placeholder="$t('department.search', '搜索部门')"
-              clearable
-              size="small"
-              :prefix-icon="Search"
-              class="mb-3"
-            />
-            <ElScrollbar class="dept-tree-wrapper">
-              <ElTree
-                ref="treeRef"
-                :data="departmentTree"
-                :props="treeProps"
-                :filter-node-method="filterNode"
-                :expand-on-click-node="false"
-                :highlight-current="true"
-                :indent="16"
-                node-key="id"
-                default-expand-all
-                @node-click="handleNodeClick"
-              >
-                <template #default="{ node, data }">
-                  <div class="tree-node">
-                    <ElIcon class="text-blue-500" :size="14"><OfficeBuilding /></ElIcon>
-                    <span class="node-label" :title="node.label">{{ node.label }}</span>
-                    <ElBadge
-                      v-if="data.children && data.children.length > 0"
-                      :value="data.children.length"
-                      :max="99"
-                      type="info"
-                    />
-                  </div>
-                </template>
-              </ElTree>
-            </ElScrollbar>
+    <ElCard class="art-table-card h-full" shadow="never">
+      <ArtSearchBar
+        :model-value="searchForm"
+        @update:model-value="Object.assign(searchForm, $event)"
+        :items="searchItems"
+        @search="handleSearch"
+        @reset="handleReset"
+      />
+
+      <ArtTableHeader v-model:columns="columns" :loading="loading" @refresh="fetchData">
+        <template #left>
+          <ElSpace wrap>
+            <ElButton
+              v-auth="'department:btn:add'"
+              type="primary"
+              :icon="Plus"
+              @click="openCreate()"
+            >
+              {{ $t('department.addDepartment') }}
+            </ElButton>
+
+            <ElButton @click="toggleExpand">
+              {{ expanded ? $t('department.collapseAll') : $t('department.expandAll') }}
+            </ElButton>
+          </ElSpace>
+        </template>
+      </ArtTableHeader>
+
+      <ArtTable
+        ref="tableRef"
+        row-key="id"
+        :data="tableData"
+        :columns="columns"
+        :loading="loading"
+        :pagination="undefined"
+        :tree-props="{ children: 'children' }"
+        default-expand-all
+        fit
+      >
+        <template #name="{ row }">
+          <div class="flex min-w-0 items-center gap-2">
+            <ElIcon class="text-sky-500"><OfficeBuilding /></ElIcon>
+            <span class="truncate">{{ row.name }}</span>
           </div>
-        </ElCard>
-      </ElAside>
-
-      <!-- 右侧详情 -->
-      <ElMain class="main-content">
-        <template v-if="selectedDepartment">
-          <!-- 工具栏 -->
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <ElBreadcrumb separator="/">
-                <ElBreadcrumbItem v-for="item in breadcrumbItems" :key="item.id">
-                  {{ item.name }}
-                </ElBreadcrumbItem>
-              </ElBreadcrumb>
-            </div>
-            <div class="toolbar-right">
-              <ElButton
-                v-auth="'department:btn:add'"
-                type="success"
-                size="small"
-                round
-                :icon="Plus"
-                @click="addSubDepartment(selectedDepartment)"
-              >
-                {{ $t('department.addSub', '添加下属') }}
-              </ElButton>
-              <ElButton
-                v-auth="'department:btn:update'"
-                type="primary"
-                size="small"
-                round
-                :icon="Edit"
-                @click="showDialog('edit', selectedDepartment)"
-              >
-                {{ $t('buttons.edit', '编辑') }}
-              </ElButton>
-              <ElButton
-                v-auth="'department:btn:delete'"
-                type="danger"
-                size="small"
-                round
-                :icon="Delete"
-                @click="deleteDepartment(selectedDepartment)"
-              >
-                {{ $t('buttons.delete', '删除') }}
-              </ElButton>
-            </div>
-          </div>
-
-          <!-- 详情卡片 -->
-          <ElCard class="detail-card" shadow="never">
-            <!-- 基本信息 -->
-            <div class="info-section">
-              <div class="section-title">
-                <ElIcon class="mr-2"><InfoFilled /></ElIcon>
-                {{ $t('department.basicInfo', '基本信息') }}
-              </div>
-              <ElRow :gutter="24">
-                <ElCol :span="8">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('department.name', '部门名称') }}</span>
-                    <span class="info-value">{{ selectedDepartment.name }}</span>
-                  </div>
-                </ElCol>
-                <ElCol :span="8">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('department.principal', '负责人') }}</span>
-                    <span class="info-value">{{ selectedDepartment.principal || '-' }}</span>
-                  </div>
-                </ElCol>
-                <ElCol :span="8">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('common.status', '状态') }}</span>
-                    <ElTag :type="selectedDepartment.status === 0 ? 'success' : 'info'" size="small">
-                      {{ selectedDepartment.status === 0 ? '正常' : '停用' }}
-                    </ElTag>
-                  </div>
-                </ElCol>
-                <ElCol :span="8">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('department.phone', '联系电话') }}</span>
-                    <span class="info-value">{{ selectedDepartment.phone || '-' }}</span>
-                  </div>
-                </ElCol>
-                <ElCol :span="8">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('department.email', '邮箱') }}</span>
-                    <span class="info-value">{{ selectedDepartment.email || '-' }}</span>
-                  </div>
-                </ElCol>
-                <ElCol :span="8">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('department.sort', '排序') }}</span>
-                    <span class="info-value">{{ selectedDepartment.sort }}</span>
-                  </div>
-                </ElCol>
-                <ElCol :span="24" v-if="selectedDepartment.remark">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('common.remark', '备注') }}</span>
-                    <span class="info-value">{{ selectedDepartment.remark }}</span>
-                  </div>
-                </ElCol>
-              </ElRow>
-            </div>
-
-            <!-- 时间信息 -->
-            <div class="info-section">
-              <div class="section-title">
-                <ElIcon class="mr-2"><Clock /></ElIcon>
-                {{ $t('department.timeInfo', '时间信息') }}
-              </div>
-              <ElRow :gutter="24">
-                <ElCol :span="12">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('common.createTime', '创建时间') }}</span>
-                    <span class="info-value text-gray-500 text-sm">{{ formatDate(selectedDepartment.created_at) }}</span>
-                  </div>
-                </ElCol>
-                <ElCol :span="12">
-                  <div class="info-item">
-                    <span class="info-label">{{ $t('common.updateTime', '更新时间') }}</span>
-                    <span class="info-value text-gray-500 text-sm">{{ formatDate(selectedDepartment.updated_at) }}</span>
-                  </div>
-                </ElCol>
-              </ElRow>
-            </div>
-
-            <!-- 子部门 -->
-            <div class="info-section" v-if="getDepartmentChildren(selectedDepartment.id).length > 0">
-              <div class="section-title">
-                <ElIcon class="mr-2"><OfficeBuilding /></ElIcon>
-                {{ $t('department.subDepartments', '子部门') }}
-                <ElBadge :value="getDepartmentChildren(selectedDepartment.id).length" type="primary" class="ml-2" />
-              </div>
-              <div class="sub-dept-list">
-                <div
-                  v-for="child in getDepartmentChildren(selectedDepartment.id)"
-                  :key="child.id"
-                  class="sub-dept-item"
-                  @click="selectDepartment(child)"
-                >
-                  <ElIcon class="text-blue-500 mr-2"><OfficeBuilding /></ElIcon>
-                  <span>{{ child.name }}</span>
-                  <ElIcon class="arrow-icon"><ArrowRight /></ElIcon>
-                </div>
-              </div>
-            </div>
-          </ElCard>
         </template>
 
-        <!-- 未选择部门的提示 -->
-        <div v-else class="empty-state">
-          <ElEmpty :description="$t('department.selectTip', '请选择左侧部门查看详情')">
-            <template #image>
-              <ElIcon :size="60" class="text-gray-300"><OfficeBuilding /></ElIcon>
-            </template>
-          </ElEmpty>
-        </div>
-      </ElMain>
-    </ElContainer>
+        <template #tenant="{ row }">
+          <ElTag v-if="row.tenant_id" size="small" type="primary">
+            {{ getTenantName(row.tenant_id) }}
+          </ElTag>
+          <span v-else class="text-[var(--el-text-color-secondary)]">-</span>
+        </template>
 
-    <!-- 部门编辑抽屉 -->
-    <DepartmentDrawer
-      v-model="dialogVisible"
-      :dialog-type="dialogType"
-      :department-data="currentDepartmentData"
-      @success="handleDialogSubmit"
-    />
+        <template #status="{ row }">
+          <ElTag :type="row.status === 1 ? 'success' : 'info'" size="small">
+            {{ row.status === 1 ? $t('common.enabled') : $t('common.disabled') }}
+          </ElTag>
+        </template>
+
+        <template #action="{ row }">
+          <ElSpace wrap :size="4">
+            <ElButton
+              v-auth="'department:btn:add'"
+              type="primary"
+              link
+              size="small"
+              @click="openCreate(row.id)"
+            >
+              {{ $t('department.addSub') }}
+            </ElButton>
+
+            <ElButton
+              v-auth="'department:btn:update'"
+              type="primary"
+              link
+              size="small"
+              @click="openEdit(row)"
+            >
+              {{ $t('buttons.edit') }}
+            </ElButton>
+            <ElButton
+              v-auth="'department:btn:delete'"
+              type="danger"
+              link
+              size="small"
+              @click="handleDelete(row)"
+            >
+              {{ $t('buttons.delete') }}
+            </ElButton>
+          </ElSpace>
+        </template>
+      </ArtTable>
+    </ElCard>
+
+    <ElDrawer v-model="drawerVisible" :title="drawerTitle" size="640px" @closed="resetForm">
+      <div
+        class="mb-4 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-lighter)] px-4 py-3"
+      >
+        <div class="text-xs text-[var(--el-text-color-secondary)]">{{
+          $t('department.currentTenant')
+        }}</div>
+        <div class="mt-1 text-sm font-medium text-[var(--el-text-color-primary)]">
+          {{ activeTenantName }}
+        </div>
+      </div>
+
+      <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="100px">
+        <ElFormItem :label="$t('department.parent')" prop="parent_id">
+          <ElTreeSelect
+            v-model="formData.parent_id"
+            :data="parentTreeData"
+            :props="{ label: 'name', value: 'id', children: 'children' }"
+            check-strictly
+            clearable
+            class="w-full"
+            :placeholder="$t('department.selectParent')"
+          />
+        </ElFormItem>
+        <ElFormItem :label="$t('department.name')" prop="name">
+          <ElInput v-model="formData.name" :placeholder="$t('department.nameRequired')" />
+        </ElFormItem>
+        <ElFormItem :label="$t('department.code')" prop="code">
+          <ElInput v-model="formData.code" :placeholder="$t('department.codeRequired')" />
+        </ElFormItem>
+        <ElFormItem :label="$t('department.principal')" prop="principal">
+          <ElInput v-model="formData.principal" :placeholder="$t('department.principalRequired')" />
+        </ElFormItem>
+        <ElFormItem :label="$t('department.phone')" prop="phone">
+          <ElInput v-model="formData.phone" :placeholder="$t('department.phone')" />
+        </ElFormItem>
+        <ElFormItem :label="$t('department.email')" prop="email">
+          <ElInput v-model="formData.email" :placeholder="$t('department.email')" />
+        </ElFormItem>
+        <ElFormItem :label="$t('department.sort')" prop="sort">
+          <ElInputNumber v-model="formData.sort" :min="0" :max="9999" class="!w-full" />
+        </ElFormItem>
+        <ElFormItem :label="$t('common.status')" prop="status">
+          <ElRadioGroup v-model="formData.status">
+            <ElRadio :label="1">{{ $t('common.enabled') }}</ElRadio>
+            <ElRadio :label="0">{{ $t('common.disabled') }}</ElRadio>
+          </ElRadioGroup>
+        </ElFormItem>
+        <ElFormItem :label="$t('department.remark')" prop="remark">
+          <ElInput
+            v-model="formData.remark"
+            type="textarea"
+            :rows="3"
+            :placeholder="$t('department.remark')"
+          />
+        </ElFormItem>
+      </ElForm>
+
+      <template #footer>
+        <ElButton @click="drawerVisible = false">{{ $t('buttons.cancel') }}</ElButton>
+        <ElButton type="primary" :loading="submitLoading" @click="handleSubmit">{{
+          $t('buttons.confirm')
+        }}</ElButton>
+      </template>
+    </ElDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import { ElMessageBox, ElMessage, ElTree } from 'element-plus'
-import { Search, OfficeBuilding, Plus, Edit, Delete, InfoFilled, Clock, ArrowRight } from '@element-plus/icons-vue'
-import { useI18n } from 'vue-i18n'
-import { fetchDepartmentTree, deleteDepartment as deleteDepartmentApi } from '@/api/system/department'
-import DepartmentDrawer from './modules/department-drawer.vue'
-import type { DepartmentInfo, DepartmentTree } from '@/typings/department'
+  import { computed, onMounted, reactive, ref } from 'vue'
+  import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+  import { OfficeBuilding, Plus } from '@element-plus/icons-vue'
+  import { useI18n } from 'vue-i18n'
+  import { useUserStore } from '@/store/modules/user'
+  import { usePermission } from '@/composables/usePermission'
+  import ArtSearchBar from '@/components/core/forms/art-search-bar/index.vue'
+  import ArtTable from '@/components/core/tables/art-table/index.vue'
+  import ArtTableHeader from '@/components/core/tables/art-table-header/index.vue'
+  import type { ColumnOption } from '@/types'
+  import {
+    addDepartment,
+    deleteDepartment,
+    fetchDepartmentList,
+    type DepartmentInfo,
+    updateDepartment
+  } from '@/api/system/department'
+  import { fetchTenantList, type TenantInfo } from '@/api/system/tenant'
 
-defineOptions({ name: 'Department' })
+  defineOptions({ name: 'Department' })
 
-const { t: $t } = useI18n()
+  type DepartmentRow = DepartmentInfo & { children?: DepartmentRow[] }
 
-// 弹窗相关
-const dialogType = ref<'add' | 'edit'>('add')
-const dialogVisible = ref(false)
-const currentDepartmentData = ref<Partial<DepartmentInfo>>({})
+  const { t: $t } = useI18n()
+  const userStore = useUserStore()
+  const { isSuperAdmin } = usePermission()
 
-// 树形组件相关
-const treeRef = ref<InstanceType<typeof ElTree>>()
-const treeFilterText = ref('')
-const departmentTree = ref<DepartmentTree[]>([])
-const selectedDepartment = ref<DepartmentInfo | null>(null)
-
-const treeProps = { children: 'children', label: 'name' }
-
-// 面包屑路径
-const breadcrumbItems = computed(() => {
-  if (!selectedDepartment.value) return []
-  
-  const items: { id: string; name: string }[] = []
-  const findPath = (nodes: DepartmentTree[], targetId: string, path: { id: string; name: string }[]): boolean => {
-    for (const node of nodes) {
-      const currentPath = [...path, { id: node.id, name: node.name }]
-      if (node.id === targetId) {
-        items.push(...currentPath)
-        return true
-      }
-      if (node.children && findPath(node.children, targetId, currentPath)) {
-        return true
-      }
-    }
-    return false
-  }
-  
-  findPath(departmentTree.value, selectedDepartment.value.id, [])
-  return items
-})
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
+  const searchForm = reactive({
+    tenant_id: '',
+    name: '',
+    principal: '',
+    status: undefined as number | undefined
   })
-}
 
-const getDepartmentChildren = (departmentId: string): DepartmentInfo[] => {
-  const findChildren = (nodes: DepartmentTree[]): DepartmentInfo[] => {
-    for (const node of nodes) {
-      if (node.id === departmentId) {
-        return node.children || []
-      }
-      if (node.children) {
-        const result = findChildren(node.children)
-        if (result.length > 0) return result
-      }
+  const tenantOptions = ref<TenantInfo[]>([])
+  const loading = ref(false)
+  const expanded = ref(true)
+  const tableRef = ref<any>()
+  const rawList = ref<DepartmentInfo[]>([])
+  const currentEditId = ref('')
+
+  const currentTenantId = computed(() => String(userStore.info?.tenant_id || ''))
+  const tenantMap = computed(() =>
+    tenantOptions.value.reduce<Record<string, string>>((acc, item) => {
+      acc[item.id] = item.name
+      return acc
+    }, {})
+  )
+
+  const effectiveTenantId = computed(() => {
+    if (isSuperAdmin.value) {
+      return searchForm.tenant_id || currentTenantId.value
     }
-    return []
-  }
-  return findChildren(departmentTree.value)
-}
+    return currentTenantId.value
+  })
 
-const filterNode = (value: string, data: any) => {
-  if (!value) return true
-  return data.name.includes(value)
-}
-
-watch(treeFilterText, (val) => {
-  treeRef.value?.filter(val)
-})
-
-const handleNodeClick = (data: DepartmentInfo) => {
-  selectedDepartment.value = data
-}
-
-const selectDepartment = (department: DepartmentInfo) => {
-  selectedDepartment.value = department
-  treeRef.value?.setCurrentKey(department.id)
-}
-
-const loadDepartmentTree = async () => {
-  try {
-    const response = await fetchDepartmentTree()
-    if (response.success && response.data) {
-      departmentTree.value = response.data.result || []
+  const activeTenantName = computed(() => {
+    const tenantId = effectiveTenantId.value
+    if (!tenantId) {
+      return $t('department.unselectedTenant')
     }
-  } catch (error) {
-    console.error('加载部门数据失败:', error)
-    ElMessage.error('加载部门数据失败')
-  }
-}
-
-const showDialog = (type: 'add' | 'edit', row?: DepartmentInfo) => {
-  dialogType.value = type
-  currentDepartmentData.value = row || {}
-  nextTick(() => {
-    dialogVisible.value = true
+    return tenantMap.value[tenantId] || `${$t('department.tenantLabel')} ${tenantId}`
   })
-}
 
-const addSubDepartment = (parentDepartment: DepartmentInfo) => {
-  dialogType.value = 'add'
-  currentDepartmentData.value = {
-    parent_id: parentDepartment.id
-  } as Partial<DepartmentInfo>
-  nextTick(() => {
-    dialogVisible.value = true
-  })
-}
+  const searchItems = computed(() => {
+    const items: any[] = []
 
-const deleteDepartment = (row: DepartmentInfo) => {
-  ElMessageBox.confirm(
-    `确定要删除部门「${row.name}」吗？`,
-    '删除确认',
-    { type: 'warning' }
-  ).then(async () => {
-    try {
-      const response = await deleteDepartmentApi(row.id)
-      if (response.success) {
-        ElMessage.success('删除成功')
-        if (selectedDepartment.value?.id === row.id) {
-          selectedDepartment.value = null
+    if (isSuperAdmin.value) {
+      items.push({
+        key: 'tenant_id',
+        type: 'select',
+        label: $t('department.tenantLabel'),
+        props: {
+          placeholder: $t('common.pleaseSelect') + $t('department.tenantLabel'),
+          clearable: true,
+          filterable: true,
+          options: tenantOptions.value.map((item) => ({
+            label: item.name,
+            value: item.id
+          }))
         }
-        await loadDepartmentTree()
-      } else {
-        ElMessage.error(response.msg || '删除失败')
+      })
+    }
+
+    items.push(
+      {
+        key: 'name',
+        type: 'input',
+        label: $t('department.name'),
+        props: {
+          placeholder: $t('department.nameRequired'),
+          clearable: true
+        }
+      },
+      {
+        key: 'principal',
+        type: 'input',
+        label: $t('department.principal'),
+        props: {
+          placeholder: $t('department.principalRequired'),
+          clearable: true
+        }
+      },
+      {
+        key: 'status',
+        type: 'select',
+        label: $t('common.status'),
+        props: {
+          placeholder: $t('common.pleaseSelect') + $t('common.status'),
+          clearable: true,
+          options: [
+            { label: $t('common.enabled'), value: 1 },
+            { label: $t('common.disabled'), value: 0 }
+          ]
+        }
       }
-    } catch (error) {
-      ElMessage.error('删除失败')
+    )
+
+    return items
+  })
+
+  const columns = ref<ColumnOption[]>([
+    ...(isSuperAdmin.value
+      ? [
+          {
+            prop: 'tenant',
+            label: $t('department.tenantLabel'),
+            width: 160,
+            useSlot: true
+          } as ColumnOption
+        ]
+      : []),
+    { prop: 'name', label: $t('department.name'), minWidth: 220, useSlot: true },
+    { prop: 'code', label: $t('department.code'), minWidth: 140 },
+    { prop: 'principal', label: $t('department.principal'), minWidth: 120 },
+    { prop: 'phone', label: $t('department.phone'), minWidth: 140 },
+    { prop: 'email', label: $t('department.email'), minWidth: 180 },
+    { prop: 'sort', label: $t('department.sort'), width: 80 },
+    { prop: 'status', label: $t('common.status'), width: 90, useSlot: true },
+    { prop: 'created_at', label: $t('common.createTime'), width: 180 },
+    { prop: 'action', label: $t('common.actions'), width: 220, fixed: 'right', useSlot: true }
+  ])
+
+  const buildTree = (items: DepartmentInfo[]): DepartmentRow[] => {
+    const map = new Map<string, DepartmentRow>()
+    const roots: DepartmentRow[] = []
+
+    items.forEach((item) => {
+      map.set(item.id, { ...item, children: [] })
+    })
+
+    map.forEach((item) => {
+      if (item.parent_id && map.has(item.parent_id)) {
+        map.get(item.parent_id)?.children?.push(item)
+      } else {
+        roots.push(item)
+      }
+    })
+
+    const sortNodes = (nodes: DepartmentRow[]) => {
+      nodes.sort((a, b) => (a.sort || 0) - (b.sort || 0))
+      nodes.forEach((node) => {
+        if (node.children?.length) {
+          sortNodes(node.children)
+        }
+      })
     }
-  }).catch(() => {})
-}
 
-const handleDialogSubmit = async () => {
-  dialogVisible.value = false
-  currentDepartmentData.value = {}
-  await loadDepartmentTree()
-}
+    sortNodes(roots)
+    return roots
+  }
 
-onMounted(() => {
-  loadDepartmentTree()
-})
+  const matchesKeyword = (dept: DepartmentInfo) => {
+    const nameMatched = !searchForm.name || dept.name.includes(searchForm.name)
+    const principalMatched =
+      !searchForm.principal || String(dept.principal || '').includes(searchForm.principal)
+    const statusMatched = searchForm.status === undefined || dept.status === searchForm.status
+    return nameMatched && principalMatched && statusMatched
+  }
+
+  const filterTree = (nodes: DepartmentRow[]): DepartmentRow[] => {
+    return nodes
+      .map((node) => {
+        const children = filterTree(node.children || [])
+        if (matchesKeyword(node) || children.length > 0) {
+          return { ...node, children }
+        }
+        return null
+      })
+      .filter(Boolean) as DepartmentRow[]
+  }
+
+  const tableData = computed(() => filterTree(buildTree(rawList.value)))
+
+  const collectDescendantIds = (nodes: DepartmentRow[], targetId: string): Set<string> => {
+    const ids = new Set<string>()
+
+    const walk = (items: DepartmentRow[]): boolean => {
+      for (const item of items) {
+        if (item.id === targetId) {
+          const collect = (node: DepartmentRow) => {
+            ids.add(node.id)
+            node.children?.forEach(collect)
+          }
+          collect(item)
+          return true
+        }
+
+        if (item.children?.length && walk(item.children)) {
+          return true
+        }
+      }
+
+      return false
+    }
+
+    walk(buildTree(rawList.value))
+    return ids
+  }
+
+  const parentTreeData = computed(() => {
+    const tree = buildTree(rawList.value)
+    if (!currentEditId.value) {
+      return [{ id: '', name: $t('department.topLevel'), children: tree }]
+    }
+
+    const excludedIds = collectDescendantIds(tree, currentEditId.value)
+    const filterNodes = (nodes: DepartmentRow[]): DepartmentRow[] =>
+      nodes
+        .filter((node) => !excludedIds.has(node.id))
+        .map((node) => ({
+          ...node,
+          children: node.children?.length ? filterNodes(node.children) : []
+        }))
+
+    return [{ id: '', name: $t('department.topLevel'), children: filterNodes(tree) }]
+  })
+
+  const getTenantName = (tenantId: string | null) => {
+    if (!tenantId) {
+      return '-'
+    }
+    return tenantMap.value[tenantId] || tenantId
+  }
+
+  const getDefaultTenantId = () => {
+    if (!isSuperAdmin.value) {
+      return ''
+    }
+
+    if (
+      currentTenantId.value &&
+      tenantOptions.value.some((item) => item.id === currentTenantId.value)
+    ) {
+      return currentTenantId.value
+    }
+
+    return tenantOptions.value[0]?.id || currentTenantId.value || ''
+  }
+
+  const syncTenantSelection = () => {
+    if (!isSuperAdmin.value) {
+      return
+    }
+
+    if (
+      searchForm.tenant_id &&
+      tenantOptions.value.some((item) => item.id === searchForm.tenant_id)
+    ) {
+      return
+    }
+
+    searchForm.tenant_id = getDefaultTenantId()
+  }
+
+  const fetchTenants = async () => {
+    if (!isSuperAdmin.value) {
+      tenantOptions.value = []
+      return
+    }
+
+    const res = await fetchTenantList({ page: 1, pageSize: 1000 })
+    tenantOptions.value = res.data?.result || []
+    syncTenantSelection()
+  }
+
+  const fetchData = async () => {
+    loading.value = true
+    try {
+      const res = await fetchDepartmentList({
+        page: 1,
+        pageSize: 9999,
+        tenant_id: effectiveTenantId.value || undefined
+      })
+      rawList.value = res.data?.result || []
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const handleSearch = async () => {
+    await fetchData()
+  }
+
+  const handleReset = async () => {
+    Object.assign(searchForm, {
+      tenant_id: getDefaultTenantId(),
+      name: '',
+      principal: '',
+      status: undefined
+    })
+    await fetchData()
+  }
+
+  const flattenTree = (items: DepartmentRow[]): DepartmentRow[] => {
+    const result: DepartmentRow[] = []
+    const walk = (nodes: DepartmentRow[]) => {
+      nodes.forEach((node) => {
+        result.push(node)
+        if (node.children?.length) {
+          walk(node.children)
+        }
+      })
+    }
+    walk(items)
+    return result
+  }
+
+  const toggleExpand = () => {
+    expanded.value = !expanded.value
+    flattenTree(tableData.value).forEach((row) => {
+      tableRef.value?.elTableRef?.toggleRowExpansion(row, expanded.value)
+    })
+  }
+
+  const drawerVisible = ref(false)
+  const drawerMode = ref<'add' | 'edit'>('add')
+  const drawerTitle = computed(() =>
+    drawerMode.value === 'add' ? $t('department.addDepartment') : $t('department.editDepartment')
+  )
+  const submitLoading = ref(false)
+  const formRef = ref<FormInstance>()
+
+  const createDefaultForm = () => ({
+    parent_id: '',
+    name: '',
+    code: '',
+    principal: '',
+    phone: '',
+    email: '',
+    sort: 0,
+    status: 1,
+    remark: ''
+  })
+
+  const formData = reactive(createDefaultForm())
+
+  const formRules: FormRules = {
+    name: [{ required: true, message: $t('department.nameRequired'), trigger: 'blur' }],
+    code: [{ required: true, message: $t('department.codeRequired'), trigger: 'blur' }]
+  }
+
+  const resetForm = () => {
+    Object.assign(formData, createDefaultForm())
+    currentEditId.value = ''
+    formRef.value?.clearValidate()
+  }
+
+  const openCreate = (parentId = '') => {
+    drawerMode.value = 'add'
+    resetForm()
+    formData.parent_id = parentId
+    drawerVisible.value = true
+  }
+
+  const openEdit = (row: DepartmentInfo) => {
+    drawerMode.value = 'edit'
+    resetForm()
+    currentEditId.value = row.id
+    Object.assign(formData, {
+      parent_id: row.parent_id || '',
+      name: row.name,
+      code: row.code || '',
+      principal: row.principal || '',
+      phone: row.phone || '',
+      email: row.email || '',
+      sort: row.sort,
+      status: row.status,
+      remark: row.remark || ''
+    })
+    drawerVisible.value = true
+  }
+
+  const handleSubmit = async () => {
+    if (!formRef.value) {
+      return
+    }
+
+    const valid = await formRef.value.validate().catch(() => false)
+    if (!valid) {
+      return
+    }
+
+    submitLoading.value = true
+    try {
+      const payload = {
+        tenant_id: isSuperAdmin.value ? effectiveTenantId.value || undefined : undefined,
+        name: formData.name,
+        code: formData.code,
+        parent_id: formData.parent_id || null,
+        principal: formData.principal || undefined,
+        phone: formData.phone || undefined,
+        email: formData.email || undefined,
+        sort: formData.sort,
+        status: formData.status,
+        remark: formData.remark || undefined
+      }
+
+      if (drawerMode.value === 'add') {
+        await addDepartment(payload)
+        ElMessage.success($t('common.addSuccess'))
+      } else {
+        await updateDepartment(currentEditId.value, payload)
+        ElMessage.success($t('common.updateSuccess'))
+      }
+
+      drawerVisible.value = false
+      await fetchData()
+    } finally {
+      submitLoading.value = false
+    }
+  }
+
+  const handleDelete = async (row: DepartmentInfo) => {
+    const confirmed = await ElMessageBox.confirm(
+      $t('department.deleteConfirm', { name: row.name }),
+      $t('common.tips'),
+      {
+        type: 'warning'
+      }
+    ).catch(() => false)
+
+    if (!confirmed) {
+      return
+    }
+
+    await deleteDepartment(row.id)
+    ElMessage.success($t('common.deleteSuccess'))
+    await fetchData()
+  }
+
+  onMounted(async () => {
+    await fetchTenants()
+    await fetchData()
+  })
 </script>
-
-<style lang="scss" scoped>
-:deep(.el-container) {
-  height: 100%;
-}
-
-.dept-aside {
-  height: 100%;
-  border-right: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-  overflow: hidden;
-}
-
-.dept-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border-radius: 0;
-  border: none;
-  
-  :deep(.el-card__header) {
-    flex-shrink: 0;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-  
-  :deep(.el-card__body) {
-    flex: 1;
-    padding: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-}
-
-.dept-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.dept-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.dept-tree-wrapper {
-  flex: 1;
-  min-height: 0;
-}
-
-.tree-node {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-  font-size: 13px;
-  
-  .node-label {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  :deep(.el-badge__content) {
-    font-size: 10px;
-    height: 16px;
-    line-height: 16px;
-    padding: 0 4px;
-  }
-}
-
-.main-content {
-  height: 100%;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--el-fill-color-lighter);
-  overflow: hidden;
-}
-
-.toolbar {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.detail-card {
-  flex: 1;
-  margin: 12px;
-  overflow: auto;
-  
-  :deep(.el-card__body) {
-    padding: 0;
-  }
-}
-
-.info-section {
-  padding: 20px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.info-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.info-label {
-  width: 80px;
-  flex-shrink: 0;
-  color: var(--el-text-color-secondary);
-  font-size: 13px;
-}
-
-.info-value {
-  flex: 1;
-  color: var(--el-text-color-primary);
-  font-size: 13px;
-  word-break: break-all;
-}
-
-.sub-dept-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sub-dept-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--el-fill-color-lighter);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-  &:hover {
-    background: var(--el-color-primary-light-9);
-    
-    .arrow-icon {
-      transform: translateX(4px);
-      color: var(--el-color-primary);
-    }
-  }
-  
-  .arrow-icon {
-    margin-left: auto;
-    color: var(--el-text-color-secondary);
-    transition: all 0.2s;
-  }
-}
-
-.empty-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-</style>

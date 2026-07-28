@@ -111,6 +111,16 @@ export const routes: AppRouteRecord[] = [
           icon: '&#xe6ce;',
           auth: ['file:btn:list']
         }
+      },
+      {
+        path: 'tenant',
+        name: 'Tenant',
+        component: '/system/tenant/index',
+        meta: {
+          title: 'menus.system.tenant',
+          icon: '&#xe6c8;',
+          auth: ['tenant:btn:list']
+        }
       }
     ]
   }

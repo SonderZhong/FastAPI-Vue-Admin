@@ -25,7 +25,7 @@ from exceptions.exception import (
     ServiceException,
     ServiceWarning,
 )
-from models import SystemLoginLog, SystemOperationLog
+from modules import SystemOperationLog
 from utils.config import config
 from utils.ip2region_util import get_ip_location
 from utils.log import logger
@@ -46,6 +46,7 @@ class OperationType(Enum):
     - EXPORT：导出数据操作
     - GRANT： 授权操作
     """
+
     OTHER = 0
     """
     其他操作
@@ -120,10 +121,10 @@ class Log:
     """
 
     def __init__(
-            self,
-            title: str,
-            operation_type: OperationType,
-            log_type: Literal["login", "operation"] = "operation",
+        self,
+        title: str,
+        operation_type: OperationType,
+        log_type: Literal["login", "operation"] = "operation",
     ) -> None:
         """
         :param title: 接口中文描述
@@ -146,11 +147,11 @@ class Log:
                 request = args[0]
             elif "request" in kwargs:
                 request = kwargs["request"]
-            
+
             if request is None:
                 # 如果找不到 request，直接执行原函数
                 return await func(*args, **kwargs)
-            
+
             # ---------- 前置采集 ----------
             start_ns: int = time.perf_counter_ns()
             meta: Dict[str, Any] = _request_meta(request)
@@ -201,44 +202,38 @@ class Log:
             if isinstance(result, (JSONResponse, ORJSONResponse, UJSONResponse)):
                 resp_dict = json.loads(result.body.decode())
             else:
-                resp_dict = {"code": status_code, "message": "success" if success else "failed"}
+                resp_dict = {
+                    "code": status_code,
+                    "message": "success" if success else "failed",
+                }
 
             # ---------- 写日志 ----------
             token: str | None = request.headers.get("Authorization")
-            if self.log_type == "login":
-                session_id: str | None = getattr(request.app.state, "session_id", None)
-                user_id: int | None = getattr(request.app.state, "login_user_id", None)
-                if user_id:
-                    await SystemLoginLog.create(
-                        user_id=user_id,
-                        login_ip=meta["ip"],
-                        login_location=meta["location"],
+            if self.log_type != "login":
+                try:
+                    user: Dict[str, Any] = await AuthController.get_current_user(
+                        request, token
+                    )
+                    await SystemOperationLog.create(
+                        operation_name=self.title,
+                        operation_type=self.operation_type.value,
+                        request_method=meta["method"],
+                        request_path=meta["path"],
+                        operator_id=user["id"],
+                        tenant_id=user.get("tenant_id"),
+                        department_id=user.get("department_id"),
+                        host=meta["ip"],
+                        location=meta["location"],
+                        user_agent=meta["ua"],
                         browser=meta["browser"],
                         os=meta["os"],
+                        request_params=params_str,
+                        response_result=json.dumps(resp_dict, ensure_ascii=False),
                         status=int(success),
-                        session_id=session_id,
+                        cost_time=cost_ms,
                     )
-            else:
-                user: Dict[str, Any] = await AuthController.get_current_user(
-                    request, token
-                )
-                await SystemOperationLog.create(
-                    operation_name=self.title,
-                    operation_type=self.operation_type.value,
-                    request_method=meta["method"],
-                    request_path=meta["path"],
-                    operator_id=user["id"],
-                    department_id=user.get("department_id"),
-                    host=meta["ip"],
-                    location=meta["location"],
-                    user_agent=meta["ua"],
-                    browser=meta["browser"],
-                    os=meta["os"],
-                    request_params=params_str,
-                    response_result=json.dumps(resp_dict, ensure_ascii=False),
-                    status=int(success),
-                    cost_time=cost_ms,
-                )
+                except Exception:
+                    pass
 
             return result
 

@@ -1,274 +1,110 @@
-# 📁 项目结构
+# 项目结构
 
-本文档详细介绍 FastAPI-Vue-Admin 的目录结构和各模块职责。
+本文档描述当前仓库的实际结构，重点以 2026-07-27 的工作树为准。
 
-## 🏗️ 整体架构
+## 根目录
 
-```
-fastapi-vue-admin/
-├── server/                 # 🔧 后端服务（FastAPI）
-├── web/                    # 🎨 前端应用（Vue 3）
-├── docs/                   # 📖 项目文档（VitePress）
-├── docker/                 # 🐳 Docker 配置
-├── logs/                   # 📝 运行日志
-├── docker-compose.yml      # Docker 编排
-├── deploy.sh              # Linux 部署脚本
-├── deploy.bat             # Windows 部署脚本
-└── README.md              # 项目说明
+```text
+FastAPI-Vue-Admin/
+├── server/                 # 后端服务
+├── web/                    # 前端项目
+├── docs/                   # VitePress 文档
+├── docker/                 # Docker 相关文件
+├── README.md
+├── README.en.md
+└── docker-compose.yml
 ```
 
-## 🔧 后端结构 (`server/`)
+## 后端结构
 
-```
+```text
 server/
-├── main.py                 # 🚀 应用入口（自动检测配置）
-├── app.py                  # 📦 FastAPI 应用实例
-├── config.yaml             # ⚙️ 配置文件（初始化后生成）
-├── requirements.txt        # 📋 Python 依赖
-├── uvicorn_config.json     # 📝 Uvicorn 日志配置
-│
-├── apis/                   # 🌐 API 路由层
-│   ├── __init__.py        # 路由注册
-│   ├── auth.py            # 认证接口
-│   ├── user.py            # 用户管理
-│   ├── role.py            # 角色管理
-│   ├── department.py      # 部门管理
-│   ├── permission.py      # 权限管理
-│   ├── config.py          # 配置管理
-│   ├── cache.py           # 缓存管理
-│   ├── file.py            # 文件管理
-│   ├── notification.py    # 通知管理
-│   ├── log.py             # 日志管理
-│   ├── server.py          # 服务器监控
-│   └── dashboard.py       # 仪表盘统计
-│
-├── models/                 # 📊 数据模型层（Tortoise-ORM）
-│   ├── __init__.py        # 模型导出
-│   ├── common.py          # 基础模型类
-│   ├── user.py            # 用户模型
-│   ├── role.py            # 角色模型
-│   ├── department.py      # 部门模型
-│   ├── permission.py      # 权限模型
-│   ├── config.py          # 配置模型
-│   ├── log.py             # 日志模型
-│   ├── notification.py    # 通知模型
-│   ├── file.py            # 文件模型
-│   └── casbin.py          # Casbin 规则模型
-│
-├── schemas/                # 📝 Pydantic 数据验证
-│   ├── __init__.py
-│   ├── common.py          # 通用模型（分页、响应）
-│   ├── auth.py            # 认证模型
-│   ├── user.py            # 用户模型
-│   ├── role.py            # 角色模型
-│   ├── department.py      # 部门模型
-│   ├── permission.py      # 权限模型
-│   └── ...
-│
-├── annotation/             # 🏷️ 装饰器
-│   ├── auth.py            # 权限验证装饰器
-│   └── log.py             # 日志记录装饰器
-│
-├── middlewares/            # 🔗 中间件
-│   ├── handle.py          # 中间件注册
-│   ├── cors.py            # 跨域处理
-│   ├── gzip.py            # Gzip 压缩
-│   └── casbin.py          # Casbin 权限中间件
-│
-├── exceptions/             # ⚠️ 异常处理
-│   ├── exception.py       # 自定义异常类
-│   └── handle.py          # 全局异常处理器
-│
-├── utils/                  # 🛠️ 工具函数
-│   ├── config.py          # 配置加载器
-│   ├── database.py        # 数据库连接
-│   ├── get_redis.py       # Redis 连接
-│   ├── response.py        # 响应封装
-│   ├── casbin.py          # Casbin 权限引擎
-│   ├── password.py        # 密码处理
-│   ├── captcha.py         # 验证码生成
-│   ├── log.py             # 日志工具
-│   ├── mail.py            # 邮件发送
-│   ├── storage.py         # 文件存储
-│   ├── geoip.py           # IP 定位
-│   ├── cron.py            # 定时任务
-│   └── dynamic_config.py  # 动态配置
-│
-├── setup/                  # 🔧 初始化向导
-│   ├── setup_app.py       # 初始化应用
-│   ├── data/              # 初始化数据
-│   └── templates/         # 初始化页面模板
-│
-├── fva_mcp/               # 🤖 MCP 服务
-│   ├── server.py          # MCP 服务入口
-│   └── tools/             # MCP 工具集
-│       ├── db_tools.py    # 数据库工具
-│       ├── redis_tools.py # Redis 工具
-│       ├── model_tools.py # 模型生成工具
-│       ├── schema_tools.py# Schema 生成工具
-│       └── api_tools.py   # API 生成工具
-│
-├── migrations/             # 📦 数据库迁移
-├── templates/              # 📧 模板文件（邮件等）
-├── assets/                 # 📁 静态资源
-├── uploads/                # 📤 上传文件存储
-└── logs/                   # 📝 日志文件
+├── main.py                 # 启动入口，检测是否已初始化
+├── app.py                  # FastAPI 应用入口
+├── config.yaml             # 仓库安全模板，初始化后会被覆写
+├── annotation/             # 认证、日志等装饰器
+├── core/                   # 核心业务与公共能力
+├── exceptions/             # 异常定义和处理
+├── middlewares/            # 中间件
+├── modules/                # 按业务域组织的模块
+├── resources/              # 静态资源、模板、数据文件
+├── setup/                  # 初始化向导
+├── utils/                  # 配置、数据库、缓存、响应等工具
+└── fva_mcp/                # MCP 服务
 ```
 
-## 🎨 前端结构 (`web/`)
+### `modules/` 组织方式
 
+当前后端不是旧版的平铺 `apis/` 结构，而是按业务聚合：
+
+```text
+modules/
+├── user/
+├── role/
+├── department/
+├── permission/
+├── config/
+├── notification/
+└── ...
 ```
+
+一个典型模块会包含：
+
+```text
+module-name/
+├── model.py
+├── schema.py
+├── service.py
+└── router.py
+```
+
+## 前端结构
+
+```text
 web/
-├── index.html              # 📄 HTML 入口
-├── vite.config.ts          # ⚡ Vite 配置
-├── uno.config.ts           # 🎨 UnoCSS 配置
-├── tsconfig.json           # 📘 TypeScript 配置
-├── package.json            # 📦 依赖配置
-├── .env                    # 🔧 环境变量
-├── .env.development        # 🔧 开发环境变量
-├── .env.production         # 🔧 生产环境变量
-│
+├── .env
+├── package.json
+├── vite.config.ts
 └── src/
-    ├── main.ts             # 🚀 应用入口
-    ├── App.vue             # 📦 根组件
-    │
-    ├── api/                # 🌐 API 接口
-    │   ├── auth.ts        # 认证接口
-    │   ├── dashboard.ts   # 仪表盘接口
-    │   ├── system-manage.ts # 系统管理接口
-    │   ├── system/        # 系统模块接口
-    │   └── common/        # 通用接口
-    │
-    ├── views/              # 📱 页面组件
-    │   ├── login/         # 登录页
-    │   ├── dashboard/     # 仪表盘
-    │   ├── system/        # 系统管理
-    │   │   ├── user/     # 用户管理
-    │   │   ├── role/     # 角色管理
-    │   │   ├── department/# 部门管理
-    │   │   ├── permission/# 权限管理
-    │   │   ├── config/   # 配置管理
-    │   │   ├── cache/    # 缓存管理
-    │   │   └── server/   # 服务监控
-    │   └── log/           # 日志管理
-    │
-    ├── components/         # 🧩 公共组件
-    │   └── core/          # 核心组件
-    │       ├── layouts/   # 布局组件
-    │       ├── table/     # 表格组件
-    │       ├── form/      # 表单组件
-    │       └── ...
-    │
-    ├── router/             # 🛣️ 路由配置
-    │   ├── index.ts       # 路由实例
-    │   ├── routesAlias.ts # 路由别名
-    │   ├── routes/        # 路由模块
-    │   │   └── modules/  # 各模块路由
-    │   ├── guards/        # 路由守卫
-    │   └── utils/         # 路由工具
-    │
-    ├── store/              # 📦 状态管理（Pinia）
-    │   ├── index.ts       # Store 实例
-    │   └── modules/       # Store 模块
-    │       ├── auth.ts   # 认证状态
-    │       ├── user.ts   # 用户状态
-    │       ├── menu.ts   # 菜单状态
-    │       ├── setting.ts# 设置状态
-    │       └── worktab.ts# 标签页状态
-    │
-    ├── utils/              # 🛠️ 工具函数
-    │   ├── http/          # HTTP 请求封装
-    │   ├── storage/       # 本地存储
-    │   ├── permission/    # 权限工具
-    │   ├── theme/         # 主题工具
-    │   ├── validation/    # 表单验证
-    │   ├── dataprocess/   # 数据处理
-    │   └── ...
-    │
-    ├── composables/        # 🎣 组合式函数
-    │   ├── usePermission.ts # 权限判断
-    │   ├── useTable.ts    # 表格逻辑
-    │   └── ...
-    │
-    ├── directives/         # 📌 自定义指令
-    │   ├── auth.ts        # 权限指令 v-auth
-    │   └── ...
-    │
-    ├── locales/            # 🌍 国际化
-    │   ├── zh.ts          # 中文
-    │   └── en.ts          # 英文
-    │
-    ├── assets/             # 📁 静态资源
-    │   ├── icons/         # 图标字体
-    │   ├── img/           # 图片资源
-    │   └── styles/        # 样式文件
-    │       ├── reset.scss # 重置样式
-    │       ├── app.scss   # 全局样式
-    │       ├── el-ui.scss # Element 样式优化
-    │       ├── dark.scss  # 暗黑主题
-    │       └── variables.scss # 变量定义
-    │
-    ├── config/             # ⚙️ 配置文件
-    ├── enums/              # 📋 枚举定义
-    ├── types/              # 📘 类型定义
-    └── typings/            # 📘 全局类型声明
+    ├── api/
+    ├── components/
+    ├── composables/
+    ├── config/
+    ├── directives/
+    ├── enums/
+    ├── locales/
+    ├── router/
+    ├── store/
+    ├── utils/
+    └── views/
 ```
 
-## 📖 文档结构 (`docs/`)
+### 与当前项目状态相关的几点
 
-```
-docs/
-├── index.md                # 首页
-├── package.json            # 文档依赖
-├── vite.config.ts          # Vite 配置
-├── uno.config.ts           # UnoCSS 配置
-│
-├── .vitepress/             # VitePress 配置
-│   ├── config.ts          # 站点配置
-│   └── theme/             # 主题定制
-│
-├── guide/                  # 📚 指南文档
-│   ├── index.md           # 项目介绍
-│   ├── getting-started.md # 快速开始
-│   ├── structure.md       # 项目结构
-│   ├── backend.md         # 后端知识库
-│   ├── frontend.md        # 前端知识库
-│   ├── router.md          # 路由和菜单
-│   ├── permission.md      # 权限控制
-│   ├── request.md         # 请求和接口
-│   ├── mcp.md             # MCP 服务
-│   └── deploy.md          # 部署指南
-│
-├── config/                 # ⚙️ 配置文档
-├── api/                    # 📡 API 文档
-└── public/                 # 📁 静态资源
-    ├── logo.png           # Logo
-    ├── favicon.ico        # 图标
-    └── screenshots/       # 系统截图
-```
+- 国际化资源位于 `web/src/locales/langs/*.json`
+- 当前前端默认使用后端路由模式，见 `web/.env`
+- 登录、租户选择、系统管理页面都在 `web/src/views/` 下
 
-## 🐳 Docker 结构 (`docker/`)
+## 初始化相关文件
 
-```
-docker/
-├── Dockerfile.backend      # 后端镜像
-├── Dockerfile.frontend     # 前端镜像
-└── nginx.conf             # Nginx 配置
-```
+准备首次运行时，重点关注：
 
-## 📝 关键文件说明
+- `server/main.py`
+- `server/config.yaml`
+- `server/setup/`
 
-| 文件 | 说明 |
-|------|------|
-| `server/main.py` | 后端入口，自动检测配置启动对应服务 |
-| `server/app.py` | FastAPI 应用实例，注册路由和中间件 |
-| `server/config.yaml` | 后端配置文件（首次启动后生成） |
-| `web/src/main.ts` | 前端入口，初始化 Vue 应用 |
-| `web/vite.config.ts` | Vite 构建配置 |
-| `docker-compose.yml` | Docker 服务编排 |
+当前设计是：
 
-## 🔗 相关文档
+1. 仓库内提交模板配置
+2. 启动时检测 `initialized`
+3. 未初始化则进入 setup
+4. setup 完成后写入真实配置并切换到正式服务
 
-- [后端知识库](./backend.md) - 后端详细开发指南
-- [前端知识库](./frontend.md) - 前端详细开发指南
-- [快速开始](./getting-started.md) - 环境搭建和启动
+## 文档与代码对齐原则
+
+如果后续再调整结构，文档应优先和下面这些事实保持一致：
+
+- 后端是否仍然以 `modules/` 为核心
+- `server/config.yaml` 是否仍作为模板提交
+- 前端是否仍默认后端路由模式
+- 初始化入口是否仍由 `server/main.py` 控制

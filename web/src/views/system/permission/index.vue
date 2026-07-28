@@ -1,956 +1,664 @@
 <template>
   <div class="art-full-height">
-    <ElContainer class="h-full">
-      <!-- 左侧权限树 -->
-      <ElAside width="300px" class="perm-aside">
-        <ElCard shadow="never" class="h-full perm-card">
-          <template #header>
-            <div class="flex justify-between items-center">
-              <span class="font-medium">{{ $t('menus.system.permission') }}</span>
-              <ElSpace>
-                <ElButton round size="small" @click="expandAll">{{ $t('buttons.expandAll') }}</ElButton>
-                <ElButton round size="small" @click="collapseAll">{{ $t('buttons.collapseAll') }}</ElButton>
-              </ElSpace>
-            </div>
-          </template>
-          
-          <div class="perm-content">
-            <ElInput
-              v-model="searchText"
-              :placeholder="$t('common.searchPlaceholder')"
-              clearable
-              size="small"
-              :prefix-icon="Search"
-              class="mb-3"
-              @input="handleSearch"
-            />
-            <ElScrollbar class="perm-tree-wrapper">
-              <ElTree
-                ref="treeRef"
-                :data="permissionTree"
-                :props="treeProps"
-                :filter-node-method="filterNode"
-                :expand-on-click-node="false"
-                :highlight-current="true"
-                :indent="16"
-                node-key="id"
-                @node-click="handleNodeClick"
-              >
-                <template #default="{ data }">
-                  <div class="tree-node">
-                    <ElIcon class="flex-shrink-0" :size="14" :class="getTypeIconClass(data.menu_type)">
-                      <Menu v-if="data.menu_type === 0" />
-                      <Operation v-else-if="data.menu_type === 1" />
-                      <Link v-else />
-                    </ElIcon>
-                    <span class="node-label" :title="translateTitle(data.title) || data.name">
-                      {{ translateTitle(data.title) || data.name }}
-                    </span>
-                    <ElTag v-if="data.menu_type === 1" type="warning" size="small">{{ $t('common.button') }}</ElTag>
-                    <ElTag v-else-if="data.menu_type === 2" type="success" size="small">API</ElTag>
-                  </div>
-                </template>
-              </ElTree>
-            </ElScrollbar>
+    <ElCard class="art-table-card h-full" shadow="never">
+      <div class="mb-4 flex flex-wrap items-center gap-4">
+        <ElInput
+          v-model="searchForm.keyword"
+          :placeholder="$t('user.searchPermissions')"
+          clearable
+          class="!w-[280px]"
+          @keyup.enter="handleSearch"
+        />
+        <ElSelect
+          v-model="searchForm.menu_type"
+          :placeholder="$t('permission.permissionType')"
+          clearable
+          class="!w-[140px]"
+        >
+          <ElOption :label="$t('common.menu')" :value="0" />
+          <ElOption :label="$t('common.button')" :value="1" />
+        </ElSelect>
+        <ElButton type="primary" :icon="Search" @click="handleSearch">
+          {{ $t('table.searchBar.search') }}
+        </ElButton>
+        <ElButton :icon="Refresh" @click="handleReset">
+          {{ $t('table.searchBar.reset') }}
+        </ElButton>
+      </div>
+
+      <div class="mb-4 flex items-center justify-between">
+        <ElSpace wrap>
+          <ElButton v-auth="'permission:btn:add'" type="primary" :icon="Plus" @click="openCreate()">
+            {{ $t('buttons.addPermission') }}
+          </ElButton>
+          <ElButton @click="toggleExpand">
+            {{ expanded ? $t('buttons.collapseAll') : $t('buttons.expandAll') }}
+          </ElButton>
+        </ElSpace>
+        <ElButton :icon="Refresh" circle @click="fetchData" />
+      </div>
+
+      <ArtTable
+        ref="tableRef"
+        row-key="id"
+        :data="tableData"
+        :columns="columns"
+        :loading="loading"
+        :pagination="undefined"
+        :tree-props="{ children: 'children' }"
+        default-expand-all
+      >
+        <template #title="{ row }">
+          <div
+            class="permission-title-cell flex min-w-0 flex-nowrap items-center gap-2 whitespace-nowrap"
+          >
+            <ElIcon :class="row.menu_type === 0 ? 'text-sky-500' : 'text-amber-500'">
+              <FolderOpened v-if="row.menu_type === 0" />
+              <Operation v-else />
+            </ElIcon>
+            <span class="truncate">{{ getDisplayName(row) }}</span>
           </div>
-        </ElCard>
-      </ElAside>
-
-      <!-- 右侧主内容区 -->
-      <ElMain class="main-content">
-        <template v-if="selectedPermission">
-          <!-- 工具栏 -->
-          <div class="toolbar">
-            <div class="toolbar-left">
-              <ElBreadcrumb separator="/">
-                <ElBreadcrumbItem>{{ translateTitle(selectedPermission.title) || selectedPermission.name }}</ElBreadcrumbItem>
-                <ElBreadcrumbItem>
-                  <ElTag :type="getTypeTagType(selectedPermission.menu_type)" size="small">
-                    {{ getTypeName(selectedPermission.menu_type) }}
-                  </ElTag>
-                </ElBreadcrumbItem>
-              </ElBreadcrumb>
-            </div>
-            <div class="toolbar-right">
-              <!-- 添加根菜单按钮 - 常驻显示 -->
-              <ElButton
-                v-auth="'permission:btn:add'"
-                round
-                type="primary"
-                size="small"
-                :icon="Plus"
-                @click="showMenuDrawer('add')"
-              >
-                {{ $t('permission.addRootMenu') }}
-              </ElButton>
-              
-              <template v-if="selectedPermission.menu_type === 0">
-                <ElButton
-                  v-auth="'permission:btn:add'"
-                  round
-                  type="primary"
-                  size="small"
-                  :icon="Plus"
-                  @click="addSubMenu"
-                >
-                  {{ $t('buttons.addSubMenu') }}
-                </ElButton>
-                <ElButton
-                  v-auth="'permission:btn:add'"
-                  round
-                  type="warning"
-                  size="small"
-                  :icon="Plus"
-                  @click="showButtonDrawer('add')"
-                >
-                  {{ $t('common.button') }}
-                </ElButton>
-                <ElButton
-                  v-auth="'permission:btn:add'"
-                  round
-                  type="success"
-                  size="small"
-                  :icon="Plus"
-                  @click="showApiDrawer('add')"
-                >
-                  API
-                </ElButton>
-              </template>
-              <ElButton
-                v-auth="'permission:btn:update'"
-                round
-                type="primary"
-                size="small"
-                @click="showMenuDrawer('edit', selectedPermission)"
-              >
-                {{ $t('buttons.edit') }}
-              </ElButton>
-              <ElButton
-                v-auth="'permission:btn:delete'"
-                round
-                type="danger"
-                size="small"
-                @click="deletePermission(selectedPermission)"
-              >
-                {{ $t('buttons.delete') }}
-              </ElButton>
-            </div>
-          </div>
-
-          <!-- 详情卡片 -->
-          <ElCard class="detail-card" shadow="never">
-            <ElTabs v-model="activeTab">
-              <!-- 基本信息 -->
-              <ElTabPane :label="$t('common.basicInfo')" name="info">
-                <div class="info-section">
-                  <ElDescriptions :column="2" border size="default">
-                    <!-- 通用字段 -->
-                    <ElDescriptionsItem :label="$t('permission.parentPermission')">
-                      {{ getParentPermissionName(selectedPermission.parent_id) }}
-                    </ElDescriptionsItem>
-                    <ElDescriptionsItem :label="$t('permission.permissionType')">
-                      <ElTag :type="getTypeTagType(selectedPermission.menu_type)" size="small">
-                        {{ getTypeName(selectedPermission.menu_type) }}
-                      </ElTag>
-                    </ElDescriptionsItem>
-                    
-                    <!-- 菜单类型字段 -->
-                    <template v-if="selectedPermission.menu_type === 0">
-                      <ElDescriptionsItem :label="$t('permission.routeName')">
-                        {{ selectedPermission.name || '-' }}
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem :label="$t('permission.menuTitle')">
-                        {{ translateTitle(selectedPermission.title) }}
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem :label="$t('permission.routePath')" :span="2">
-                        <code class="code-tag">{{ selectedPermission.path || '-' }}</code>
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem :label="$t('permission.componentPath')" :span="2">
-                        <code class="code-tag">{{ selectedPermission.component || '-' }}</code>
-                      </ElDescriptionsItem>
-                    </template>
-                    
-                    <!-- 按钮类型字段 -->
-                    <template v-else-if="selectedPermission.menu_type === 1">
-                      <ElDescriptionsItem :label="$t('permission.buttonName')">
-                        {{ translateTitle(selectedPermission.authTitle) }}
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem :label="$t('permission.permissionMark')">
-                        <code class="code-tag">{{ selectedPermission.authMark || '-' }}</code>
-                      </ElDescriptionsItem>
-                    </template>
-                    
-                    <!-- API类型字段 -->
-                    <template v-else-if="selectedPermission.menu_type === 2">
-                      <ElDescriptionsItem :label="$t('permission.apiName')">
-                        {{ selectedPermission.title || '-' }}
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem :label="$t('permission.dataScope')">
-                        <ElTag :type="getDataScopeTagType(selectedPermission.data_scope)" size="small">
-                          {{ getDataScopeName(selectedPermission.data_scope) }}
-                        </ElTag>
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem :label="$t('permission.apiPath')" :span="2">
-                        <code class="code-tag">{{ selectedPermission.api_path || '-' }}</code>
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem :label="$t('permission.requestMethod')" :span="2">
-                        <template v-if="Array.isArray(selectedPermission.api_method)">
-                          <ElTag 
-                            v-for="method in selectedPermission.api_method" 
-                            :key="method" 
-                            :type="getMethodTagType(method)" 
-                            size="small"
-                            class="mr-1"
-                          >
-                            {{ method }}
-                          </ElTag>
-                        </template>
-                        <ElTag v-else-if="selectedPermission.api_method" :type="getMethodTagType(selectedPermission.api_method)" size="small">
-                          {{ selectedPermission.api_method }}
-                        </ElTag>
-                        <span v-else>-</span>
-                      </ElDescriptionsItem>
-                      <ElDescriptionsItem v-if="selectedPermission.remark" :label="$t('common.remark')" :span="2">
-                        {{ selectedPermission.remark }}
-                      </ElDescriptionsItem>
-                    </template>
-                    
-                    <!-- 通用底部字段 -->
-                    <ElDescriptionsItem :label="$t('permission.minUserType')">
-                      <ElTag :type="getMinUserTypeTagType(selectedPermission.min_user_type)" size="small">
-                        {{ getMinUserTypeName(selectedPermission.min_user_type) }}
-                      </ElTag>
-                    </ElDescriptionsItem>
-                    <ElDescriptionsItem :label="$t('common.sort')">{{ selectedPermission.order ?? 999 }}</ElDescriptionsItem>
-                    <ElDescriptionsItem :label="$t('common.createTime')">
-                      {{ formatDate(selectedPermission.created_at) }}
-                    </ElDescriptionsItem>
-                    <ElDescriptionsItem :label="$t('common.updateTime')">
-                      {{ formatDate(selectedPermission.updated_at) }}
-                    </ElDescriptionsItem>
-                  </ElDescriptions>
-                </div>
-              </ElTabPane>
-
-              <!-- 按钮权限（仅菜单类型显示） -->
-              <ElTabPane v-if="selectedPermission.menu_type === 0" :label="$t('common.buttonPermissions')" name="buttons">
-                <div class="tab-toolbar">
-                  <span class="tab-title">{{ $t('common.buttonPermissions') }} ({{ buttonPermissions.length }})</span>
-                  <ElButton round type="warning" size="small" :icon="Plus" @click="showButtonDrawer('add')">
-                    {{ $t('buttons.addButton') }}
-                  </ElButton>
-                </div>
-                <ElTable :data="buttonPermissions" border size="small">
-                  <ElTableColumn prop="authTitle" :label="$t('common.buttonName')" min-width="120">
-                    <template #default="{ row }">{{ translateTitle(row.authTitle) }}</template>
-                  </ElTableColumn>
-                  <ElTableColumn prop="authMark" :label="$t('permission.permissionMark')" min-width="150">
-                    <template #default="{ row }">
-                      <code class="code-tag">{{ row.authMark }}</code>
-                    </template>
-                  </ElTableColumn>
-                  <ElTableColumn prop="order" :label="$t('common.sort')" width="80" align="center" />
-                  <ElTableColumn :label="$t('common.actions')" width="120" align="center">
-                    <template #default="{ row }">
-                      <ElButton type="primary" size="small" link @click="showButtonDrawer('edit', row)">{{ $t('buttons.edit') }}</ElButton>
-                      <ElButton type="danger" size="small" link @click="deleteButton(row)">{{ $t('buttons.delete') }}</ElButton>
-                    </template>
-                  </ElTableColumn>
-                </ElTable>
-              </ElTabPane>
-
-              <!-- API权限（仅菜单类型显示） -->
-              <ElTabPane v-if="selectedPermission.menu_type === 0" :label="$t('role.apiPermission')" name="apis">
-                <div class="tab-toolbar">
-                  <span class="tab-title">{{ $t('role.apiPermission') }} ({{ apiPermissions.length }})</span>
-                  <ElButton round type="success" size="small" :icon="Plus" @click="showApiDrawer('add')">
-                    {{ $t('permission.addApiPermission') }}
-                  </ElButton>
-                </div>
-                <ElTable :data="apiPermissions" border size="small">
-                  <ElTableColumn prop="title" :label="$t('common.displayName')" min-width="120" />
-                  <ElTableColumn prop="api_path" :label="$t('permission.apiPath')" min-width="200">
-                    <template #default="{ row }">
-                      <code class="code-tag">{{ row.api_path }}</code>
-                    </template>
-                  </ElTableColumn>
-                  <ElTableColumn prop="api_method" :label="$t('permission.requestMethod')" min-width="150" align="center">
-                    <template #default="{ row }">
-                      <template v-if="Array.isArray(row.api_method)">
-                        <ElTag 
-                          v-for="method in row.api_method" 
-                          :key="method" 
-                          :type="getMethodTagType(method)" 
-                          size="small"
-                          class="mr-1"
-                        >
-                          {{ method }}
-                        </ElTag>
-                      </template>
-                      <ElTag v-else :type="getMethodTagType(row.api_method)" size="small">{{ row.api_method }}</ElTag>
-                    </template>
-                  </ElTableColumn>
-                  <ElTableColumn prop="data_scope" :label="$t('permission.dataScope')" width="120" align="center">
-                    <template #default="{ row }">
-                      <ElTag :type="getDataScopeTagType(row.data_scope)" size="small">
-                        {{ getDataScopeName(row.data_scope) }}
-                      </ElTag>
-                    </template>
-                  </ElTableColumn>
-                  <ElTableColumn :label="$t('common.actions')" width="120" align="center">
-                    <template #default="{ row }">
-                      <ElButton type="primary" size="small" link @click="showApiDrawer('edit', row)">{{ $t('buttons.edit') }}</ElButton>
-                      <ElButton type="danger" size="small" link @click="deleteApi(row)">{{ $t('buttons.delete') }}</ElButton>
-                    </template>
-                  </ElTableColumn>
-                </ElTable>
-              </ElTabPane>
-            </ElTabs>
-          </ElCard>
         </template>
 
-        <!-- 未选择权限的提示 -->
-        <div v-else class="empty-state">
-          <ElEmpty :description="$t('common.selectPermissionToView')">
-            <template #image>
-              <ElIcon :size="60" class="text-gray-300"><Menu /></ElIcon>
-            </template>
-            <ElButton round type="primary" :icon="Plus" @click="showMenuDrawer('add')">
-              {{ $t('permission.addRootMenu') }}
-            </ElButton>
-          </ElEmpty>
-        </div>
-      </ElMain>
-    </ElContainer>
+        <template #menu_type="{ row }">
+          <ElTag :type="row.menu_type === 0 ? 'primary' : 'warning'" size="small">
+            {{ row.menu_type === 0 ? $t('common.menu') : $t('common.button') }}
+          </ElTag>
+        </template>
 
-    <!-- 菜单权限抽屉 -->
-    <PermissionDrawer
-      v-model="menuDrawerVisible"
-      :dialog-type="menuDrawerType"
-      :permission-data="currentMenuData"
-      @success="handleMenuSuccess"
-    />
+        <template #identifier="{ row }">
+          <span v-if="row.menu_type === 0" class="truncate">
+            {{ row.name || row.path || '-' }}
+          </span>
+          <code
+            v-else
+            class="rounded bg-[var(--el-fill-color-light)] px-2 py-1 text-xs text-[var(--el-text-color-secondary)]"
+          >
+            {{ row.code || row.name || '-' }}
+          </code>
+        </template>
 
-    <!-- 按钮权限抽屉 -->
-    <ButtonPermissionDrawer
-      v-model="buttonDrawerVisible"
-      :dialog-type="buttonDrawerType"
-      :permission-data="currentButtonData"
-      :parent-id="selectedPermission?.id"
-      @success="handleButtonSuccess"
-    />
+        <template #action="{ row }">
+          <ElButton
+            v-if="row.menu_type === 0"
+            v-auth="'permission:btn:add'"
+            type="primary"
+            link
+            size="small"
+            @click="openCreate(row.id)"
+          >
+            {{ $t('buttons.addSubMenu') }}
+          </ElButton>
+          <ElButton
+            v-auth="'permission:btn:update'"
+            type="primary"
+            link
+            size="small"
+            @click="openEdit(row)"
+          >
+            {{ $t('buttons.edit') }}
+          </ElButton>
+          <ElButton
+            v-auth="'permission:btn:delete'"
+            type="danger"
+            link
+            size="small"
+            @click="handleDelete(row)"
+          >
+            {{ $t('buttons.delete') }}
+          </ElButton>
+        </template>
+      </ArtTable>
+    </ElCard>
 
-    <!-- API权限抽屉 -->
-    <ApiPermissionDrawer
-      v-model="apiDrawerVisible"
-      :dialog-type="apiDrawerType"
-      :permission-data="currentApiData"
-      :parent-id="selectedPermission?.id"
-      @success="handleApiSuccess"
-    />
+    <ElDrawer v-model="drawerVisible" :title="drawerTitle" size="620px" @closed="resetForm">
+      <ElForm ref="formRef" :model="formData" :rules="formRules" label-width="100px">
+        <ElFormItem :label="$t('permission.permissionType')" prop="menu_type">
+          <ElRadioGroup v-model="formData.menu_type" :disabled="drawerMode === 'edit'">
+            <ElRadio :value="0">{{ $t('common.menu') }}</ElRadio>
+            <ElRadio :value="1">{{ $t('common.button') }}</ElRadio>
+          </ElRadioGroup>
+        </ElFormItem>
+
+        <ElFormItem :label="$t('permission.parentPermission')" prop="parent_id">
+          <ElTreeSelect
+            v-model="formData.parent_id"
+            :data="parentOptions"
+            :props="{ label: 'title', value: 'id', children: 'children' }"
+            check-strictly
+            clearable
+            class="w-full"
+            :placeholder="$t('common.pleaseSelect')"
+          />
+        </ElFormItem>
+
+        <template v-if="formData.menu_type === 0">
+          <ElFormItem :label="$t('permission.menuTitle')" prop="title">
+            <ElInput v-model="formData.title" :placeholder="$t('common.pleaseInput')" />
+          </ElFormItem>
+          <ElFormItem :label="$t('permission.routeName')" prop="name">
+            <ElInput v-model="formData.name" :placeholder="$t('common.pleaseInput')" />
+          </ElFormItem>
+          <ElFormItem :label="$t('permission.routePath')" prop="path">
+            <ElInput v-model="formData.path" :placeholder="$t('common.pleaseInput')" />
+          </ElFormItem>
+          <ElFormItem :label="$t('permission.componentPath')" prop="component">
+            <ElInput v-model="formData.component" :placeholder="$t('common.pleaseInput')" />
+          </ElFormItem>
+          <ElFormItem :label="$t('common.icon')" prop="icon">
+            <ArtIconSelector
+              v-model="formData.icon"
+              :iconType="IconTypeEnum.UNICODE"
+              :text="$t('common.pleaseSelect')"
+              width="100%"
+            />
+          </ElFormItem>
+
+          <div class="grid grid-cols-2 gap-4">
+            <ElFormItem :label="$t('permission.keepAlive')" prop="keepAlive">
+              <ElSwitch v-model="formData.keepAlive" />
+            </ElFormItem>
+            <ElFormItem :label="$t('permission.isHide')" prop="isHide">
+              <ElSwitch v-model="formData.isHide" />
+            </ElFormItem>
+            <ElFormItem :label="$t('permission.isFullPage')" prop="isFullPage">
+              <ElSwitch v-model="formData.isFullPage" />
+            </ElFormItem>
+            <ElFormItem :label="$t('permission.externalLink')" prop="link">
+              <ElInput v-model="formData.link" :placeholder="$t('common.pleaseInput')" />
+            </ElFormItem>
+          </div>
+        </template>
+
+        <template v-else>
+          <ElFormItem :label="$t('permission.buttonName')" prop="authTitle">
+            <ElInput v-model="formData.authTitle" :placeholder="$t('common.pleaseInput')" />
+          </ElFormItem>
+          <ElFormItem :label="$t('permission.permissionMark')" prop="authMark">
+            <ElInput v-model="formData.authMark" placeholder="user:btn:add" />
+          </ElFormItem>
+        </template>
+
+        <ElFormItem :label="$t('common.sort')" prop="order">
+          <ElInputNumber v-model="formData.order" :min="0" :max="9999" class="!w-full" />
+        </ElFormItem>
+
+        <ElFormItem :label="$t('common.remark')" prop="remark">
+          <ElInput
+            v-model="formData.remark"
+            type="textarea"
+            :rows="3"
+            :placeholder="$t('common.pleaseInput')"
+          />
+        </ElFormItem>
+      </ElForm>
+
+      <template #footer>
+        <ElButton @click="drawerVisible = false">{{ $t('common.cancel') }}</ElButton>
+        <ElButton type="primary" :loading="submitLoading" @click="handleSubmit">
+          {{ $t('common.confirm') }}
+        </ElButton>
+      </template>
+    </ElDrawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, ElTree } from 'element-plus'
-import { Search, Menu, Operation, Link, Plus } from '@element-plus/icons-vue'
-import { useI18n } from 'vue-i18n'
-import {
-  fetchPermissionTree,
-  fetchPermissionList,
-  fetchMenuButtons,
-  deletePermission as deletePermissionApi,
-  deleteButtonPermission as deleteButtonPermissionApi,
-  deleteApiPermission as deleteApiPermissionApi,
-  type PermissionInfo
-} from '@/api/system/permission'
-import { getUserTypeName, UserType } from '@/utils/permission'
-import PermissionDrawer from './modules/permission-drawer.vue'
-import ButtonPermissionDrawer from './modules/button-permission-drawer.vue'
-import ApiPermissionDrawer from './modules/api-permission-drawer.vue'
+  import { computed, onMounted, reactive, ref } from 'vue'
+  import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+  import { FolderOpened, Operation, Plus, Refresh, Search } from '@element-plus/icons-vue'
+  import { useI18n } from 'vue-i18n'
+  import ArtTable from '@/components/core/tables/art-table/index.vue'
+  import ArtIconSelector from '@/components/core/base/art-icon-selector/index.vue'
+  import { IconTypeEnum } from '@/enums/appEnum'
+  import type { ColumnOption } from '@/types'
+  import {
+    addPermission,
+    deletePermission,
+    fetchPermissionTree,
+    updatePermission,
+    type PermissionInfo,
+    type PermissionTree
+  } from '@/api/system/permission'
 
-defineOptions({ name: 'Permission' })
+  defineOptions({ name: 'Permission' })
 
-const { t } = useI18n()
+  const { t, te } = useI18n()
 
-// 响应式数据
-const searchText = ref('')
-const permissionTree = ref<PermissionInfo[]>([])
-const selectedPermission = ref<PermissionInfo | null>(null)
-const buttonPermissions = ref<PermissionInfo[]>([])
-const apiPermissions = ref<PermissionInfo[]>([])
-const activeTab = ref('info')
+  type PermissionFormData = {
+    menu_type: number
+    parent_id: string
+    title: string
+    name: string
+    path: string
+    component: string
+    icon: string
+    keepAlive: boolean
+    isHide: boolean
+    isFullPage: boolean
+    link: string
+    authTitle: string
+    authMark: string
+    order: number
+    remark: string
+  }
 
-// 树组件
-const treeRef = ref<InstanceType<typeof ElTree>>()
-const treeProps = { children: 'children', label: 'title' }
+  const searchForm = reactive({
+    keyword: '',
+    menu_type: undefined as number | undefined
+  })
 
-// 抽屉状态
-const menuDrawerVisible = ref(false)
-const menuDrawerType = ref<'add' | 'edit'>('add')
-const currentMenuData = ref<Partial<PermissionInfo>>({})
+  const loading = ref(false)
+  const expanded = ref(true)
+  const tableRef = ref<any>()
+  const rawTree = ref<PermissionTree[]>([])
 
-const buttonDrawerVisible = ref(false)
-const buttonDrawerType = ref<'add' | 'edit'>('add')
-const currentButtonData = ref<Partial<PermissionInfo>>({})
+  const columns = computed<ColumnOption[]>(() => [
+    { prop: 'title', label: t('common.permissionName'), minWidth: 220, useSlot: true },
+    { prop: 'menu_type', label: t('common.type'), width: 90, useSlot: true },
+    {
+      prop: 'identifier',
+      label: `${t('permission.routeName')} / ${t('permission.permissionMark')}`,
+      minWidth: 180,
+      useSlot: true
+    },
+    { prop: 'order', label: t('common.sort'), width: 80 },
+    { prop: 'created_at', label: t('common.createTime'), width: 180 },
+    { prop: 'action', label: t('common.actions'), width: 220, fixed: 'right', useSlot: true }
+  ])
 
-const apiDrawerVisible = ref(false)
-const apiDrawerType = ref<'add' | 'edit'>('add')
-const currentApiData = ref<Partial<PermissionInfo>>({})
-
-// 翻译标题
-const translateTitle = (title: string | undefined) => {
-  if (!title) return ''
-  if (title.includes('.')) {
-    try {
-      return t(title, title)
-    } catch {
-      return title
+  const translateLocaleText = (value?: string) => {
+    if (!value) {
+      return ''
     }
-  }
-  return title
-}
 
-// 格式化日期
-const formatDate = (dateStr: string | undefined) => {
-  if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleString('zh-CN')
-}
-
-// 获取类型图标样式
-const getTypeIconClass = (menuType: number) => {
-  switch (menuType) {
-    case 0: return 'text-blue-500'
-    case 1: return 'text-orange-500'
-    case 2: return 'text-green-500'
-    default: return 'text-gray-500'
-  }
-}
-
-// 获取类型名称
-const getTypeName = (menuType: number) => {
-  switch (menuType) {
-    case 0: return t('common.menu')
-    case 1: return t('common.button')
-    case 2: return 'API'
-    default: return t('common.unknown')
-  }
-}
-
-// 获取类型标签样式
-const getTypeTagType = (menuType: number) => {
-  switch (menuType) {
-    case 0: return 'primary'
-    case 1: return 'warning'
-    case 2: return 'success'
-    default: return 'info'
-  }
-}
-
-// 获取HTTP方法标签样式
-const getMethodTagType = (method: string | undefined) => {
-  switch (method?.toUpperCase()) {
-    case 'GET': return 'success'
-    case 'POST': return 'primary'
-    case 'PUT': return 'warning'
-    case 'DELETE': return 'danger'
-    case 'PATCH': return 'info'
-    default: return 'info'
-  }
-}
-
-// 获取最低用户身份名称
-const getMinUserTypeName = (minUserType: number | undefined) => {
-  if (minUserType === undefined || minUserType === null) return t('permission.allUsers')
-  return getUserTypeName(minUserType) + t('permission.andAbove')
-}
-
-// 获取最低用户身份标签类型
-const getMinUserTypeTagType = (minUserType: number | undefined) => {
-  if (minUserType === undefined || minUserType === null) return 'info'
-  switch (minUserType) {
-    case UserType.SUPER_ADMIN: return 'danger'
-    case UserType.ADMIN: return 'warning'
-    case UserType.DEPT_ADMIN: return 'primary'
-    default: return 'info'
-  }
-}
-
-// 获取数据权限名称
-const getDataScopeName = (dataScope: number | undefined) => {
-  switch (dataScope) {
-    case 1: return t('permission.dataScopeAll')
-    case 2: return t('permission.dataScopeDeptAndChild')
-    case 3: return t('permission.dataScopeDeptOnly')
-    case 4: return t('permission.dataScopeSelfOnly')
-    default: return t('permission.dataScopeSelfOnly')
-  }
-}
-
-// 获取数据权限标签类型
-const getDataScopeTagType = (dataScope: number | undefined) => {
-  switch (dataScope) {
-    case 1: return 'danger'
-    case 2: return 'warning'
-    case 3: return 'primary'
-    case 4: return 'info'
-    default: return 'info'
-  }
-}
-
-// 获取上级权限名称
-const getParentPermissionName = (parentId: string | undefined) => {
-  if (!parentId) return t('permission.rootPermission')
-  
-  // 递归查找权限
-  const findPermission = (nodes: PermissionInfo[], id: string): PermissionInfo | null => {
-    for (const node of nodes) {
-      if (node.id === id) return node
-      if (node.children?.length) {
-        const found = findPermission(node.children, id)
-        if (found) return found
-      }
+    if (te(value)) {
+      return t(value)
     }
-    return null
-  }
-  
-  const parent = findPermission(permissionTree.value, parentId)
-  if (parent) {
-    return translateTitle(parent.title) || parent.name || parentId
-  }
-  return parentId
-}
 
-// 展开所有节点
-const expandAll = () => {
-  const tree = treeRef.value
-  if (tree) {
-    const getAllKeys = (nodes: PermissionInfo[]): string[] => {
-      let keys: string[] = []
-      nodes.forEach(node => {
-        if (node.id) keys.push(node.id)
-        if (node.children?.length) keys = keys.concat(getAllKeys(node.children))
-      })
-      return keys
+    return value
+  }
+
+  const getDisplayName = (row: PermissionInfo) => {
+    return translateLocaleText(row.title) || translateLocaleText(row.name) || row.code || '-'
+  }
+
+  const comparePermissionOrder = (left: PermissionTree, right: PermissionTree) => {
+    const orderDiff = (left.order ?? 0) - (right.order ?? 0)
+    if (orderDiff !== 0) {
+      return orderDiff
     }
-    getAllKeys(permissionTree.value).forEach(key => tree.store.nodesMap[key]?.expand())
-  }
-}
 
-// 收起所有节点
-const collapseAll = () => {
-  const tree = treeRef.value
-  if (tree) {
-    const getAllKeys = (nodes: PermissionInfo[]): string[] => {
-      let keys: string[] = []
-      nodes.forEach(node => {
-        if (node.id) keys.push(node.id)
-        if (node.children?.length) keys = keys.concat(getAllKeys(node.children))
-      })
-      return keys
+    return String(left.id || '').localeCompare(String(right.id || ''))
+  }
+
+  const normalizeTree = (nodes: PermissionTree[] = []): PermissionTree[] => {
+    return nodes
+      .filter((node) => node.menu_type === 0 || node.menu_type === 1)
+      .map((node) => ({
+        ...node,
+        title: translateLocaleText(node.title),
+        name: translateLocaleText(node.name),
+        children: normalizeTree(node.children || [])
+      }))
+      .sort(comparePermissionOrder)
+  }
+
+  const keywordMatch = (node: PermissionTree) => {
+    const keyword = searchForm.keyword.trim().toLowerCase()
+    if (!keyword) {
+      return true
     }
-    getAllKeys(permissionTree.value).forEach(key => tree.store.nodesMap[key]?.collapse())
+
+    return [translateLocaleText(node.title), translateLocaleText(node.name), node.path, node.code]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(keyword))
   }
-}
 
-// 过滤节点
-const filterNode = (value: string, data: any) => {
-  if (!value) return true
-  const title = translateTitle(data.title) || data.name || ''
-  const name = data.name || ''
-  return title.toLowerCase().includes(value.toLowerCase()) || name.toLowerCase().includes(value.toLowerCase())
-}
+  const filterTree = (nodes: PermissionTree[]): PermissionTree[] => {
+    return nodes
+      .map((node) => {
+        const children = filterTree(node.children || [])
+        const typeMatched =
+          searchForm.menu_type === undefined || node.menu_type === searchForm.menu_type
+        const matched = keywordMatch(node) && typeMatched
 
-// 搜索处理
-const handleSearch = (value: string) => {
-  treeRef.value?.filter(value)
-}
-
-// 节点点击
-const handleNodeClick = (data: PermissionInfo) => {
-  selectedPermission.value = data
-  activeTab.value = 'info'
-  if (data.menu_type === 0 && data.id) {
-    loadButtonPermissions(data.id)
-    loadApiPermissions(data.id)
-  } else {
-    buttonPermissions.value = []
-    apiPermissions.value = []
-  }
-}
-
-// 加载权限树
-const loadPermissionTree = async () => {
-  try {
-    const res = await fetchPermissionTree()
-    if (res.success && res.data) {
-      permissionTree.value = res.data.result || []
-    }
-  } catch (e) {
-    console.error('加载权限树失败:', e)
-    ElMessage.error('加载权限数据失败')
-  }
-}
-
-// 加载按钮权限
-const loadButtonPermissions = async (parentId: string) => {
-  try {
-    const res = await fetchMenuButtons(parentId)
-    if (res.success && res.data) {
-      buttonPermissions.value = res.data.result || []
-    }
-  } catch (e) {
-    console.error('加载按钮权限失败:', e)
-  }
-}
-
-// 加载API权限（从权限列表中筛选）
-const loadApiPermissions = async (parentId: string) => {
-  try {
-    const res = await fetchPermissionList({ parent_id: parentId, menu_type: 2, pageSize: 100 })
-    if (res.success && res.data) {
-      apiPermissions.value = res.data.result || []
-    }
-  } catch (e) {
-    console.error('加载API权限失败:', e)
-  }
-}
-
-// 显示菜单抽屉
-const showMenuDrawer = (type: 'add' | 'edit', data?: PermissionInfo) => {
-  menuDrawerType.value = type
-  currentMenuData.value = data || {}
-  menuDrawerVisible.value = true
-}
-
-// 添加子菜单
-const addSubMenu = () => {
-  currentMenuData.value = { parent_id: selectedPermission.value?.id, menu_type: 0 }
-  menuDrawerType.value = 'add'
-  menuDrawerVisible.value = true
-}
-
-// 显示按钮抽屉
-const showButtonDrawer = (type: 'add' | 'edit', data?: PermissionInfo) => {
-  buttonDrawerType.value = type
-  currentButtonData.value = data || {}
-  buttonDrawerVisible.value = true
-}
-
-// 显示API抽屉
-const showApiDrawer = (type: 'add' | 'edit', data?: PermissionInfo) => {
-  apiDrawerType.value = type
-  currentApiData.value = data || {}
-  apiDrawerVisible.value = true
-}
-
-// 删除权限
-const deletePermission = async (row: PermissionInfo) => {
-  const name = translateTitle(row.title) || row.name
-  const confirm = await ElMessageBox.confirm(`确定删除权限【${name}】吗？`, '确认删除', { type: 'warning' }).catch(() => false)
-  if (!confirm) return
-
-  try {
-    const res = await deletePermissionApi(row.id!)
-    if (res.success) {
-      ElMessage.success('删除成功')
-      selectedPermission.value = null
-      loadPermissionTree()
-    } else {
-      ElMessage.error(res.msg || '删除失败')
-    }
-  } catch (e) {
-    console.error('删除权限失败:', e)
-    ElMessage.error('删除失败')
-  }
-}
-
-// 删除按钮
-const deleteButton = async (row: PermissionInfo) => {
-  const name = translateTitle(row.authTitle) || row.name
-  const confirm = await ElMessageBox.confirm(`确定删除按钮【${name}】吗？`, '确认删除', { type: 'warning' }).catch(() => false)
-  if (!confirm) return
-
-  try {
-    const res = await deleteButtonPermissionApi(row.id!)
-    if (res.success) {
-      ElMessage.success('删除成功')
-      if (selectedPermission.value?.id) loadButtonPermissions(selectedPermission.value.id)
-    } else {
-      ElMessage.error(res.msg || '删除失败')
-    }
-  } catch (e) {
-    console.error('删除按钮失败:', e)
-    ElMessage.error('删除失败')
-  }
-}
-
-// 删除API
-const deleteApi = async (row: PermissionInfo) => {
-  const name = row.title || row.name
-  const confirm = await ElMessageBox.confirm(`确定删除API权限【${name}】吗？`, '确认删除', { type: 'warning' }).catch(() => false)
-  if (!confirm) return
-
-  try {
-    const res = await deleteApiPermissionApi(row.id!)
-    if (res.success) {
-      ElMessage.success('删除成功')
-      if (selectedPermission.value?.id) loadApiPermissions(selectedPermission.value.id)
-    } else {
-      ElMessage.error(res.msg || '删除失败')
-    }
-  } catch (e) {
-    console.error('删除API失败:', e)
-    ElMessage.error('删除失败')
-  }
-}
-
-// 菜单操作成功
-const handleMenuSuccess = () => {
-  loadPermissionTree()
-}
-
-// 按钮操作成功
-const handleButtonSuccess = () => {
-  if (selectedPermission.value?.id) loadButtonPermissions(selectedPermission.value.id)
-}
-
-// API操作成功
-const handleApiSuccess = () => {
-  if (selectedPermission.value?.id) loadApiPermissions(selectedPermission.value.id)
-}
-
-onMounted(() => loadPermissionTree())
-</script>
-
-<style lang="scss" scoped>
-:deep(.el-container) {
-  height: 100%;
-}
-
-.perm-aside {
-  height: 100%;
-  border-right: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-  overflow: hidden;
-}
-
-.perm-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  border-radius: 0;
-  border: none;
-  
-  :deep(.el-card__header) {
-    flex-shrink: 0;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-  
-  :deep(.el-card__body) {
-    flex: 1;
-    padding: 12px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-}
-
-.perm-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.perm-tree-wrapper {
-  flex: 1;
-  min-height: 0;
-}
-
-.tree-node {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 0;
-  font-size: 13px;
-  
-  .node-label {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-.main-content {
-  height: 100%;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--el-fill-color-lighter);
-  overflow: hidden;
-}
-
-.toolbar {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.detail-card {
-  flex: 1;
-  margin: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-  
-  :deep(.el-card__body) {
-    flex: 1;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
-  }
-  
-  :deep(.el-tabs) {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  :deep(.el-tabs__header) {
-    padding: 0 16px;
-    margin: 0;
-  }
-  
-  :deep(.el-tabs__nav-wrap) {
-    padding: 0;
-  }
-  
-  :deep(.el-tabs__content) {
-    flex: 1;
-    overflow: auto;
-    padding: 16px;
-  }
-}
-
-.info-section {
-  padding: 8px 0;
-  
-  :deep(.el-descriptions) {
-    .el-descriptions__label {
-      width: 140px;
-      font-weight: 500;
-      color: var(--el-text-color-regular);
-      text-align: right;
-      padding-right: 16px;
-      vertical-align: top;
-    }
-    
-    .el-descriptions__content {
-      word-break: break-all;
-      padding-left: 16px;
-      vertical-align: top;
-    }
-    
-    .el-descriptions__cell {
-      padding: 12px 16px;
-      vertical-align: top;
-    }
-    
-    .el-descriptions__table {
-      width: 100%;
-      table-layout: fixed;
-    }
-    
-    .el-descriptions__body {
-      .el-descriptions__table {
-        .el-descriptions__row {
-          .el-descriptions__cell {
-            &:nth-child(odd) {
-              width: 160px;
-            }
-            &:nth-child(even) {
-              width: calc(50% - 80px);
-            }
+        if (matched || children.length > 0) {
+          return {
+            ...node,
+            children
           }
         }
+
+        return null
+      })
+      .filter(Boolean) as PermissionTree[]
+  }
+
+  const tableData = computed(() => filterTree(rawTree.value))
+  const currentId = ref('')
+
+  const collectDescendantIds = (
+    nodes: PermissionTree[],
+    targetId: string,
+    result = new Set<string>()
+  ) => {
+    for (const node of nodes) {
+      if (node.id === targetId) {
+        const collect = (item: PermissionTree) => {
+          if (item.id) {
+            result.add(item.id)
+          }
+          ;(item.children || []).forEach(collect)
+        }
+        collect(node)
+        return result
+      }
+
+      if (node.children?.length) {
+        collectDescendantIds(node.children, targetId, result)
       }
     }
+
+    return result
   }
-  
-  // 响应式优化
-  @media (max-width: 768px) {
-    :deep(.el-descriptions) {
-      .el-descriptions__label {
-        width: 120px;
-        font-size: 13px;
-      }
-      
-      .el-descriptions__content {
-        font-size: 13px;
-      }
-      
-      .el-descriptions__cell {
-        padding: 8px 12px;
-      }
+
+  const menuOnlyTree = (nodes: PermissionTree[]): PermissionTree[] => {
+    return nodes
+      .filter((node) => node.menu_type === 0)
+      .map((node) => ({
+        ...node,
+        children: menuOnlyTree(node.children || [])
+      }))
+  }
+
+  const parentOptions = computed(() => {
+    const roots = menuOnlyTree(rawTree.value)
+    const rootNode = { id: '', title: t('permission.rootPermission'), children: roots }
+
+    if (!currentId.value) {
+      return [rootNode]
+    }
+
+    const excludedIds = collectDescendantIds(rawTree.value, currentId.value)
+    const filterNodes = (nodes: PermissionTree[]): PermissionTree[] =>
+      nodes
+        .filter((node) => !excludedIds.has(node.id || ''))
+        .map((node) => ({
+          ...node,
+          children: filterNodes(node.children || [])
+        }))
+
+    return [{ ...rootNode, children: filterNodes(roots) }]
+  })
+
+  const fetchData = async () => {
+    loading.value = true
+    try {
+      const res = await fetchPermissionTree()
+      rawTree.value = normalizeTree(res.data?.result || [])
+    } catch (error) {
+      console.error('fetch permission tree failed:', error)
+      ElMessage.error(t('common.updateFailed'))
+    } finally {
+      loading.value = false
     }
   }
-}
 
-.tab-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
+  const handleSearch = () => {
+    expanded.value = true
+  }
 
-.tab-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-}
+  const handleReset = () => {
+    Object.assign(searchForm, {
+      keyword: '',
+      menu_type: undefined
+    })
+    expanded.value = true
+  }
 
-.code-tag {
-  font-size: 12px;
-  background: var(--el-fill-color-light);
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  color: var(--el-text-color-primary);
-  border: 1px solid var(--el-border-color-lighter);
-  display: inline-block;
-  max-width: 100%;
-  word-break: break-all;
-}
+  const flattenTree = (nodes: PermissionTree[]): PermissionTree[] => {
+    return nodes.flatMap((node) => [node, ...flattenTree(node.children || [])])
+  }
 
-.empty-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  const toggleExpand = () => {
+    expanded.value = !expanded.value
+    flattenTree(tableData.value).forEach((row) => {
+      tableRef.value?.elTableRef?.toggleRowExpansion(row, expanded.value)
+    })
+  }
+
+  const drawerVisible = ref(false)
+  const drawerMode = ref<'add' | 'edit'>('add')
+  const submitLoading = ref(false)
+  const formRef = ref<FormInstance>()
+
+  const drawerTitle = computed(() =>
+    drawerMode.value === 'add' ? t('buttons.addPermission') : t('buttons.updatePermission')
+  )
+
+  const createDefaultForm = (): PermissionFormData => ({
+    menu_type: 0,
+    parent_id: '',
+    title: '',
+    name: '',
+    path: '',
+    component: '',
+    icon: '',
+    keepAlive: false,
+    isHide: false,
+    isFullPage: false,
+    link: '',
+    authTitle: '',
+    authMark: '',
+    order: 0,
+    remark: ''
+  })
+
+  const formData = reactive<PermissionFormData>(createDefaultForm())
+
+  const formRules: FormRules = {
+    menu_type: [{ required: true, message: t('common.pleaseSelect'), trigger: 'change' }],
+    title: [
+      {
+        validator: (_rule, value, callback) => {
+          if (formData.menu_type === 0 && !value) {
+            callback(new Error(t('common.pleaseInput')))
+            return
+          }
+          callback()
+        },
+        trigger: 'blur'
+      }
+    ],
+    name: [
+      {
+        validator: (_rule, value, callback) => {
+          if (formData.menu_type === 0 && !value) {
+            callback(new Error(t('common.pleaseInput')))
+            return
+          }
+          callback()
+        },
+        trigger: 'blur'
+      }
+    ],
+    path: [
+      {
+        validator: (_rule, value, callback) => {
+          if (formData.menu_type === 0 && !value) {
+            callback(new Error(t('permission.pathRequired')))
+            return
+          }
+          callback()
+        },
+        trigger: 'blur'
+      }
+    ],
+    authTitle: [
+      {
+        validator: (_rule, value, callback) => {
+          if (formData.menu_type === 1 && !value) {
+            callback(new Error(t('permission.authTitleRequired')))
+            return
+          }
+          callback()
+        },
+        trigger: 'blur'
+      }
+    ],
+    authMark: [
+      {
+        validator: (_rule, value, callback) => {
+          if (formData.menu_type === 1 && !value) {
+            callback(new Error(t('permission.authMarkRequired')))
+            return
+          }
+          callback()
+        },
+        trigger: 'blur'
+      }
+    ]
+  }
+
+  const resetForm = () => {
+    Object.assign(formData, createDefaultForm())
+    currentId.value = ''
+    formRef.value?.clearValidate()
+  }
+
+  const openCreate = (parentId = '') => {
+    drawerMode.value = 'add'
+    resetForm()
+    formData.parent_id = parentId
+    drawerVisible.value = true
+  }
+
+  const openEdit = (row: PermissionTree) => {
+    drawerMode.value = 'edit'
+    resetForm()
+    currentId.value = row.id || ''
+    Object.assign(formData, {
+      menu_type: row.menu_type,
+      parent_id: row.parent_id || '',
+      title: translateLocaleText(row.title) || '',
+      name: translateLocaleText(row.name) || '',
+      path: row.path || '',
+      component: row.component || '',
+      icon: row.icon || '',
+      keepAlive: row.keepAlive || false,
+      isHide: row.isHide || false,
+      isFullPage: row.isFullPage || false,
+      link: row.link || '',
+      authTitle: translateLocaleText(row.title) || '',
+      authMark: row.code || row.name || '',
+      order: row.order || 0,
+      remark: row.remark || ''
+    })
+    drawerVisible.value = true
+  }
+
+  const buildSubmitPayload = (): Partial<PermissionInfo> => {
+    if (formData.menu_type === 0) {
+      return {
+        menu_type: 0,
+        parent_id: formData.parent_id || undefined,
+        title: formData.title,
+        name: formData.name,
+        path: formData.path,
+        component: formData.component || undefined,
+        icon: formData.icon || undefined,
+        keepAlive: formData.keepAlive,
+        isHide: formData.isHide,
+        isFullPage: formData.isFullPage,
+        link: formData.link || undefined,
+        order: formData.order,
+        remark: formData.remark || undefined
+      }
+    }
+
+    return {
+      menu_type: 1,
+      parent_id: formData.parent_id || undefined,
+      title: formData.authTitle,
+      code: formData.authMark,
+      name: formData.authMark.replace(/:/g, '_'),
+      order: formData.order,
+      remark: formData.remark || undefined
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!formRef.value) {
+      return
+    }
+
+    const valid = await formRef.value.validate().catch(() => false)
+    if (!valid) {
+      return
+    }
+
+    submitLoading.value = true
+    try {
+      const payload = buildSubmitPayload()
+      if (drawerMode.value === 'add') {
+        await addPermission(payload)
+        ElMessage.success(t('common.addSuccess'))
+      } else {
+        await updatePermission(currentId.value, payload)
+        ElMessage.success(t('common.updateSuccess'))
+      }
+
+      drawerVisible.value = false
+      await fetchData()
+    } catch (error) {
+      console.error('submit permission failed:', error)
+      ElMessage.error(t('common.updateFailed'))
+    } finally {
+      submitLoading.value = false
+    }
+  }
+
+  const handleDelete = async (row: PermissionTree) => {
+    const name = getDisplayName(row)
+    const confirmed = await ElMessageBox.confirm(
+      t('common.confirmDeletePermission', { name }),
+      t('common.tips'),
+      { type: 'warning' }
+    ).catch(() => false)
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      await deletePermission(row.id || '')
+      ElMessage.success(t('common.deleteSuccess'))
+      await fetchData()
+    } catch (error) {
+      console.error('delete permission failed:', error)
+      ElMessage.error(t('common.deleteFailed'))
+    }
+  }
+
+  onMounted(() => {
+    fetchData()
+  })
+</script>
+
+<style scoped lang="scss">
+  :deep(.el-table__body td:nth-child(1) .cell) {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  :deep(.el-table__body td:nth-child(1) .el-table__expand-icon),
+  :deep(.el-table__body td:nth-child(1) .el-table__indent) {
+    flex: 0 0 auto;
+  }
+
+  .permission-title-cell {
+    line-height: 1;
+  }
 </style>

@@ -1,140 +1,130 @@
 # _*_ coding : UTF-8 _*_
-# @Time : 2025/08/03 22:38
-# @UpdateTime : 2025/08/03 22:38
-# @Author : sonder
-# @File : database.py
-# @Software : PyCharm
-# @Comment : 本程序
+
 import logging
 from typing import Dict, Any
 
 from tortoise import Tortoise
 
-from utils.config import config  # 导入统一配置实例
-from utils.log import logger  # 日志工具
+from utils.config import config, DatabaseNodeSettings
+from utils.log import logger
 
 
-def _build_db_connection(db_config) -> Dict[str, Dict[str, Any]]:
-    """构建数据库连接配置"""
+def _build_single_connection(node: DatabaseNodeSettings) -> Dict[str, Any]:
+    """构建单个数据库节点的连接配置"""
     engine_map = {
         "mysql": "tortoise.backends.mysql",
         "postgresql": "tortoise.backends.asyncpg",
-        "sqlite": "tortoise.backends.sqlite"
+        "sqlite": "tortoise.backends.sqlite",
     }
 
-    conn_config = {
-        "engine": engine_map.get(db_config.engine, "tortoise.backends.mysql"),
-        "credentials": {
-            "host": db_config.host,
-            "port": db_config.port,
-            "user": db_config.username,
-            "password": db_config.password.get_secret_value() if db_config.password else None,
-            "database": db_config.database,
+    if node.engine == "sqlite":
+        db_path = node.database if node.database else "fva.db"
+        return {
+            "engine": "tortoise.backends.sqlite",
+            "credentials": {"file_path": db_path},
         }
+
+    credentials = {
+        "host": node.host,
+        "port": node.port,
+        "user": node.username,
+        "password": node.password.get_secret_value() if node.password else None,
+        "database": node.database,
     }
 
-    # MySQL 特定配置
-    if db_config.engine == "mysql":
-        conn_config["credentials"]["charset"] = getattr(db_config, 'charset', 'utf8mb4')
-        conn_config["credentials"]["init_command"] = "SET time_zone = '+08:00'"
-        conn_config["credentials"]["connect_timeout"] = 10
+    if node.engine == "mysql":
+        credentials["charset"] = node.charset
+        credentials["init_command"] = "SET time_zone = '+08:00'"
+        credentials["connect_timeout"] = 10
+    elif node.engine == "postgresql":
+        credentials["ssl"] = False
+        credentials["timeout"] = 10
+        credentials["server_settings"] = {"client_encoding": "utf8"}
 
-    # PostgreSQL 特定配置
-    elif db_config.engine == "postgresql":
-        conn_config["credentials"]["ssl"] = False
-        conn_config["credentials"]["timeout"] = 10 
-        conn_config["credentials"]["server_settings"] = {"client_encoding": "utf8"}
-    
-    # SQLite 特定配置
-    elif db_config.engine == "sqlite":
-        # SQLite 只需要文件路径，移除其他凭据
-        db_path = db_config.database if db_config.database else "fva.db"
-        conn_config["credentials"] = {
-            "file_path": db_path
-        }
+    return {
+        "engine": engine_map.get(node.engine, "tortoise.backends.mysql"),
+        "credentials": credentials,
+    }
 
-    return {"default": conn_config}
+
+def _build_db_connections() -> Dict[str, Dict[str, Any]]:
+    """构建所有数据库连接配置"""
+    connections = {}
+    for node in config.database().get_all_nodes():
+        connections[node.alias] = _build_single_connection(node)
+    return connections
 
 
 def _build_db_apps() -> Dict[str, Dict[str, Any]]:
-    """构建应用映射配置
-    
-    注意：
-        - models 统一指向 "models" 包，Tortoise 会自动扫描其中的所有模型
-        - 时区配置在全局 tortoise_config 中设置
-        - app名称必须与模型Meta中的app一致
-    """
+    """构建应用映射配置"""
     return {
         "system": {
-            "models": ["models"],
-            "default_connection": "default"
+            "models": [
+                "modules.config.model",
+                "modules.department.model",
+                "modules.dictionary.model",
+                "modules.dictionary.item_model",
+                "modules.file.model",
+                "modules.log.model",
+                "modules.notification.model",
+                "modules.permission.model",
+                "modules.role.model",
+                "modules.tenant.model",
+                "modules.user.model",
+            ],
+            "default_connection": "system",
         }
     }
 
 
 def _configure_db_logging(enable: bool, log_level: str = "INFO"):
-    """
-    配置数据库日志
-
-    :param enable: 是否启用SQL日志
-    :param log_level: 日志级别
-    """
-    # 获取Tortoise的核心日志器
     tortoise_logger = logging.getLogger("tortoise")
     db_client_logger = logging.getLogger("tortoise.db_client")
 
     if enable:
-        # 启用日志
         tortoise_logger.setLevel(getattr(logging, log_level))
         db_client_logger.setLevel(getattr(logging, log_level))
-
-        # 如果没有处理器，添加一个控制台处理器（可根据需要修改）
         if not tortoise_logger.handlers:
             console_handler = logging.StreamHandler()
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             console_handler.setFormatter(formatter)
             tortoise_logger.addHandler(console_handler)
             db_client_logger.addHandler(console_handler)
     else:
-        # 禁用日志
         tortoise_logger.setLevel(logging.WARNING)
         db_client_logger.setLevel(logging.WARNING)
 
 
 async def init_db():
-    """异步初始化数据库连接"""
+    """异步初始化数据库连接（支持多数据源）"""
     try:
-        db_config = config.database()
+        connections = _build_db_connections()
+        default_node = config.database().get_node("system")
 
-        # 构建Tortoise配置
         tortoise_config = {
-            "connections": _build_db_connection(db_config),
+            "connections": connections,
             "apps": _build_db_apps(),
             "use_tz": False,
-            "timezone": db_config.timezone
+            "timezone": default_node.timezone,
         }
 
-        # 初始化Tortoise ORM
-        if db_config.engine == "sqlite":
-            logger.info(f"开始初始化数据库连接（{db_config.engine}://{db_config.database}）")
+        if default_node.engine == "sqlite":
+            logger.info(f"开始初始化数据库连接（{default_node.engine}://{default_node.database}）")
         else:
-            logger.info(f"开始初始化数据库连接（{db_config.engine}://{db_config.host}:{db_config.port}/{db_config.database}）")
+            logger.info(f"开始初始化数据库连接（{default_node.engine}://{default_node.host}:{default_node.port}/{default_node.database}）")
+
+        logger.info(f"已配置 {len(connections)} 个数据库节点: {list(connections.keys())}")
         await Tortoise.init(config=tortoise_config)
 
-        # 配置SQL日志
-        if db_config.echo:
+        if default_node.echo:
             logger.info("SQL查询日志已启用")
             _configure_db_logging(enable=True, log_level="INFO")
         else:
             logger.info("SQL查询日志已禁用")
             _configure_db_logging(enable=False)
 
-        # 生成表结构
         logger.info("开始生成数据库表结构...")
         await Tortoise.generate_schemas()
-
         logger.success("数据库连接初始化成功")
         return tortoise_config
 

@@ -68,7 +68,9 @@
         <div class="btn-box notice-btn" v-if="shouldShowNotification" @click="visibleNotice">
           <div class="btn notice-button">
             <i class="iconfont-sys notice-btn">&#xe6c2;</i>
-            <span v-if="unreadCount > 0" class="count notice-btn">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+            <span v-if="unreadCount > 0" class="count notice-btn">{{
+              unreadCount > 99 ? '99+' : unreadCount
+            }}</span>
           </div>
         </div>
         <!-- 聊天 -->
@@ -192,7 +194,11 @@
     </div>
     <ArtWorkTab />
 
-    <ArtNotification v-model:value="showNotice" ref="notificationRef" @update:unread-count="handleUnreadCountUpdate" />
+    <ArtNotification
+      v-model:value="showNotice"
+      ref="notificationRef"
+      @update:unread-count="handleUnreadCountUpdate"
+    />
   </div>
 </template>
 

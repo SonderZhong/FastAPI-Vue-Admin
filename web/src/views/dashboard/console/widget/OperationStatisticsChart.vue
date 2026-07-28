@@ -230,7 +230,7 @@
       xAxis: {
         type: 'category',
         boundaryGap: false,
-        data: dates.map(d => d.slice(5)),
+        data: dates.map((d) => d.slice(5)),
         axisLine: { lineStyle: { color: theme.axisLineColor } },
         axisLabel: { color: theme.subTextColor }
       },

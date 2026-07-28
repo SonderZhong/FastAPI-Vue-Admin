@@ -11,7 +11,11 @@ export interface NotificationMessage {
 }
 
 type MessageHandler = (message: NotificationMessage) => void
-type ResponseResolver = { resolve: (data: any) => void; reject: (error: any) => void; timeout: number }
+type ResponseResolver = {
+  resolve: (data: any) => void
+  reject: (error: any) => void
+  timeout: number
+}
 
 class NotificationWebSocket {
   private ws: WebSocket | null = null
@@ -59,7 +63,7 @@ class NotificationWebSocket {
       this.ws.onmessage = (event) => {
         try {
           const message: NotificationMessage = JSON.parse(event.data)
-          
+
           // 处理请求响应
           if (message.type === 'response' && message.requestId) {
             const pending = this.pendingRequests.get(message.requestId)
@@ -74,7 +78,7 @@ class NotificationWebSocket {
             }
             return
           }
-          
+
           this.notifyHandlers(message)
         } catch (e) {
           // 可能是 pong 响应
@@ -107,7 +111,7 @@ class NotificationWebSocket {
     this.stopHeartbeat()
     this.cancelReconnect()
     this.rejectAllPending('WebSocket 已断开')
-    
+
     if (this.ws) {
       this.ws.close()
       this.ws = null
@@ -133,12 +137,14 @@ class NotificationWebSocket {
       this.pendingRequests.set(requestId, { resolve, reject, timeout })
 
       try {
-        this.ws!.send(JSON.stringify({
-          type: 'request',
-          action,
-          requestId,
-          data
-        }))
+        this.ws!.send(
+          JSON.stringify({
+            type: 'request',
+            action,
+            requestId,
+            data
+          })
+        )
       } catch (e) {
         clearTimeout(timeout)
         this.pendingRequests.delete(requestId)
@@ -179,7 +185,7 @@ class NotificationWebSocket {
    * 通知所有处理器
    */
   private notifyHandlers(message: NotificationMessage) {
-    this.handlers.forEach(handler => {
+    this.handlers.forEach((handler) => {
       try {
         handler(message)
       } catch (e) {
@@ -199,7 +205,7 @@ class NotificationWebSocket {
    * 拒绝所有待处理请求
    */
   private rejectAllPending(reason: string) {
-    this.pendingRequests.forEach((pending, requestId) => {
+    this.pendingRequests.forEach((pending) => {
       clearTimeout(pending.timeout)
       pending.reject(new Error(reason))
     })
@@ -238,10 +244,12 @@ class NotificationWebSocket {
     }
 
     this.cancelReconnect()
-    
+
     const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts)
-    console.log(`[WS] ${delay}ms 后尝试重连 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`)
-    
+    console.log(
+      `[WS] ${delay}ms 后尝试重连 (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`
+    )
+
     this.reconnectTimer = window.setTimeout(() => {
       this.reconnectAttempts++
       this.connect()

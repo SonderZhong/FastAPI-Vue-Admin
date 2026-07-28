@@ -221,3 +221,9 @@ which python
 - "查询所有用户列表"
 - "创建一个文章模型，包含标题、内容、作者字段"
 - "根据 Article 模型生成 CRUD API"
+## 当前工具集
+
+- 数据库工具：`list_users`、`get_user`、`search_users`、`list_roles`、`get_role`、`create_role`、`update_role`、`delete_role`、`list_departments`、`get_department`、`create_department`、`update_department`、`delete_department`、`list_tenants`、`get_tenant`、`get_tenant_members`、`list_configs`、`get_config`、`set_config`、`list_permissions`、`get_permission`、`get_statistics`、`execute_sql`
+- Redis 工具：`redis_get`、`redis_set`、`redis_delete`、`redis_keys`、`redis_exists`、`redis_ttl`、`redis_hget`、`redis_hset`、`redis_hgetall`、`redis_hdel`、`redis_lrange`、`redis_lpush`、`redis_rpush`、`redis_smembers`、`redis_sadd`、`redis_srem`、`redis_info`、`redis_dbsize`
+- 开发工具：`get_project_info`、`list_modules`、`get_module_info`、`get_model_structure`、`list_api_endpoints`、`get_dynamic_config`、`list_operation_logs`
+- 推荐 autoApprove：`list_*`、`get_*`、`redis_get`、`redis_keys`、`redis_info`、`redis_dbsize`

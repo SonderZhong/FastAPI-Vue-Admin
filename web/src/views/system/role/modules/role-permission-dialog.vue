@@ -1,7 +1,7 @@
 <template>
   <ElDialog
     v-model="visible"
-    :title="$t('role.assignPermissions', '分配权限')"
+    :title="$t('role.assignPermissions')"
     width="70%"
     align-center
     @close="handleClose"
@@ -10,16 +10,16 @@
       <div class="dialog-header mb-4">
         <ElSpace>
           <ElButton type="primary" size="small" @click="expandAll">{{
-            $t('buttons.expandAll', '展开全部')
+            $t('buttons.expandAll')
           }}</ElButton>
           <ElButton type="primary" size="small" @click="collapseAll">{{
-            $t('buttons.collapseAll', '收起全部')
+            $t('buttons.collapseAll')
           }}</ElButton>
           <ElButton type="success" size="small" @click="checkAll">{{
-            $t('buttons.selectAll', '全选')
+            $t('buttons.selectAll')
           }}</ElButton>
           <ElButton type="warning" size="small" @click="uncheckAll">{{
-            $t('buttons.deselectAll', '取消全选')
+            $t('buttons.deselectAll')
           }}</ElButton>
         </ElSpace>
       </div>
@@ -43,7 +43,7 @@
               </ElIcon>
               <span>{{ translateTitle(data.title) || data.name }}</span>
               <ElTag v-if="data.menu_type === 1" type="warning" size="small" class="ml-2">
-                {{ $t('common.button', '按钮') }}
+                {{ $t('common.button') }}
               </ElTag>
             </div>
           </template>
@@ -53,10 +53,8 @@
 
     <template #footer>
       <div class="dialog-footer">
-        <ElButton @click="handleClose">{{ $t('buttons.cancel', '取消') }}</ElButton>
-        <ElButton type="primary" @click="handleSubmit">{{
-          $t('buttons.confirm', '确定')
-        }}</ElButton>
+        <ElButton @click="handleClose">{{ $t('buttons.cancel') }}</ElButton>
+        <ElButton type="primary" @click="handleSubmit">{{ $t('buttons.confirm') }}</ElButton>
       </div>
     </template>
   </ElDialog>
@@ -160,7 +158,7 @@
       if (response.success && response.data) {
         // 使用权限ID作为选中的key
         checkedKeys.value =
-          response.data?.result?.map((item) => item.permission_id) || []
+          response.data?.result?.map((item: { permission_id: string }) => item.permission_id) || []
         nextTick(() => {
           treeRef.value?.setCheckedKeys(checkedKeys.value)
         })

@@ -129,6 +129,8 @@ export interface EnvConfig {
   VITE_BASE_URL: string
   // API 地址
   VITE_API_URL: string
+  // 是否启用前端权限控制
+  VITE_PERMISSION_VERIFY_ENABLED?: string
   // 是否开启 Mock
   VITE_USE_MOCK?: string
   // 是否开启压缩

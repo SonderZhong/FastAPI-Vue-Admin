@@ -157,12 +157,8 @@
       { required: true, message: t('config.configKeyRequired'), trigger: 'blur' },
       { min: 2, max: 100, message: t('config.configKeyLength'), trigger: 'blur' }
     ],
-    value: [
-      { required: true, message: t('config.configValueRequired'), trigger: 'blur' }
-    ],
-    group: [
-      { required: true, message: t('config.selectGroup'), trigger: 'change' }
-    ]
+    value: [{ required: true, message: t('config.configValueRequired'), trigger: 'blur' }],
+    group: [{ required: true, message: t('config.selectGroup'), trigger: 'change' }]
   })
 
   const dialogTitle = computed(() => {

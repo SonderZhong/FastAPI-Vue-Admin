@@ -260,8 +260,12 @@
     return permissions.value.filter(
       (permission) =>
         getTranslatedPermissionName(permission.permission_name).toLowerCase().includes(keyword) ||
-        permission.permission_auth.toLowerCase().includes(keyword) ||
-        permission.role_name.toLowerCase().includes(keyword)
+        String(permission.permission_auth || permission.permission_code || '')
+          .toLowerCase()
+          .includes(keyword) ||
+        String(permission.role_name || permission.roles?.map((role) => role.name).join(' ') || '')
+          .toLowerCase()
+          .includes(keyword)
     )
   })
 
@@ -295,12 +299,12 @@
 
   // 菜单权限数量
   const menuPermissionsCount = computed(() => {
-    return permissions.value.filter((permission) => permission.permission_type === 0).length
+    return permissions.value.filter((permission) => permission.permission_type === 'menu').length
   })
 
   // 按钮权限数量
   const buttonPermissionsCount = computed(() => {
-    return permissions.value.filter((permission) => permission.permission_type === 1).length
+    return permissions.value.filter((permission) => permission.permission_type === 'button').length
   })
 
   /**

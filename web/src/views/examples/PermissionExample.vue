@@ -127,14 +127,14 @@
               导出用户
             </ElButton>
             <ElButton
-              v-if="hasAllPermissions(['user:btn:import', 'user:btn:add'])"
+              v-if="hasAllPermissions('user:btn:import', 'user:btn:add')"
               type="warning"
               @click="handleAction('批量导入')"
             >
               批量导入 (需要所有权限)
             </ElButton>
             <ElButton
-              v-if="hasAnyPermission(['user:btn:reset', 'user:btn:edit'])"
+              v-if="hasAnyPermission('user:btn:reset', 'user:btn:edit')"
               type="danger"
               @click="handleAction('用户操作')"
             >
@@ -186,7 +186,7 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import { ElMessage } from 'element-plus'
-  import { usePermission } from '@/composables/useAuth'
+  import { usePermission } from '@/composables/usePermission'
   import { useAuth } from '@/composables/useAuth'
   import { useUserStore } from '@/store/modules/user'
   import { storeToRefs } from 'pinia'
@@ -222,8 +222,8 @@
 
   // 多权限检查示例
   const userPermissions = ['user:btn:add', 'user:btn:edit', 'user:btn:delete', 'user:btn:list']
-  const hasAnyUserPermission = computed(() => hasAnyPermission(userPermissions))
-  const hasAllUserPermissions = computed(() => hasAllPermissions(userPermissions))
+  const hasAnyUserPermission = computed(() => hasAnyPermission(...userPermissions))
+  const hasAllUserPermissions = computed(() => hasAllPermissions(...userPermissions))
 
   // 处理操作
   const handleAction = (action: string) => {

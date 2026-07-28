@@ -108,7 +108,7 @@
     // 允许输入字母、数字和负号（用于算术题验证码）
     // 负号只能出现在开头
     let filteredValue = value.replace(/[^a-zA-Z0-9-]/g, '')
-    
+
     // 如果有多个负号，只保留第一个，且必须在开头
     if (filteredValue.includes('-')) {
       const firstMinusIndex = filteredValue.indexOf('-')
@@ -119,7 +119,7 @@
         filteredValue = '-' + filteredValue
       }
     }
-    
+
     emit('update:modelValue', filteredValue)
   }
 

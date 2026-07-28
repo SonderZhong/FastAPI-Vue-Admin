@@ -7,20 +7,20 @@
       <!-- 表格头部 -->
       <ArtTableHeader :loading="loading" v-model:columns="columnChecks" @refresh="refreshData">
         <template #left>
-          <ElButton 
-            v-if="onlineSelectedCount > 0" 
-            v-auth="'login:btn:logout'" 
-            type="danger" 
+          <ElButton
+            v-if="onlineSelectedCount > 0"
+            v-auth="'login:btn:logout'"
+            type="danger"
             @click="handleBatchLogout"
           >
             <i class="iconfont-sys mr-1">&#xe6dc;</i>
             {{ t('logManager.loginLog.batchForceLogout') }} ({{ onlineSelectedCount }})
           </ElButton>
-          <ElButton 
-            v-if="selectedRows.length > 0" 
-            v-auth="'login:btn:delete'" 
-            type="danger" 
-            plain 
+          <ElButton
+            v-if="selectedRows.length > 0"
+            v-auth="'login:btn:delete'"
+            type="danger"
+            plain
             @click="handleBatchDelete"
           >
             <i class="iconfont-sys mr-1">&#xe6e2;</i>
@@ -177,7 +177,7 @@
           fixed: 'right',
           formatter: (row: LoginLogInfo) => {
             const buttons = []
-            
+
             // 查看详情按钮
             buttons.push(
               h(
@@ -190,7 +190,7 @@
                 () => [t('buttons.info')]
               )
             )
-            
+
             // 强制登出按钮
             if (hasPermission('login:btn:logout')) {
               buttons.push(
@@ -206,7 +206,7 @@
                 )
               )
             }
-            
+
             // 删除按钮
             if (hasPermission('login:btn:delete')) {
               buttons.push(
@@ -221,7 +221,7 @@
                 )
               )
             }
-            
+
             return h('div', { class: 'flex gap-2 justify-center' }, buttons)
           }
         }
@@ -311,7 +311,7 @@
 
     try {
       await ElMessageBox.confirm(
-        t('logManager.loginLog.batchLogoutConfirm').replace('  ', onlineUsers.length.toString()),
+        t('logManager.loginLog.batchLogoutConfirm', { count: onlineUsers.length }),
         t('common.warning'),
         {
           confirmButtonText: t('common.confirm'),
@@ -340,10 +340,7 @@
     }
     try {
       await ElMessageBox.confirm(
-        t('logManager.loginLog.batchDeleteConfirm').replace(
-          '  ',
-          selectedRows.value.length.toString()
-        ),
+        t('logManager.loginLog.batchDeleteConfirm', { count: selectedRows.value.length }),
         t('common.warning'),
         {
           confirmButtonText: t('common.confirm'),

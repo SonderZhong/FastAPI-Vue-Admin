@@ -18,11 +18,18 @@
         @refresh="handleRefresh"
       >
         <template #left>
-          <ElButton v-auth="'add'" @click="handleAddMenu" v-ripple> 添加菜单 </ElButton>
-          <ElButton @click="toggleExpand" v-ripple>
-            {{ isExpanded ? '收起' : '展开' }}
+          <ElButton
+            v-if="hasAuth('add')"
+            v-auth="'add'"
+            type="primary"
+            @click="handleAddMenu"
+            v-ripple
+          >
+            {{ $t('buttons.add') }}
           </ElButton>
-          <ElButton v-if="hasAuth('add')" @click="handleAddMenu" v-ripple> 添加菜单 </ElButton>
+          <ElButton @click="toggleExpand" v-ripple>
+            {{ isExpanded ? $t('buttons.collapseAll') : $t('buttons.expandAll') }}
+          </ElButton>
         </template>
       </ArtTableHeader>
 
@@ -53,6 +60,7 @@
   import { useMenuStore } from '@/store/modules/menu'
   import { ElMessage, ElMessageBox, ElTag } from 'element-plus'
   import { formatMenuTitle } from '@/router/utils/utils'
+  import { useI18n } from 'vue-i18n'
   import ArtButtonTable from '@/components/core/forms/art-button-table/index.vue'
   import { useTableColumns } from '@/composables/useTableColumns'
   import type { AppRouteRecord } from '@/types/router'
@@ -62,6 +70,7 @@
   defineOptions({ name: 'Menus' })
 
   const { hasAuth } = useAuth()
+  const { t } = useI18n()
   const { menuList } = storeToRefs(useMenuStore())
 
   // 状态管理
@@ -86,13 +95,13 @@
 
   const formItems = computed(() => [
     {
-      label: '菜单名称',
+      label: t('menu.menuName'),
       key: 'name',
       type: 'input',
       props: { clearable: true }
     },
     {
-      label: '路由地址',
+      label: t('menu.routeAddress'),
       key: 'route',
       type: 'input',
       props: { clearable: true }
@@ -110,32 +119,32 @@
   }
 
   const getMenuTypeText = (row: AppRouteRecord) => {
-    if (row.meta?.isAuthButton) return '按钮'
-    if (row.children?.length) return '目录'
-    if (row.meta?.link && row.meta?.isIframe) return '内嵌'
-    if (row.path) return '菜单'
-    if (row.meta?.link) return '外链'
-    return '未知'
+    if (row.meta?.isAuthButton) return t('common.button')
+    if (row.children?.length) return t('menu.directory')
+    if (row.meta?.link && row.meta?.isIframe) return t('menu.embedded')
+    if (row.path) return t('common.menu')
+    if (row.meta?.link) return t('menu.externalLink')
+    return t('common.unknown')
   }
 
   // 表格列配置
   const { columnChecks, columns } = useTableColumns(() => [
     {
       prop: 'meta.title',
-      label: '菜单名称',
+      label: t('menu.menuName'),
       minWidth: 120,
       formatter: (row: AppRouteRecord) => formatMenuTitle(row.meta?.title)
     },
     {
       prop: 'type',
-      label: '菜单类型',
+      label: t('menu.menuType'),
       formatter: (row: AppRouteRecord) => {
         return h(ElTag, { type: getMenuTypeTag(row) }, () => getMenuTypeText(row))
       }
     },
     {
       prop: 'path',
-      label: '路由',
+      label: t('menu.route'),
       formatter: (row: AppRouteRecord) => {
         if (row.meta?.isAuthButton) return ''
         return row.meta?.link || row.path || ''
@@ -143,28 +152,28 @@
     },
     {
       prop: 'meta.authList',
-      label: '权限标识',
+      label: t('common.authMark'),
       formatter: (row: AppRouteRecord) => {
         if (row.meta?.isAuthButton) {
           return row.meta?.authMark || ''
         }
         if (!row.meta?.authList?.length) return ''
-        return `${row.meta.authList.length} 个权限标识`
+        return `${row.meta.authList.length} ${t('menu.permissionMarks')}`
       }
     },
     {
       prop: 'date',
-      label: '编辑时间',
+      label: t('common.updateTime'),
       formatter: () => '2022-3-12 12:00:00'
     },
     {
       prop: 'status',
-      label: '状态',
-      formatter: () => h(ElTag, { type: 'success' }, () => '启用')
+      label: t('common.status'),
+      formatter: () => h(ElTag, { type: 'success' }, () => t('common.enabled'))
     },
     {
       prop: 'operation',
-      label: '操作',
+      label: t('common.actions'),
       width: 180,
       align: 'right',
       formatter: (row: AppRouteRecord) => {
@@ -187,7 +196,7 @@
           h(ArtButtonTable, {
             type: 'add',
             onClick: () => handleAddAuth(),
-            title: '新增权限'
+            title: t('buttons.addButton')
           }),
           h(ArtButtonTable, {
             type: 'edit',
@@ -343,39 +352,39 @@
   }
 
   const handleSubmit = (formData: any) => {
-    console.log('提交数据:', formData)
+    console.log('submit menu data:', formData)
     // 这里可以调用API保存数据
     getTableData()
   }
 
   const handleDeleteMenu = async () => {
     try {
-      await ElMessageBox.confirm('确定要删除该菜单吗？删除后无法恢复', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      await ElMessageBox.confirm(t('menu.deleteConfirm'), t('common.tips'), {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       })
-      ElMessage.success('删除成功')
+      ElMessage.success(t('common.deleteSuccess'))
       getTableData()
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('删除失败')
+        ElMessage.error(t('common.deleteFailed'))
       }
     }
   }
 
   const handleDeleteAuth = async () => {
     try {
-      await ElMessageBox.confirm('确定要删除该权限吗？删除后无法恢复', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+      await ElMessageBox.confirm(t('menu.deleteAuthConfirm'), t('common.tips'), {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       })
-      ElMessage.success('删除成功')
+      ElMessage.success(t('common.deleteSuccess'))
       getTableData()
     } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('删除失败')
+        ElMessage.error(t('common.deleteFailed'))
       }
     }
   }

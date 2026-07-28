@@ -58,14 +58,22 @@
             @keyup.enter="nextStep"
             :validate-on-rule-change="false"
           >
-            <ElFormItem prop="usernameOrEmail" :label="$t('forgetPassword.usernameOrEmail')" :show-message="showValidation">
+            <ElFormItem
+              prop="usernameOrEmail"
+              :label="$t('forgetPassword.usernameOrEmail')"
+              :show-message="showValidation"
+            >
               <ElInput
                 v-model.trim="step1Form.usernameOrEmail"
                 :placeholder="$t('forgetPassword.placeholder')"
               />
             </ElFormItem>
 
-            <ElFormItem prop="code" :label="$t('forgetPassword.emailCode')" :show-message="showValidation">
+            <ElFormItem
+              prop="code"
+              :label="$t('forgetPassword.emailCode')"
+              :show-message="showValidation"
+            >
               <div class="email-code-input">
                 <ElInput
                   v-model.trim="step1Form.code"
@@ -110,7 +118,11 @@
             @keyup.enter="resetPassword"
             :validate-on-rule-change="false"
           >
-            <ElFormItem prop="newPassword" :label="$t('forgetPassword.newPassword')" :show-message="showValidation">
+            <ElFormItem
+              prop="newPassword"
+              :label="$t('forgetPassword.newPassword')"
+              :show-message="showValidation"
+            >
               <ElInput
                 v-model.trim="step2Form.newPassword"
                 type="password"
@@ -119,7 +131,11 @@
               />
             </ElFormItem>
 
-            <ElFormItem prop="confirmPassword" :label="$t('forgetPassword.confirmPassword')" :show-message="showValidation">
+            <ElFormItem
+              prop="confirmPassword"
+              :label="$t('forgetPassword.confirmPassword')"
+              :show-message="showValidation"
+            >
               <ElInput
                 v-model.trim="step2Form.confirmPassword"
                 type="password"
@@ -265,19 +281,19 @@
 
       const response = await fetchEmailCode({
         username: step1Form.usernameOrEmail,
-        title: '忘记密码验证码',
+        title: t('forgetPassword.emailCodeTitle'),
         mail: step1Form.usernameOrEmail
       })
 
       // 检查响应是否成功
       if (!response.success) {
-        throw new Error(response.msg || '发送验证码失败')
+        throw new Error(response.msg || t('forgetPassword.errors.sendCodeFailed'))
       }
 
-      ElMessage.success(response.msg || '验证码已发送至您的邮箱，请注意查收')
+      ElMessage.success(response.msg || t('forgetPassword.errors.sendCodeSuccess'))
       startCountdown()
     } catch (error: any) {
-      ElMessage.error(error.message || '发送验证码失败，请稍后重试')
+      ElMessage.error(error.message || t('forgetPassword.errors.sendCodeRetry'))
       console.error(error)
     } finally {
       emailCodeLoading.value = false
@@ -306,7 +322,7 @@
     try {
       // 启用验证提示
       showValidation.value = true
-      
+
       await step1FormRef.value.validate()
       // 这里可以添加验证码校验的API调用
       currentStep.value = 2
@@ -331,11 +347,11 @@
     try {
       // 启用验证提示
       showValidation.value = true
-      
+
       await step2FormRef.value.validate()
       loading.value = true
 
-      const resetParams: Auth.ForgetPasswordParams = {
+      const resetParams = {
         username: step1Form.usernameOrEmail,
         email: step1Form.usernameOrEmail,
         code: step1Form.code,
@@ -346,7 +362,7 @@
 
       // 检查响应是否成功
       if (!response.success) {
-        throw new Error(response.msg || '重置密码失败')
+        throw new Error(response.msg || t('forgetPassword.errors.resetFailed'))
       }
 
       ElNotification({
@@ -361,7 +377,7 @@
         router.push(RoutesAlias.Login)
       }, 2000)
     } catch (error: any) {
-      ElMessage.error(error.message || '重置密码失败，请稍后重试')
+      ElMessage.error(error.message || t('forgetPassword.errors.resetRetry'))
       console.log('重置密码失败:', error)
     } finally {
       loading.value = false

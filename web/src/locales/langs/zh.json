@@ -151,6 +151,13 @@
     "password": "密码",
     "captcha": "验证码",
     "loginDays": "登录有效期",
+    "loginDaysOptions": {
+      "one": "1天",
+      "three": "3天",
+      "seven": "7天",
+      "fifteen": "15天",
+      "thirty": "30天"
+    },
     "placeholder": [
       "请输入用户名/邮箱/手机号",
       "请输入密码",
@@ -168,6 +175,14 @@
       "title": "登录成功",
       "message": "欢迎回来"
     },
+    "errors": {
+      "captchaLoadFailed": "获取验证码失败",
+      "loginFailed": "登录失败",
+      "loginRetry": "登录失败，请稍后重试",
+      "tokenMissing": "登录失败，未获取到访问令牌",
+      "userInfoFailed": "获取用户信息失败",
+      "multipleTenants": "当前账号关联多个租户，请先选择进入的租户"
+    },
     "validation": {
       "usernameRequired": "请输入用户名",
       "usernameLength": "用户名长度应为3-50个字符",
@@ -178,11 +193,28 @@
       "captchaMathResult": "请输入算术题的计算结果"
     }
   },
+  "selectTenant": {
+    "title": "选择租户",
+    "subTitle": "当前账号关联了多个租户，请先选择本次进入的工作空间。",
+    "backToLogin": "返回登录",
+    "enterSystem": "进入系统",
+    "selectRequired": "请选择一个租户",
+    "switchSuccess": "租户切换成功",
+    "switchFailed": "租户切换失败",
+    "userInfoFailed": "获取用户信息失败"
+  },
+  "router": {
+    "errors": {
+      "userRoutesFailed": "获取用户路由失败",
+      "menuListFailed": "获取菜单列表失败，请重新登录"
+    }
+  },
   "forgetPassword": {
     "title": "忘记密码？",
     "subTitle": "请输入您注册时使用的电子邮件来重置密码",
     "step1": "验证身份",
     "step2": "设置新密码",
+    "emailCodeTitle": "忘记密码验证码",
     "usernameOrEmail": "用户名或邮箱",
     "emailCode": "邮箱验证码",
     "newPassword": "新密码",
@@ -199,6 +231,13 @@
       "newPasswordRequired": "请输入新密码",
       "confirmPasswordRequired": "请确认新密码",
       "passwordMismatch": "两次输入的密码不一致"
+    },
+    "errors": {
+      "sendCodeFailed": "发送验证码失败",
+      "sendCodeSuccess": "验证码已发送至您的邮箱，请注意查收",
+      "sendCodeRetry": "发送验证码失败，请稍后重试",
+      "resetFailed": "重置密码失败",
+      "resetRetry": "重置密码失败，请稍后重试"
     },
     "success": {
       "title": "密码重置成功",
@@ -221,6 +260,13 @@
   "register": {
     "title": "创建账号",
     "subTitle": "欢迎使用 FastAPI-Vue-Admin，请填写以下信息完成注册",
+    "steps": {
+      "basic": "基本信息",
+      "additional": "附加信息"
+    },
+    "nextStep": "下一步",
+    "prevStep": "上一步",
+    "emailCodeTitle": "注册验证码",
     "placeholder": [
       "请输入用户名",
       "请输入密码",
@@ -268,6 +314,14 @@
       "phoneFormat": "手机号格式不正确",
       "emailCodeRequired": "请输入邮箱验证码",
       "emailCodeLength": "验证码长度应为6位"
+    },
+    "errors": {
+      "loadConfigFailed": "获取系统配置失败",
+      "sendCodeFailed": "发送验证码失败",
+      "sendCodeSuccess": "验证码已发送至您的邮箱，请注意查收",
+      "sendCodeRetry": "发送验证码失败，请稍后重试",
+      "registerFailed": "注册失败",
+      "registerRetry": "注册失败，请稍后重试"
     },
     "success": {
       "title": "注册成功",
@@ -340,6 +394,7 @@
       "notification": "通知管理",
       "dictionary": "数据字典",
       "file": "文件管理",
+      "tenant": "租户管理",
       "userCenter": "个人中心"
     },
     "logManager": {
@@ -476,6 +531,7 @@
     "deleteFailed": "删除失败",
     "deleteSuccess": "删除成功",
     "operationSuccess": "操作成功",
+    "operationFailed": "操作失败",
     "addSuccess": "新增成功",
     "addFailed": "新增失败",
     "updateSuccess": "更新成功",
@@ -507,6 +563,7 @@
     "copySuccess": "复制成功",
     "copyFailed": "复制失败",
     "close": "关闭",
+    "loadFailed": "加载失败",
     "pleaseSelectData": "请先选择数据",
     "pleaseInput": "请输入",
     "pleaseSelect": "请选择",
@@ -589,21 +646,33 @@
     "search": "搜索部门",
     "structure": "部门结构",
     "add": "新增",
+    "scope": "范围",
+    "currentTenant": "当前租户",
+    "tenantLabel": "租户",
+    "unselectedTenant": "未选择租户",
     "addDepartment": "新增部门",
     "editDepartment": "编辑部门",
     "addSub": "添加下属",
+    "expandAll": "展开全部",
+    "collapseAll": "收起全部",
     "basicInfo": "基本信息",
     "timeInfo": "时间信息",
     "subDepartments": "子部门",
     "selectTip": "请选择左侧部门查看详情",
     "name": "部门名称",
     "parent": "上级部门",
+    "topLevel": "顶级部门",
+    "selectParent": "请选择上级部门",
+    "code": "部门编码",
     "principal": "负责人",
     "phone": "联系电话",
     "email": "邮箱",
     "sort": "排序",
+    "remark": "备注",
     "nameRequired": "请输入部门名称",
+    "codeRequired": "请输入部门编码",
     "principalRequired": "请输入负责人",
+    "deleteConfirm": "确定删除部门“{name}”吗？",
     "addSuccess": "新增部门成功",
     "addFailed": "新增部门失败",
     "updateSuccess": "编辑部门成功",
@@ -733,6 +802,31 @@
     "confirmPasswordRequired": "请确认密码",
     "passwordNotMatch": "两次输入的密码不一致"
   },
+  "tenant": {
+    "title": "租户管理",
+    "createTenant": "新增租户",
+    "editTenant": "编辑租户",
+    "tenantName": "租户名称",
+    "tenantCode": "租户编码",
+    "tenantNameRequired": "请输入租户名称",
+    "tenantCodeRequired": "请输入租户编码",
+    "allowRegister": "邀请注册",
+    "inviteInfo": "邀请信息",
+    "currentTenant": "当前租户",
+    "inviteCode": "邀请码",
+    "inviteLink": "邀请链接",
+    "notGenerated": "未生成",
+    "generateInviteCode": "生成",
+    "regenerateInviteCode": "重新生成",
+    "inviteCodeGenerated": "邀请码生成成功",
+    "inviteCodeRegenerated": "邀请码重新生成成功",
+    "allowRegisterEnabled": "已开启邀请注册",
+    "allowRegisterDisabled": "已关闭邀请注册",
+    "noInviteCode": "当前租户尚未生成邀请码",
+    "deleteConfirm": "确定要删除租户“{name}”吗？",
+    "batchDeleteConfirm": "确定要删除选中的 {count} 个租户吗？"
+  },
+
   "config": {
     "title": "配置管理",
     "configName": "配置名称",
@@ -1111,23 +1205,49 @@
   },
   "dashboard": {
     "loginStatistics": "登录统计分析",
-    "loginStatisticsDesc": "统计浏览器、操作系统、登录地区等信息",
+    "loginStatisticsDesc": "统计最近 7 天的浏览器、操作系统与登录地区分布",
     "loginTrend": "登录趋势分析",
-    "loginTrendDesc": "近7天登录次数及地区分布趋势",
+    "loginTrendDesc": "查看近 7 天登录次数及地区变化趋势",
     "osDistribution": "操作系统分布",
     "browserDistribution": "浏览器分布",
     "locationDistribution": "登录地区 Top 10",
-    "last7DaysLoginTrend": "近7天登录趋势",
+    "last7DaysLoginTrend": "近 7 天登录趋势",
     "totalLogins": "总登录次数",
     "loginCount": "登录次数",
     "loadStatisticsFailed": "加载统计数据失败",
     "loadTrendFailed": "加载趋势数据失败",
     "operationStatistics": "操作统计分析",
-    "operationStatisticsDesc": "统计操作类型、模块分布及操作趋势",
+    "operationStatisticsDesc": "统计操作类型、模块分布及近 7 天操作趋势",
     "operationTypeDistribution": "操作类型分布",
     "moduleDistribution": "模块分布 Top 10",
-    "operationTrend": "近7天操作趋势",
-    "operationCount": "操作次数"
+    "operationTrend": "近 7 天操作趋势",
+    "operationCount": "操作次数",
+    "unreadNotifications": "未读通知",
+    "totalNotifications": "全部通知",
+    "todayLogins": "今日登录",
+    "todayOperations": "今日操作",
+    "last7DaysLogins": "近 7 天登录",
+    "last7DaysOperations": "近 7 天操作",
+    "readRate": "已读率",
+    "checkMessages": "点击查看通知详情",
+    "greetings": {
+      "lateNight": "凌晨好",
+      "morning": "早上好",
+      "forenoon": "上午好",
+      "noon": "中午好",
+      "afternoon": "下午好",
+      "evening": "晚上好",
+      "night": "夜深了"
+    },
+    "weekdays": {
+      "sun": "周日",
+      "mon": "周一",
+      "tue": "周二",
+      "wed": "周三",
+      "thu": "周四",
+      "fri": "周五",
+      "sat": "周六"
+    }
   },
   "hts": {
     "codeManager": {

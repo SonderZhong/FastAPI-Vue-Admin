@@ -26,6 +26,13 @@ export function fetchLogin(params: Auth.LoginParams) {
   })
 }
 
+export function fetchSelectTenant(tenant_id: string) {
+  return request.post<{ tenant_id: string; tenant_name: string }>({
+    url: '/api/auth/select-tenant',
+    data: { tenant_id }
+  })
+}
+
 /**
  * 注册
  * @param params 注册参数
@@ -77,7 +84,7 @@ export async function fetchGetUserInfo() {
       console.warn('[Auth] WebSocket 获取用户信息失败，回退到 HTTP:', e)
     }
   }
-  
+
   // 回退到 HTTP
   return request.get<Auth.UserInfo>({
     url: '/api/auth/info'
@@ -99,7 +106,7 @@ export async function fetchGetUserRoutes() {
       console.warn('[Auth] WebSocket 获取路由失败，回退到 HTTP:', e)
     }
   }
-  
+
   // 回退到 HTTP
   return request.get<Api.Auth.UserRoutes>({
     url: '/api/auth/routes'

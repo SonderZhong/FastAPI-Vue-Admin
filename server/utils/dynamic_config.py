@@ -7,8 +7,8 @@
 from typing import Any, Dict, List, Optional
 from redis.asyncio import Redis as AsyncRedis
 
-from models import SystemConfig
-from models.config import ConfigGroup
+from modules import SystemConfig
+from modules.config.model import ConfigGroup
 from utils.log import logger
 from utils.get_redis import RedisKeyConfig
 
@@ -58,7 +58,16 @@ class DynamicConfigService:
         {"group": ConfigGroup.ACCOUNT, "key": "account_register_enabled", "name": "开放注册", "value": "true", "type": True, "remark": "是否开放用户注册"},
         {"group": ConfigGroup.ACCOUNT, "key": "default_department_id", "name": "默认部门", "value": "", "type": True, "remark": "新用户默认部门ID"},
         {"group": ConfigGroup.ACCOUNT, "key": "default_role_id", "name": "默认角色", "value": "", "type": True, "remark": "新用户默认角色ID"},
-        
+
+        # Sentry 配置
+        {"group": ConfigGroup.SYSTEM, "key": "sentry_dsn", "name": "Sentry DSN", "value": "", "type": True, "remark": "Sentry上报链接，留空则不上报"},
+        {"group": ConfigGroup.SYSTEM, "key": "sentry_traces_sample_rate", "name": "Sentry采样率", "value": "1.0", "type": True, "remark": "Sentry性能监控采样率（0.0-1.0）"},
+        {"group": ConfigGroup.SYSTEM, "key": "sentry_environment", "name": "Sentry环境", "value": "production", "type": True, "remark": "Sentry环境标识：production/development/staging"},
+
+        # 数据加密配置
+        {"group": ConfigGroup.SECURITY, "key": "encryption_enabled", "name": "启用数据加密", "value": "false", "type": True, "remark": "是否启用RSA数据加密传输"},
+        {"group": ConfigGroup.SECURITY, "key": "encryption_key_size", "name": "RSA密钥长度", "value": "2048", "type": True, "remark": "RSA密钥长度（1024/2048/4096）"},
+
         # 上传配置 - 基础
         {"group": ConfigGroup.UPLOAD, "key": "upload_storage_type", "name": "存储类型", "value": "local", "type": True, "remark": "文件存储类型：local/aliyun_oss/tencent_cos/qiniu/minio"},
         {"group": ConfigGroup.UPLOAD, "key": "upload_max_size", "name": "单文件大小限制", "value": "100", "type": True, "remark": "单个文件上传的最大大小（MB）"},
@@ -92,6 +101,33 @@ class DynamicConfigService:
         {"group": ConfigGroup.UPLOAD, "key": "minio_secret_key", "name": "MinIO SecretKey", "value": "", "type": True, "remark": "MinIO SecretKey"},
         {"group": ConfigGroup.UPLOAD, "key": "minio_bucket", "name": "MinIO Bucket", "value": "", "type": True, "remark": "MinIO Bucket名称"},
         {"group": ConfigGroup.UPLOAD, "key": "minio_secure", "name": "MinIO启用HTTPS", "value": "false", "type": True, "remark": "MinIO是否启用HTTPS"},
+
+        # 短信配置
+        {"group": ConfigGroup.SMS, "key": "sms_provider", "name": "短信服务商", "value": "aliyun", "type": True, "remark": "短信服务商：aliyun/tencent"},
+        {"group": ConfigGroup.SMS, "key": "sms_daily_limit", "name": "每日发送上限", "value": "10", "type": True, "remark": "单个手机号每日发送次数上限"},
+        {"group": ConfigGroup.SMS, "key": "sms_per_minute_limit", "name": "每分钟发送上限", "value": "1", "type": True, "remark": "单个手机号每分钟发送次数上限"},
+        {"group": ConfigGroup.SMS, "key": "sms_aliyun_access_key_id", "name": "阿里云AccessKey", "value": "", "type": True, "remark": "阿里云短信AccessKey ID"},
+        {"group": ConfigGroup.SMS, "key": "sms_aliyun_access_key_secret", "name": "阿里云SecretKey", "value": "", "type": True, "remark": "阿里云短信AccessKey Secret"},
+        {"group": ConfigGroup.SMS, "key": "sms_aliyun_sign_name", "name": "阿里云签名", "value": "", "type": True, "remark": "阿里云短信签名"},
+        {"group": ConfigGroup.SMS, "key": "sms_aliyun_template_code", "name": "阿里云模板", "value": "", "type": True, "remark": "阿里云短信模板Code"},
+        {"group": ConfigGroup.SMS, "key": "sms_tencent_secret_id", "name": "腾讯云SecretId", "value": "", "type": True, "remark": "腾讯云短信SecretId"},
+        {"group": ConfigGroup.SMS, "key": "sms_tencent_secret_key", "name": "腾讯云SecretKey", "value": "", "type": True, "remark": "腾讯云短信SecretKey"},
+        {"group": ConfigGroup.SMS, "key": "sms_tencent_sdk_app_id", "name": "腾讯云SdkAppId", "value": "", "type": True, "remark": "腾讯云短信SdkAppId"},
+        {"group": ConfigGroup.SMS, "key": "sms_tencent_sign_name", "name": "腾讯云签名", "value": "", "type": True, "remark": "腾讯云短信签名"},
+        {"group": ConfigGroup.SMS, "key": "sms_tencent_template_id", "name": "腾讯云模板", "value": "", "type": True, "remark": "腾讯云短信模板ID"},
+
+        # 飞书配置
+        {"group": ConfigGroup.FEISHU, "key": "feishu_webhook_url", "name": "飞书Webhook地址", "value": "", "type": True, "remark": "飞书群机器人Webhook URL"},
+        {"group": ConfigGroup.FEISHU, "key": "feishu_webhook_secret", "name": "飞书Webhook密钥", "value": "", "type": True, "remark": "飞书群机器人签名密钥（可选）"},
+        {"group": ConfigGroup.FEISHU, "key": "feishu_app_id", "name": "飞书应用ID", "value": "", "type": True, "remark": "飞书企业自建应用App ID"},
+        {"group": ConfigGroup.FEISHU, "key": "feishu_app_secret", "name": "飞书应用密钥", "value": "", "type": True, "remark": "飞书企业自建应用App Secret"},
+
+        # 钉钉配置
+        {"group": ConfigGroup.DINGTALK, "key": "dingtalk_webhook_url", "name": "钉钉Webhook地址", "value": "", "type": True, "remark": "钉钉群机器人Webhook URL"},
+        {"group": ConfigGroup.DINGTALK, "key": "dingtalk_webhook_secret", "name": "钉钉Webhook密钥", "value": "", "type": True, "remark": "钉钉群机器人签名密钥（可选）"},
+        {"group": ConfigGroup.DINGTALK, "key": "dingtalk_app_id", "name": "钉钉应用ID", "value": "", "type": True, "remark": "钉钉企业应用AppKey"},
+        {"group": ConfigGroup.DINGTALK, "key": "dingtalk_app_secret", "name": "钉钉应用密钥", "value": "", "type": True, "remark": "钉钉企业应用AppSecret"},
+        {"group": ConfigGroup.DINGTALK, "key": "dingtalk_agent_id", "name": "钉钉AgentId", "value": "", "type": True, "remark": "钉钉企业应用AgentId"},
     ]
     
     def __init__(self, redis: AsyncRedis):

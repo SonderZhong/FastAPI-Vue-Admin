@@ -151,6 +151,13 @@
     "password": "Password",
     "captcha": "Captcha",
     "loginDays": "Login Duration",
+    "loginDaysOptions": {
+      "one": "1 day",
+      "three": "3 days",
+      "seven": "7 days",
+      "fifteen": "15 days",
+      "thirty": "30 days"
+    },
     "placeholder": [
       "Please enter username/email/phone",
       "Please enter password",
@@ -168,6 +175,14 @@
       "title": "Login successful",
       "message": "Welcome back"
     },
+    "errors": {
+      "captchaLoadFailed": "Failed to load captcha",
+      "loginFailed": "Login failed",
+      "loginRetry": "Login failed, please try again later",
+      "tokenMissing": "Login failed, no access token received",
+      "userInfoFailed": "Failed to get user info",
+      "multipleTenants": "This account is linked to multiple tenants. Please choose a workspace first."
+    },
     "validation": {
       "usernameRequired": "Please enter username",
       "usernameLength": "Username length should be 3-50 characters",
@@ -178,11 +193,28 @@
       "captchaMathResult": "Please enter the result of the math problem"
     }
   },
+  "selectTenant": {
+    "title": "Select tenant",
+    "subTitle": "This account is linked to multiple tenants. Please choose the workspace you want to enter.",
+    "backToLogin": "Back to login",
+    "enterSystem": "Enter system",
+    "selectRequired": "Please select a tenant",
+    "switchSuccess": "Tenant switched successfully",
+    "switchFailed": "Failed to switch tenant",
+    "userInfoFailed": "Failed to get user info"
+  },
+  "router": {
+    "errors": {
+      "userRoutesFailed": "Failed to get user routes",
+      "menuListFailed": "Failed to get menu list, please log in again"
+    }
+  },
   "forgetPassword": {
     "title": "Forgot password?",
     "subTitle": "Please enter your registered email address to reset your password",
     "step1": "Verify Identity",
     "step2": "Set New Password",
+    "emailCodeTitle": "Password reset code",
     "usernameOrEmail": "Username or Email",
     "emailCode": "Email Code",
     "newPassword": "New Password",
@@ -199,6 +231,13 @@
       "newPasswordRequired": "Please enter new password",
       "confirmPasswordRequired": "Please confirm new password",
       "passwordMismatch": "The two passwords do not match"
+    },
+    "errors": {
+      "sendCodeFailed": "Failed to send verification code",
+      "sendCodeSuccess": "The verification code has been sent to your email",
+      "sendCodeRetry": "Failed to send verification code, please try again later",
+      "resetFailed": "Failed to reset password",
+      "resetRetry": "Failed to reset password, please try again later"
     },
     "success": {
       "title": "Password reset successful",
@@ -221,6 +260,13 @@
   "register": {
     "title": "Create account",
     "subTitle": "Welcome to FastAPI-Vue-Admin, please fill in the following information to complete the registration",
+    "steps": {
+      "basic": "Basic Information",
+      "additional": "Additional Information"
+    },
+    "nextStep": "Next step",
+    "prevStep": "Previous step",
+    "emailCodeTitle": "Registration code",
     "username": "Username",
     "password": "Password",
     "confirmPassword": "Confirm Password",
@@ -265,6 +311,14 @@
       "phoneFormat": "Invalid phone format",
       "emailCodeRequired": "Please enter email code",
       "emailCodeLength": "Verification code length should be 6 digits"
+    },
+    "errors": {
+      "loadConfigFailed": "Failed to load system configuration",
+      "sendCodeFailed": "Failed to send verification code",
+      "sendCodeSuccess": "The verification code has been sent to your email",
+      "sendCodeRetry": "Failed to send verification code, please try again later",
+      "registerFailed": "Registration failed",
+      "registerRetry": "Registration failed, please try again later"
     },
     "agreeText": "I agree",
     "privacyPolicy": "Privacy policy",
@@ -340,6 +394,7 @@
       "notification": "Notification",
       "dictionary": "Dictionary",
       "file": "File Management",
+      "tenant": "Tenant Management",
       "userCenter": "User Center"
     },
     "logManager": {
@@ -555,6 +610,7 @@
     "deleteFailed": "Delete Failed",
     "deleteSuccess": "Delete Success",
     "operationSuccess": "Operation Success",
+    "operationFailed": "Operation Failed",
     "addSuccess": "Add Success",
     "addFailed": "Add Failed",
     "updateSuccess": "Update Success",
@@ -578,11 +634,15 @@
     "detail": "Detail",
     "delete": "Delete",
     "refresh": "Refresh",
+    "more": "More",
     "batchDelete": "Batch Delete",
     "copy": "Copy",
     "copySuccess": "Copy Success",
     "copyFailed": "Copy Failed",
     "close": "Close",
+    "loadFailed": "Load Failed",
+    "role": "Role",
+    "dept": "Department",
     "pleaseSelectData": "Please select data first",
     "pleaseInput": "Please input ",
     "pleaseSelect": "Please select ",
@@ -659,6 +719,79 @@
     "addButtonPermission": "Add Button Permission",
     "editButtonPermission": "Edit Button Permission"
   },
+  "menu": {
+    "menuName": "Menu Name",
+    "menuType": "Menu Type",
+    "route": "Route",
+    "routeAddress": "Route Address",
+    "directory": "Directory",
+    "embedded": "Embedded",
+    "externalLink": "External Link",
+    "permissionMarks": "permission marks",
+    "deleteConfirm": "Are you sure you want to delete this menu? This action cannot be undone.",
+    "deleteAuthConfirm": "Are you sure you want to delete this permission? This action cannot be undone."
+  },
+  "department": {
+    "title": "Department",
+    "search": "Search Department",
+    "structure": "Department Structure",
+    "add": "Add",
+    "scope": "Scope",
+    "currentTenant": "Current Tenant",
+    "tenantLabel": "Tenant",
+    "unselectedTenant": "No tenant selected",
+    "addDepartment": "Add Department",
+    "editDepartment": "Edit Department",
+    "addSub": "Add Sub Department",
+    "expandAll": "Expand All",
+    "collapseAll": "Collapse All",
+    "basicInfo": "Basic Information",
+    "timeInfo": "Time Information",
+    "subDepartments": "Sub Departments",
+    "selectTip": "Please select a department on the left to view details",
+    "name": "Department Name",
+    "parent": "Parent Department",
+    "topLevel": "Top Level Department",
+    "selectParent": "Please select parent department",
+    "code": "Department Code",
+    "principal": "Principal",
+    "phone": "Phone",
+    "email": "Email",
+    "sort": "Sort",
+    "remark": "Remark",
+    "nameRequired": "Please enter department name",
+    "codeRequired": "Please enter department code",
+    "principalRequired": "Please enter principal",
+    "deleteConfirm": "Are you sure you want to delete department \"{name}\"?",
+    "addSuccess": "Add Department Successfully",
+    "addFailed": "Add Department Failed",
+    "updateSuccess": "Edit Department Successfully",
+    "updateFailed": "Edit Department Failed"
+  },
+  "tenant": {
+    "title": "Tenant Management",
+    "createTenant": "Create Tenant",
+    "editTenant": "Edit Tenant",
+    "tenantName": "Tenant Name",
+    "tenantCode": "Tenant Code",
+    "tenantNameRequired": "Please enter tenant name",
+    "tenantCodeRequired": "Please enter tenant code",
+    "allowRegister": "Invite Register",
+    "inviteInfo": "Invite Info",
+    "currentTenant": "Current Tenant",
+    "inviteCode": "Invite Code",
+    "inviteLink": "Invite Link",
+    "notGenerated": "Not Generated",
+    "generateInviteCode": "Generate",
+    "regenerateInviteCode": "Regenerate",
+    "inviteCodeGenerated": "Invite code generated successfully",
+    "inviteCodeRegenerated": "Invite code regenerated successfully",
+    "allowRegisterEnabled": "Invite registration enabled",
+    "allowRegisterDisabled": "Invite registration disabled",
+    "noInviteCode": "No invite code for this tenant yet",
+    "deleteConfirm": "Are you sure to delete tenant \"{name}\"?",
+    "batchDeleteConfirm": "Are you sure to delete {count} selected tenants?"
+  },
   "role": {
     "roleManagement": "Role Management",
     "selectDepartment": "Please Select Department",
@@ -667,6 +800,7 @@
     "searchRole": "Search role name or code",
     "roleDetail": "Role Detail",
     "assignPermissions": "Assign Permissions",
+    "cascadeSelection": "Cascade Selection",
     "roleName": "Role Name",
     "roleCode": "Role Code",
     "rolePermissions": "Role Permissions",
@@ -782,7 +916,17 @@
     "refreshCacheFailed": "Failed to refresh cache",
     "searchPlaceholder": "Search config name or key",
     "notSet": "Not Set",
-    "noConfigs": "No configurations"
+    "noConfigs": "No configurations",
+    "pageTitle": "Site Settings",
+    "pageDesc": "Manage system identity, login experience, registration, captcha, storage and security policies in one place.",
+    "lastUpdate": "Last Update",
+    "defaultLang": "Default Language",
+    "langHint": "Default language for login and public pages",
+    "groupTitle": "Config Groups",
+    "totalCount": "Total Items",
+    "visibleCount": "Visible Now",
+    "builtInCount": "Built-in Items",
+    "groupHint": "Supports inline editing and cache refresh"
   },
   "file": {
     "title": "File Management",
@@ -1116,9 +1260,9 @@
   },
   "dashboard": {
     "loginStatistics": "Login Statistics",
-    "loginStatisticsDesc": "Statistics of browser, OS, and login location",
+    "loginStatisticsDesc": "Overview of browser, OS, and login location distribution over the last 7 days",
     "loginTrend": "Login Trend Analysis",
-    "loginTrendDesc": "Login counts and location distribution trend in the last 7 days",
+    "loginTrendDesc": "Track login counts and regional changes across the last 7 days",
     "osDistribution": "OS Distribution",
     "browserDistribution": "Browser Distribution",
     "locationDistribution": "Top 10 Login Locations",
@@ -1128,11 +1272,37 @@
     "loadStatisticsFailed": "Failed to load statistics",
     "loadTrendFailed": "Failed to load trend data",
     "operationStatistics": "Operation Statistics",
-    "operationStatisticsDesc": "Statistics of operation types, modules, and trends",
+    "operationStatisticsDesc": "Overview of operation types, module distribution, and 7-day activity trend",
     "operationTypeDistribution": "Operation Type Distribution",
     "moduleDistribution": "Top 10 Module Distribution",
     "operationTrend": "Last 7 Days Operation Trend",
-    "operationCount": "Operation Count"
+    "operationCount": "Operation Count",
+    "unreadNotifications": "Unread Notifications",
+    "totalNotifications": "All Notifications",
+    "todayLogins": "Today's Logins",
+    "todayOperations": "Today's Operations",
+    "last7DaysLogins": "Last 7 Days Logins",
+    "last7DaysOperations": "Last 7 Days Operations",
+    "readRate": "Read Rate",
+    "checkMessages": "Click to view notifications",
+    "greetings": {
+      "lateNight": "Good early morning",
+      "morning": "Good morning",
+      "forenoon": "Good forenoon",
+      "noon": "Good noon",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "night": "Working late"
+    },
+    "weekdays": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    }
   },
   "hts": {
     "codeManager": {
